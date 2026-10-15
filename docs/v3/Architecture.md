@@ -34,7 +34,7 @@ Comprende la composición y describe su estado estratégico. Sus conclusiones in
 
 ### Optimization Layer
 
-Determina qué necesidad estratégica representa la mejora de mayor valor para la composición. Define qué debe mejorar sin elegir ni proponer campeones.
+El Composition Optimizer determina qué necesidad estratégica representa la mejora de mayor valor para la composición, reutilizando la prioridad ya establecida por el diagnóstico y la corrección de la v2. Devuelve una única necesidad, su motivo, el aspecto del plan que refuerza y el problema que busca evitar. No elige campeones ni roles y no genera recomendaciones visibles.
 
 ### Recommendation Layer
 
@@ -49,7 +49,7 @@ Presenta al usuario las conclusiones del análisis, la necesidad de mejora y las
 La información estratégica pasa entre los módulos en una secuencia clara:
 
 1. **Composition Analysis** comprende la composición y produce las señales base de su estado estratégico.
-2. **Optimization Layer** interpreta esas señales y determina qué necesidad de mejora aporta más valor.
+2. **Optimization Layer** consume esas señales y la corrección estratégica existente para producir una única necesidad de mejora prioritaria.
 3. **Recommendation Layer** convierte esa necesidad en recomendaciones concretas y justificables.
 4. **Report Layer** presenta el resultado final al usuario.
 

@@ -2,6 +2,9 @@
 
 ## v3.0.0
 
+### Capability 1 — Composition Optimizer
+- Añadir una capa interna que expresa una única necesidad estratégica prioritaria a partir del diagnóstico y la corrección existentes, sin elegir campeones ni roles.
+
 ### Preparation
 - Inicio del desarrollo de la versión v3.
 - Preparación de la documentación de v3.
