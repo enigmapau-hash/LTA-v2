@@ -2,6 +2,10 @@
 
 ## v3.0.0
 
+### Calidad de recomendaciones
+- Excluir campeones ya seleccionados y reducir alternativas redundantes, priorizando evidencia estratégica diversa.
+- Ajustar el orden y la justificación de candidatos según su relación con la necesidad, el plan, la condición de victoria y los atributos existentes.
+
 ### Capability 7 — Strategic Recommendation Polisher
 - Refinar la recomendación integrada en el informe para reducir duplicidades y mantener claros la necesidad, el perfil y los candidatos ya priorizados.
 

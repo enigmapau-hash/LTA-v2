@@ -45,7 +45,12 @@
     const optimizer = optimizeComposition({ diagnosis, correction });
     const recommendations = recommendProfiles({ diagnosis, optimizer });
     const candidatesByRole = window.LTAStrategicReportCandidatesByRole || {};
-    const mappedCandidates = mapCandidates({ optimizer, recommendations, candidatesByRole });
+    const mappedCandidates = mapCandidates({
+      optimizer,
+      recommendations,
+      candidatesByRole,
+      selectedChampions: picks.map((pick) => pick.champion),
+    });
     const evaluatedCandidates = evaluateCandidates({ diagnosis, optimizer, recommendations, mappedCandidates });
     const presentation = presentRecommendations({ optimizer, recommendations, mappedCandidates, evaluatedCandidates });
     const integration = presentForReport({ optimizer, recommendations, mappedCandidates, evaluatedCandidates, presentation });

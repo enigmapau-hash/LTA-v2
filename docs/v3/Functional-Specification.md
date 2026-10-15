@@ -98,6 +98,8 @@ Según la composición y las conclusiones que resulten útiles, LTA podrá gener
 - Una necesidad estratégica prioritaria que indique qué aspecto del plan conviene reforzar y qué problema busca evitar.
 - Perfiles estratégicos compatibles y ordenados que respondan a esa necesidad, seguidos de candidatos agrupados por perfil.
 - Candidatos priorizados dentro de cada perfil según su ajuste a la necesidad, la identidad, la condición de victoria y las señales de contradicción ya disponibles.
+- La lista evita campeones que ya estén seleccionados y reduce alternativas redundantes, favoreciendo candidatos con señales estratégicas distintas cuando respaldan igual de bien el perfil.
+- La prioridad y la justificación de cada candidato consideran conjuntamente su relación con el plan, la condición de victoria, las contradicciones y la evidencia de sus atributos disponibles.
 - Para cada candidato, el motivo principal, las fortalezas que aporta y las limitaciones conocidas en sus atributos. La recomendación principal se integra en el bloque de mejora del informe, sin constituir un análisis de draft.
 - Una presentación compacta que destaque el perfil estratégico principal y sus candidatos priorizados, con el motivo y el aspecto del plan que refuerza.
 - La recomendación principal integrada en el bloque de mejora del informe: necesidad estratégica, perfil prioritario y hasta cuatro candidatos con motivo, fortalezas relevantes y limitaciones conocidas cuando aporten valor.
