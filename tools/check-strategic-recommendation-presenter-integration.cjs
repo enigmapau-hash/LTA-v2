@@ -36,7 +36,12 @@ function reportFor(selection) {
   const protection = protectComposition({ diagnosis, correction });
   const optimizer = optimizeComposition({ diagnosis, correction });
   const recommendations = recommendProfiles({ diagnosis, optimizer });
-  const mappedCandidates = mapCandidates({ optimizer, recommendations, candidatesByRole });
+  const mappedCandidates = mapCandidates({
+    optimizer,
+    recommendations,
+    candidatesByRole,
+    selectedChampions: picks.map((item) => item.champion),
+  });
   const evaluatedCandidates = evaluateCandidates({ diagnosis, optimizer, recommendations, mappedCandidates });
   const recommendation = presentForReport({ optimizer, recommendations, mappedCandidates, evaluatedCandidates });
   return buildStrategicReport({ diagnosis, correction, protection, recommendation: recommendation.section });
@@ -54,6 +59,9 @@ assert.ok(recommendation.improves);
 assert.ok(recommendation.candidates.length >= 2 && recommendation.candidates.length <= 4);
 assert.ok(recommendation.candidates.every((candidate) => candidate.champion && candidate.reason));
 assert.ok(recommendation.candidates.every((candidate) => candidate.strengths.length <= 2 && candidate.limitations.length <= 1));
+assert.ok(recommendation.candidates.every((candidate) => !Object.values(selection).includes(candidate.champion)),
+  "El informe no recomienda una pieza que ya forma parte de la composición");
+assert.ok(recommendation.candidates.every((candidate) => candidate.reason.length < 180), "Cada motivo explica el encaje sin alargarse");
 assert.deepEqual(reportFor(selection), report, "La salida visible es determinista");
 
 const noRecommendation = buildStrategicReport({ diagnosis: { status: "not-assessable" } });

@@ -54,15 +54,22 @@
     const supportsSecondary = identityRelation(candidate.identity, secondaryIdentity);
     const opposingIdentity = opposingIdentities.find((identity) => identityRelation(candidate.identity, identity));
 
+    const contribution = [...(Array.isArray(candidate.signals) ? candidate.signals : [])]
+      .map((signal) => String(signal || "").trim())
+      .filter(Boolean)
+      .slice(0, 2)
+      .join(" y ");
+    const improvement = String(candidate.improves || profile.improves || "").trim().replace(/[.]$/, "");
     const reason = contradictsPlan
-      ? "Puede reforzar la dirección contradictoria de " + opposingIdentity + "."
+      ? "Puede reforzar " + opposingIdentity + ", en conflicto con " + primaryIdentity + "."
       : supportsWinCondition
-        ? "Su identidad encaja con la condición de victoria de " + winCondition.identity + " y el perfil " + profile.label.toLocaleLowerCase("es") + "."
+        ? "Apoya " + winCondition.identity + " y refuerza " + improvement + "."
         : supportsPrimary
-          ? "Su identidad refuerza " + primaryIdentity + " dentro del perfil " + profile.label.toLocaleLowerCase("es") + "."
+          ? "Refuerza " + primaryIdentity + " al mejorar " + improvement + "."
           : supportsSecondary
-            ? "Su identidad complementa " + secondaryIdentity + " y aporta " + candidate.improves.toLocaleLowerCase("es") + "."
-            : candidate.reason + " Refuerza " + candidate.improves.toLocaleLowerCase("es") + ".";
+            ? "Complementa " + secondaryIdentity + " y mejora " + improvement + " sin apartar " + primaryIdentity + "."
+            : (contribution ? "Aporta " + contribution : "Sus atributos encajan con " + profile.label.toLocaleLowerCase("es"))
+              + " y ayuda a " + improvement + (primaryIdentity ? " dentro del plan " + primaryIdentity : "") + ".";
 
     const limitations = [...candidate.weaknesses];
     if (contradictsPlan) {
@@ -78,6 +85,8 @@
       supportsWinCondition,
       supportsPrimary,
       supportsSecondary,
+      signalCount: Array.isArray(candidate.signals) ? candidate.signals.length : 0,
+      fieldCoverage: Array.isArray(candidate.matchedFields) ? candidate.matchedFields.length : 0,
       reason,
       limitations: [...new Set(limitations)],
     };
@@ -106,6 +115,8 @@
         || Number(b.supportsWinCondition) - Number(a.supportsWinCondition)
         || Number(b.supportsPrimary) - Number(a.supportsPrimary)
         || Number(b.supportsSecondary) - Number(a.supportsSecondary)
+        || b.fieldCoverage - a.fieldCoverage
+        || b.signalCount - a.signalCount
         || a.candidate.priority - b.candidate.priority);
 
       if (!assessed.length) continue;

@@ -147,7 +147,7 @@ const conflictResult = evaluateCandidates({
 });
 assert.equal(conflictResult.status, "evaluated");
 assert.deepEqual(conflictResult.profiles[0].candidates.map((candidate) => candidate.champion), ["Ornn", "Camille"]);
-assert.match(conflictResult.profiles[0].candidates[1].reason, /contradictoria de Dive/);
+assert.match(conflictResult.profiles[0].candidates[1].reason, /reforzar Dive, en conflicto con Poke/);
 assert.ok(conflictResult.profiles[0].candidates[1].limitations.length);
 
 const winConditionConflict = evaluateCandidates({
@@ -181,6 +181,36 @@ assert.deepEqual(
   ["Xerath", "Camille"],
   "Una win condition contradictoria no debe imponerse sobre la identidad principal del plan"
 );
+
+const evidenceInput = {
+  diagnosis: {
+    status: "assessed",
+    plan: { primaryIdentity: "Front to Back", secondaryIdentity: "Poke" },
+    coherence: { status: "coherent" },
+    contradictions: { status: "coherent", identities: [] },
+    winCondition: { primary: { identity: "Front to Back" } },
+  },
+  optimizer: { status: "prioritized", priority: { need: { id: "frontline" } } },
+  recommendations: { status: "recommended", profiles: [{ id: "frontline" }] },
+  mappedCandidates: {
+    status: "mapped",
+    profiles: [{
+      id: "frontline", label: "Frontline", priority: 1, reason: "Sostener la línea.", improves: "el espacio para ejecutar el plan",
+      candidates: [
+        { champion: "Poca evidencia", priority: 1, reason: "Encaja con frontline.", improves: "el espacio", identity: "Mage", strengths: ["DPS"], weaknesses: [], signals: ["frontline"], matchedFields: ["strengths"] },
+        { champion: "Más evidencia", priority: 2, reason: "Encaja con frontline.", improves: "el espacio", identity: "Mage", strengths: ["Frontline", "Peel"], weaknesses: [], signals: ["frontline", "peel"], matchedFields: ["strengths", "function"] },
+        { champion: "Plan alineado", priority: 3, reason: "Encaja con frontline.", improves: "el espacio", identity: "Front to Back", strengths: ["Frontline"], weaknesses: [], signals: ["frontline"], matchedFields: ["strengths"] },
+      ],
+    }],
+  },
+};
+const evidencePriority = evaluateCandidates(evidenceInput);
+assert.deepEqual(evidencePriority.profiles[0].candidates.map((candidate) => candidate.champion), [
+  "Plan alineado", "Más evidencia", "Poca evidencia",
+], "La prioridad combina alineación estratégica y evidencia de atributos");
+assert.match(evidencePriority.profiles[0].candidates[0].reason, /Apoya Front to Back y refuerza/);
+assert.match(evidencePriority.profiles[0].candidates[1].reason, /Aporta frontline y peel/);
+assert.deepEqual(evaluateCandidates(evidenceInput), evidencePriority, "La valoración y las justificaciones deben ser deterministas");
 
 assert.deepEqual(evaluateCandidates({ optimizer: { status: "no-priority" } }), { status: "no-priority", profiles: [] });
 assert.deepEqual(evaluateCandidates({ optimizer: { status: "prioritized" }, recommendations: { status: "recommended" } }), { status: "no-candidates", profiles: [] });

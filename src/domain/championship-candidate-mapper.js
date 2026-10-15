@@ -24,6 +24,9 @@
     zoneControl: { fields: ["strengths"], terms: ["control de zonas", "control de visión"] },
   });
 
+  const ROLE_ORDER = Object.freeze(["top", "jungle", "mid", "botline", "support"]);
+  const MAX_CANDIDATES_PER_PROFILE = 3;
+
   function normalize(value) {
     return String(value || "")
       .normalize("NFD")
@@ -34,8 +37,18 @@
   }
 
   function findSignals(candidate, signalDefinition) {
-    const fields = signalDefinition.fields.map((field) => normalize(candidate[field])).join(" ");
-    return signalDefinition.terms.filter((term) => fields.includes(normalize(term)));
+    const signals = [];
+    const matchedFields = [];
+    for (const field of signalDefinition.fields) {
+      const value = normalize(candidate[field]);
+      const matches = signalDefinition.terms.filter((term) => value.includes(normalize(term)));
+      if (matches.length) matchedFields.push(field);
+      signals.push(...matches);
+    }
+    return {
+      signals: [...new Set(signals)],
+      matchedFields,
+    };
   }
 
   function listAttributes(value) {
@@ -46,12 +59,47 @@
     return { status, profiles: [] };
   }
 
+  function candidateSimilarity(left, right) {
+    const leftSignals = new Set(left.signals.map(normalize));
+    const rightSignals = new Set(right.signals.map(normalize));
+    const shared = [...leftSignals].filter((signal) => rightSignals.has(signal)).length;
+    const union = new Set([...leftSignals, ...rightSignals]).size;
+    const overlap = union ? shared / union : 0;
+    const sameIdentity = normalize(left.candidate.identity) === normalize(right.candidate.identity);
+    return (sameIdentity && overlap >= 0.5) || (Math.min(leftSignals.size, rightSignals.size) >= 2 && overlap >= 0.8);
+  }
+
+  function candidateOrder(left, right) {
+    return right.signals.length - left.signals.length
+      || right.matchedFields.length - left.matchedFields.length
+      || ROLE_ORDER.indexOf(left.role) - ROLE_ORDER.indexOf(right.role)
+      || left.champion.localeCompare(right.champion, "es");
+  }
+
+  function selectDiverseCandidates(ranked) {
+    const selected = [];
+    for (const candidate of ranked.sort(candidateOrder)) {
+      if (selected.some((item) => candidateSimilarity(item, candidate))) continue;
+      selected.push(candidate);
+      if (selected.length === MAX_CANDIDATES_PER_PROFILE) break;
+    }
+    return selected;
+  }
+
   function mapCandidates(input = {}) {
     if (input.optimizer?.status !== "prioritized") return notMapped("no-priority");
     if (input.recommendations?.status !== "recommended") return notMapped("no-profiles");
 
-    const candidates = Object.values(input.candidatesByRole || {}).flat();
+    const candidatesByRole = input.candidatesByRole || {};
+    const candidates = Object.entries(candidatesByRole).flatMap(([role, roleCandidates]) =>
+      (Array.isArray(roleCandidates) ? roleCandidates : []).map((candidate) => ({ ...candidate, role }))
+    );
     if (!candidates.length) return notMapped("no-candidates");
+
+    const selectedChampions = new Set([
+      ...(Array.isArray(input.selectedChampions) ? input.selectedChampions : []),
+      ...(Array.isArray(input.picks) ? input.picks.map((pick) => pick?.champion) : []),
+    ].map(normalize).filter(Boolean));
 
     const profiles = [];
     for (const profile of input.recommendations.profiles || []) {
@@ -61,23 +109,17 @@
       const ranked = new Map();
       for (const candidate of candidates) {
         const champion = String(candidate?.champion || "").trim();
-        if (!champion) continue;
-        const signals = findSignals(candidate, signalDefinition);
+        if (!champion || selectedChampions.has(normalize(champion))) continue;
+        const { signals, matchedFields } = findSignals(candidate, signalDefinition);
         if (!signals.length) continue;
 
         const key = normalize(champion);
         const existing = ranked.get(key);
-        if (!existing || signals.length > existing.signals.length) {
-          ranked.set(key, { champion, signals, candidate });
-        } else if (signals.length === existing.signals.length) {
-          const mergedSignals = [...new Set([...existing.signals, ...signals])];
-          ranked.set(key, { ...existing, signals: mergedSignals });
-        }
+        const item = { champion, role: candidate.role, signals, matchedFields, candidate };
+        if (!existing || candidateOrder(item, existing) < 0) ranked.set(key, item);
       }
 
-      const topCandidates = [...ranked.values()]
-        .sort((a, b) => b.signals.length - a.signals.length || a.champion.localeCompare(b.champion, "es"))
-        .slice(0, 3);
+      const topCandidates = selectDiverseCandidates([...ranked.values()]);
       if (topCandidates.length < 2) continue;
 
       profiles.push({
@@ -94,6 +136,8 @@
           identity: String(candidate.candidate.identity || "").trim(),
           strengths: listAttributes(candidate.candidate.strengths),
           weaknesses: listAttributes(candidate.candidate.weaknesses),
+          signals: candidate.signals,
+          matchedFields: candidate.matchedFields,
         })),
       });
     }

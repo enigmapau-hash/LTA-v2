@@ -60,8 +60,13 @@ function evaluate(picks) {
   const correction = proposeCorrections({ picks, diagnosis, candidatesByRole });
   const optimizer = optimizeComposition({ diagnosis, correction });
   const recommendations = recommendProfiles({ diagnosis, optimizer });
-  const result = mapCandidates({ optimizer, recommendations, candidatesByRole });
-  return { diagnosis, optimizer, recommendations, result };
+  const result = mapCandidates({
+    optimizer,
+    recommendations,
+    candidatesByRole,
+    selectedChampions: picks.map((item) => item.champion),
+  });
+  return { picks, diagnosis, optimizer, recommendations, result };
 }
 
 function verify(result) {
@@ -74,6 +79,7 @@ function verify(result) {
     assert.equal(new Set(profile.candidates.map((item) => item.champion)).size, profile.candidates.length, "No se repiten campeones dentro del perfil");
     assert.ok(profile.candidates.every((item) => item.reason && item.improves === profile.improves));
     assert.ok(profile.candidates.every((item) => item.identity && item.strengths.length && Array.isArray(item.weaknesses)));
+    assert.ok(profile.candidates.every((item) => item.signals.length && item.matchedFields.length));
     assert.ok(profile.candidates.every((item) => !("role" in item) && !("score" in item) && !("affinity" in item)));
     assert.ok(profile.candidates.every((item) => item.reason.length < 120), "Las justificaciones deben ser breves");
   }
@@ -84,6 +90,8 @@ const clear = composition({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botl
 const clearEvaluation = evaluate(clear);
 assert.equal(clearEvaluation.diagnosis.plan.primaryIdentity, "Front to Back");
 verify(clearEvaluation.result);
+assert.ok(clearEvaluation.result.profiles.flatMap((profile) => profile.candidates)
+  .every((candidate) => !clear.some((pick) => pick.champion === candidate.champion)), "No se recomiendan campeones ya elegidos");
 assert.ok(clearEvaluation.result.profiles.every((profile) => clearEvaluation.recommendations.profiles.some((recommended) => recommended.id === profile.id)));
 
 const hybrid = composition({ top: "Camille", jungle: "Vi", mid: "Ahri", botline: "Kai'Sa", support: "Rakan" });
@@ -107,9 +115,51 @@ for (const evaluation of [clearEvaluation, hybridEvaluation, incoherentEvaluatio
     optimizer: evaluation.optimizer,
     recommendations: evaluation.recommendations,
     candidatesByRole,
+    selectedChampions: evaluation.picks.map((item) => item.champion),
   });
   assert.deepEqual(repeated, evaluation.result, "El mapeo debe ser determinista");
 }
+
+const varied = mapCandidates({
+  optimizer: { status: "prioritized", priority: { need: { id: "pick", label: "Pick" } } },
+  recommendations: {
+    status: "recommended",
+    profiles: [{ id: "pick", label: "Pick", priority: 1, reason: "Abrir una ventaja.", improves: "la capacidad de encontrar objetivos aislados" }],
+  },
+  candidatesByRole: {
+    top: [{ champion: "Alpha", identity: "Assassin", function: "Pick", strengths: "Ganks · Pick" }],
+    jungle: [{ champion: "Beta", identity: "Assassin", function: "Pick", strengths: "Ganks · Pick" }],
+    mid: [{ champion: "Gamma", identity: "Mage", function: "Pick", strengths: "Roams · Ganks" }],
+    botline: [{ champion: "Delta", identity: "Marksman", function: "Pick", strengths: "Roams · Ganks" }],
+    support: [
+      { champion: "Epsilon", identity: "Support", function: "Pick", strengths: "Roams · Pick" },
+      { champion: "alpha", identity: "Assassin", function: "Pick", strengths: "Ganks · Pick" },
+    ],
+  },
+});
+assert.equal(varied.status, "mapped");
+assert.equal(varied.profiles[0].candidates.length, 3);
+const variedNames = varied.profiles[0].candidates.map((candidate) => candidate.champion);
+assert.ok(variedNames.some((name) => ["Alpha", "Beta"].includes(name)));
+assert.ok(variedNames.some((name) => ["Gamma", "Delta"].includes(name)));
+assert.ok(!(variedNames.includes("Alpha") && variedNames.includes("Beta")), "No conserva dos candidatos prácticamente equivalentes");
+assert.ok(!(variedNames.includes("Gamma") && variedNames.includes("Delta")), "La lista evita duplicar el mismo perfil funcional");
+assert.equal(new Set(variedNames.map((name) => name.toLocaleLowerCase("es"))).size, variedNames.length,
+  "Un campeón disponible en varias posiciones solo aparece una vez");
+const selectedAlpha = mapCandidates({
+  optimizer: { status: "prioritized", priority: { need: { id: "pick", label: "Pick" } } },
+  recommendations: { status: "recommended", profiles: [{ id: "pick", label: "Pick", priority: 1, reason: "Abrir una ventaja.", improves: "encontrar objetivos" }] },
+  selectedChampions: ["alpha"],
+  candidatesByRole: {
+    top: [{ champion: "Alpha", identity: "Assassin", function: "Pick", strengths: "Ganks · Pick" }],
+    jungle: [{ champion: "Beta", identity: "Assassin", function: "Pick", strengths: "Ganks · Pick" }],
+    mid: [{ champion: "Gamma", identity: "Mage", function: "Pick", strengths: "Roams · Ganks" }],
+    botline: [{ champion: "Delta", identity: "Marksman", function: "Pick", strengths: "Roams · Ganks" }],
+    support: [{ champion: "Epsilon", identity: "Support", function: "Pick", strengths: "Roams · Pick" }],
+  },
+});
+assert.ok(selectedAlpha.profiles.flatMap((profile) => profile.candidates).every((candidate) => candidate.champion !== "Alpha"),
+  "La exclusión de picks ignora mayúsculas y minúsculas");
 
 assert.deepEqual(mapCandidates({ optimizer: { status: "no-priority" } }), { status: "no-priority", profiles: [] });
 assert.deepEqual(mapCandidates({ optimizer: clearEvaluation.optimizer, recommendations: { status: "none" } }), { status: "no-profiles", profiles: [] });
@@ -120,4 +170,4 @@ assert.deepEqual(mapCandidates({
   candidatesByRole,
 }), { status: "no-matching-candidates", profiles: [] });
 
-console.log("Championship Candidate Mapper validado: candidatos agrupados por perfil para composiciones claras, híbridas e incoherentes; determinismo y casos sin datos.");
+console.log("Championship Candidate Mapper validado: candidatos no seleccionados, priorización por evidencia, variedad, determinismo y casos sin datos.");
