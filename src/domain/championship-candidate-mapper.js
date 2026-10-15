@@ -38,6 +38,10 @@
     return signalDefinition.terms.filter((term) => fields.includes(normalize(term)));
   }
 
+  function listAttributes(value) {
+    return String(value || "").split("·").map((item) => item.trim()).filter(Boolean);
+  }
+
   function notMapped(status) {
     return { status, profiles: [] };
   }
@@ -64,10 +68,10 @@
         const key = normalize(champion);
         const existing = ranked.get(key);
         if (!existing || signals.length > existing.signals.length) {
-          ranked.set(key, { champion, signals });
+          ranked.set(key, { champion, signals, candidate });
         } else if (signals.length === existing.signals.length) {
           const mergedSignals = [...new Set([...existing.signals, ...signals])];
-          ranked.set(key, { champion: existing.champion, signals: mergedSignals });
+          ranked.set(key, { ...existing, signals: mergedSignals });
         }
       }
 
@@ -87,6 +91,9 @@
           priority: index + 1,
           reason: `Sus atributos incluyen ${candidate.signals.join(" y ")}, acorde con el perfil «${profile.label}».`,
           improves: profile.improves,
+          identity: String(candidate.candidate.identity || "").trim(),
+          strengths: listAttributes(candidate.candidate.strengths),
+          weaknesses: listAttributes(candidate.candidate.weaknesses),
         })),
       });
     }

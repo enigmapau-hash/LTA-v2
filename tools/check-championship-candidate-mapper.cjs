@@ -73,6 +73,7 @@ function verify(result) {
     assert.deepEqual(profile.candidates.map((item) => item.priority), profile.candidates.map((_, index) => index + 1));
     assert.equal(new Set(profile.candidates.map((item) => item.champion)).size, profile.candidates.length, "No se repiten campeones dentro del perfil");
     assert.ok(profile.candidates.every((item) => item.reason && item.improves === profile.improves));
+    assert.ok(profile.candidates.every((item) => item.identity && item.strengths.length && Array.isArray(item.weaknesses)));
     assert.ok(profile.candidates.every((item) => !("role" in item) && !("score" in item) && !("affinity" in item)));
     assert.ok(profile.candidates.every((item) => item.reason.length < 120), "Las justificaciones deben ser breves");
   }

@@ -42,6 +42,9 @@ jobs:
       - name: Validate the Championship Candidate Mapper
         run: node tools/check-championship-candidate-mapper.cjs
 
+      - name: Validate the Candidate Evaluator
+        run: node tools/check-candidate-evaluator.cjs
+
       - name: Validate composition stability
         run: node tools/check-composition-stability-engine.cjs
 
