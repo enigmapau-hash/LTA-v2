@@ -12,6 +12,7 @@
     "test:championship-candidate-mapper": "node tools/check-championship-candidate-mapper.cjs",
     "test:candidate-evaluator": "node tools/check-candidate-evaluator.cjs",
     "test:strategic-recommendation-presenter": "node tools/check-strategic-recommendation-presenter.cjs",
+    "test:strategic-recommendation-presenter-integration": "node tools/check-strategic-recommendation-presenter-integration.cjs",
     "test:diagnostic-engine": "node tools/check-diagnostic-engine.cjs",
     "test:composition-stability": "node tools/check-composition-stability-engine.cjs",
     "test:win-condition-coherence": "node tools/check-win-condition-coherence-engine.cjs",

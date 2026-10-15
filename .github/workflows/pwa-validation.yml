@@ -48,6 +48,9 @@ jobs:
       - name: Validate the Strategic Recommendation Presenter
         run: node tools/check-strategic-recommendation-presenter.cjs
 
+      - name: Validate visible strategic recommendation integration
+        run: node tools/check-strategic-recommendation-presenter-integration.cjs
+
       - name: Validate composition stability
         run: node tools/check-composition-stability-engine.cjs
 

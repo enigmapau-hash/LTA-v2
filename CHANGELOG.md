@@ -2,6 +2,9 @@
 
 ## v3.0.0
 
+### Capability 6 — Strategic Recommendation Presenter Integration
+- Integrar en el bloque de mejora del informe la necesidad estratégica, el perfil prioritario y hasta cuatro candidatos justificados, sin añadir una sección redundante.
+
 ### Capability 5 — Strategic Recommendation Presenter
 - Preparar una presentación compacta del perfil estratégico principal y sus candidatos ya evaluados, con motivo y mejora del plan.
 

@@ -163,6 +163,39 @@
   margin-top: 6px;
 }
 
+.result-summary__recommendation-list {
+  display: grid;
+  gap: 8px;
+  margin: 9px 0 0;
+  padding: 8px 0 0 19px;
+  border-top: 1px solid var(--line);
+}
+
+.result-summary__recommendation-list li {
+  padding-left: 2px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.result-summary__recommendation-list li strong,
+.result-summary__recommendation-list li small {
+  display: block;
+}
+
+.result-summary__recommendation-list li strong {
+  color: var(--text);
+  font-size: 0.84rem;
+}
+
+.result-summary__recommendation-list li small {
+  margin-top: 2px;
+}
+
+.result-summary__recommendation-list .result-summary__limitation {
+  color: var(--muted);
+}
+
 .result-summary__strategic-closing {
   margin: 0;
   padding-top: 10px;
