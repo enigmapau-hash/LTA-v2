@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.0.0
+
+### Preparation
+- Inicio del desarrollo de la versión v3.
+- Preparación de la documentación de v3.
+
+
 ## v2.12.1
 
 ### Fixed

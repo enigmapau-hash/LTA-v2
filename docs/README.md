@@ -1,5 +1,12 @@
 # Documentación
 
+## v3
+
+- [Functional Specification](v3/Functional-Specification.md)
+- [Architecture](v3/Architecture.md)
+- [Roadmap](v3/Roadmap.md)
+- [Architecture Decision Records](v3/ADR.md)
+
 ## Índice
 
 - [Especificación funcional de v2](v2/Functional-Specification.md)
