@@ -11,6 +11,11 @@ Definir la filosofía y el alcance funcional de LTA v3. Esta primera parte no es
 3. [Alcance](#3-alcance)
 4. [Fuera del alcance](#4-fuera-del-alcance)
 5. [Principios de diseño](#5-principios-de-diseño)
+6. [Flujo de razonamiento](#6-flujo-de-razonamiento)
+7. [Información analizada](#7-información-analizada)
+8. [Información generada](#8-información-generada)
+9. [Filosofía de las recomendaciones](#9-filosofía-de-las-recomendaciones)
+10. [Principios del informe](#10-principios-del-informe)
 
 ## 1. Resumen ejecutivo
 
@@ -57,3 +62,58 @@ La v3 no incluye:
 ### Optimización de composiciones
 
 > LTA optimiza composiciones; no recomienda campeones de forma aislada.
+
+## 6. Flujo de razonamiento
+
+LTA v3 seguirá un proceso lógico orientado a mejorar la composición como conjunto:
+
+1. Analiza la composición.
+2. Comprende su identidad y el plan que intenta ejecutar.
+3. Detecta sus fortalezas y debilidades estratégicas.
+4. Explica el estado estratégico de la composición.
+5. Identifica la mejora que tendría mayor impacto.
+6. Propone las mejores alternativas disponibles para esa mejora.
+7. Justifica cada recomendación y sus consecuencias estratégicas.
+
+## 7. Información analizada
+
+LTA analizará la composición y las señales estratégicas aprobadas para entender cómo funciona como equipo:
+
+- Identidad estratégica.
+- Condición de victoria.
+- Coherencia del plan.
+- Estabilidad de la composición.
+- Contradicciones estratégicas.
+- Fortalezas y debilidades.
+- Amenazas estratégicas.
+- Confianza de las conclusiones.
+
+## 8. Información generada
+
+Según la composición y las conclusiones que resulten útiles, LTA podrá generar:
+
+- Un informe estratégico que explique el estado de la composición.
+- Recomendaciones para mejorarla y candidatos por rol cuando corresponda.
+- Una propuesta de optimización para una composición completa.
+- Advertencias sobre riesgos o debilidades estratégicas.
+- Propuestas de bans como orientación estratégica.
+
+Estas salidas deben ayudar a entender y mejorar la composición sin convertir el informe en una lista extensa. Las propuestas de bans no implican análisis del rival durante la selección de campeones ni recomendaciones en tiempo real durante el draft.
+
+## 9. Filosofía de las recomendaciones
+
+- LTA explica el problema antes de recomendar una solución.
+- Las recomendaciones buscan mejorar el plan existente siempre que sea viable.
+- Solo propone cambios cuando aportan un beneficio estratégico claro.
+- No intenta maximizar estadísticas aisladas ni recomendar campeones fuera del contexto de la composición.
+
+## 10. Principios del informe
+
+El informe estratégico debe ser:
+
+- Breve.
+- Comprensible.
+- Útil para decidir cómo mejorar la composición.
+- Justificable a partir de la información analizada.
+- Determinista.
+- Libre de puntuaciones y probabilidades visibles.
