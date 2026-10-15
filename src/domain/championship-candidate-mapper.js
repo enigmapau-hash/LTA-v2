@@ -86,6 +86,20 @@
     return selected;
   }
 
+  function presentCandidate(candidate, profile, priority) {
+    return {
+      champion: candidate.champion,
+      priority,
+      reason: `Sus atributos incluyen ${candidate.signals.join(" y ")}, acorde con el perfil «${profile.label}».`,
+      improves: profile.improves,
+      identity: String(candidate.candidate.identity || "").trim(),
+      strengths: listAttributes(candidate.candidate.strengths),
+      weaknesses: listAttributes(candidate.candidate.weaknesses),
+      signals: candidate.signals,
+      matchedFields: candidate.matchedFields,
+    };
+  }
+
   function mapCandidates(input = {}) {
     if (input.optimizer?.status !== "prioritized") return notMapped("no-priority");
     if (input.recommendations?.status !== "recommended") return notMapped("no-profiles");
@@ -121,6 +135,11 @@
 
       const topCandidates = selectDiverseCandidates([...ranked.values()]);
       if (topCandidates.length < 2) continue;
+      const alternativesByRole = Object.fromEntries(ROLE_ORDER.map((role) => [
+        role,
+        selectDiverseCandidates([...ranked.values()].filter((candidate) => candidate.role === role))
+          .map((candidate, index) => presentCandidate(candidate, profile, index + 1)),
+      ]));
 
       profiles.push({
         id: profile.id,
@@ -128,21 +147,41 @@
         priority: profile.priority,
         reason: profile.reason,
         improves: profile.improves,
-        candidates: topCandidates.map((candidate, index) => ({
-          champion: candidate.champion,
-          priority: index + 1,
-          reason: `Sus atributos incluyen ${candidate.signals.join(" y ")}, acorde con el perfil «${profile.label}».`,
-          improves: profile.improves,
-          identity: String(candidate.candidate.identity || "").trim(),
-          strengths: listAttributes(candidate.candidate.strengths),
-          weaknesses: listAttributes(candidate.candidate.weaknesses),
-          signals: candidate.signals,
-          matchedFields: candidate.matchedFields,
-        })),
+        candidates: topCandidates.map((candidate, index) => presentCandidate(candidate, profile, index + 1)),
+        alternativesByRole,
       });
     }
 
-    return profiles.length ? { status: "mapped", profiles } : notMapped("no-matching-candidates");
+    const currentPicks = Array.isArray(input.currentPicks) ? input.currentPicks : null;
+    const composition = currentPicks ? {
+      status: currentPicks.length === ROLE_ORDER.length
+        && new Set(currentPicks.map((pick) => normalize(pick?.role))).size === ROLE_ORDER.length
+        && currentPicks.every((pick) => String(pick?.champion || "").trim())
+        ? "complete"
+        : "incomplete",
+      picks: currentPicks.map((pick) => {
+        const fitByProfile = {};
+        for (const profile of input.recommendations.profiles || []) {
+          const signalDefinition = PROFILE_SIGNALS[profile?.id];
+          if (!signalDefinition) continue;
+          fitByProfile[profile.id] = findSignals(pick, signalDefinition);
+        }
+        return {
+          role: String(pick?.role || "").trim(),
+          champion: String(pick?.champion || "").trim(),
+          identity: String(pick?.identity || "").trim(),
+          function: String(pick?.function || "").trim(),
+          tempo: String(pick?.tempo || "").trim(),
+          strengths: String(pick?.strengths || "").trim(),
+          weaknesses: String(pick?.weaknesses || "").trim(),
+          fitByProfile,
+        };
+      }),
+    } : null;
+
+    return profiles.length
+      ? { status: "mapped", profiles, ...(composition ? { composition } : {}) }
+      : notMapped("no-matching-candidates");
   }
 
   return { mapCandidates };

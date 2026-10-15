@@ -12,6 +12,9 @@ const { optimizeComposition } = require("../src/domain/composition-optimizer.js"
 const { recommendProfiles } = require("../src/domain/strategic-recommendation-engine.js");
 const { mapCandidates } = require("../src/domain/championship-candidate-mapper.js");
 const { evaluateCandidates } = require("../src/domain/candidate-evaluator.js");
+const { presentRecommendations } = require("../src/domain/strategic-recommendation-presenter.js");
+const { polishRecommendation } = require("../src/domain/strategic-recommendation-polisher.js");
+const { optimizeStrategicComposition } = require("../src/domain/strategic-composition-optimizer.js");
 const { presentForReport } = require("../src/report/strategic-recommendation-presenter-integration.js");
 const { buildStrategicReport } = require("../src/report/strategic-report.js");
 
@@ -41,10 +44,17 @@ function reportFor(selection) {
     recommendations,
     candidatesByRole,
     selectedChampions: picks.map((item) => item.champion),
+    currentPicks: picks,
   });
   const evaluatedCandidates = evaluateCandidates({ diagnosis, optimizer, recommendations, mappedCandidates });
-  const recommendation = presentForReport({ optimizer, recommendations, mappedCandidates, evaluatedCandidates });
-  return buildStrategicReport({ diagnosis, correction, protection, recommendation: recommendation.section });
+  const presentation = presentRecommendations({ optimizer, recommendations, mappedCandidates, evaluatedCandidates });
+  const recommendation = presentForReport({ optimizer, recommendations, mappedCandidates, evaluatedCandidates, presentation });
+  const polished = polishRecommendation({ optimizer, recommendations, mappedCandidates, evaluatedCandidates, presentation, integration: recommendation });
+  const compositionOptimization = optimizeStrategicComposition({
+    optimizer, recommendations, mappedCandidates, evaluatedCandidates, presentation,
+    integration: recommendation, polished,
+  });
+  return buildStrategicReport({ diagnosis, correction, protection, recommendation: polished.section, compositionOptimization });
 }
 
 const selection = { top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" };
@@ -53,6 +63,8 @@ assert.equal(report.status, "assessed");
 assert.deepEqual(report.sections.map((section) => section.id), ["diagnosis", "correction", "protection"], "La recomendación ocupa el bloque de mejora existente");
 const recommendation = report.sections[1];
 assert.equal(recommendation.title, "Recomendación estratégica");
+assert.ok(recommendation.compositionOptimization, "La misma sección integra la propuesta completa cuando hay un reemplazo alineado disponible");
+assert.deepEqual(report.sections.map((section) => section.id), ["diagnosis", "correction", "protection"], "La optimización no añade una sección nueva al informe");
 assert.match(recommendation.answer, /Necesidad: .+ · Perfil: .+/);
 assert.ok(recommendation.explanation);
 assert.ok(recommendation.improves);

@@ -68,7 +68,14 @@
       };
     });
 
-    return { status: "recommended", profiles };
+    return {
+      status: "recommended",
+      plan: {
+        primaryIdentity: String(diagnosis.plan?.primaryIdentity || "").trim() || null,
+        secondaryIdentity: String(diagnosis.plan?.secondaryIdentity || "").trim() || null,
+      },
+      profiles,
+    };
   }
 
   return { recommendProfiles };
