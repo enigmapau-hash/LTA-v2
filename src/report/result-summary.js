@@ -6,6 +6,11 @@
   const diagnoseComposition = window.LTADiagnosticEngine?.diagnoseComposition;
   const proposeCorrections = window.LTACorrectionEngine?.proposeCorrections;
   const protectComposition = window.LTAProtectionEngine?.protectComposition;
+  const optimizeComposition = window.LTACompositionOptimizer?.optimizeComposition;
+  const recommendProfiles = window.LTAStrategicRecommendationEngine?.recommendProfiles;
+  const mapCandidates = window.LTAChampionshipCandidateMapper?.mapCandidates;
+  const evaluateCandidates = window.LTACandidateEvaluator?.evaluateCandidates;
+  const presentForReport = window.LTAStrategicRecommendationPresenterIntegration?.presentForReport;
   const buildStrategicReport = window.LTAStrategicReportBuilder?.buildStrategicReport;
 
   let refreshQueued = false;
@@ -18,7 +23,7 @@
   }
 
   function renderStrategicReport(items) {
-    if (![diagnoseComposition, proposeCorrections, protectComposition, buildStrategicReport].every((fn) => typeof fn === "function")) return "";
+    if (![diagnoseComposition, proposeCorrections, protectComposition, optimizeComposition, recommendProfiles, mapCandidates, evaluateCandidates, presentForReport, buildStrategicReport].every((fn) => typeof fn === "function")) return "";
     const picks = items.map((item) => ({
       role: item.role,
       champion: item.champion,
@@ -35,7 +40,13 @@
       candidatesByRole: window.LTAStrategicReportCandidatesByRole || {},
     });
     const protection = protectComposition({ diagnosis, correction });
-    const report = buildStrategicReport({ diagnosis, correction, protection });
+    const optimizer = optimizeComposition({ diagnosis, correction });
+    const recommendations = recommendProfiles({ diagnosis, optimizer });
+    const candidatesByRole = window.LTAStrategicReportCandidatesByRole || {};
+    const mappedCandidates = mapCandidates({ optimizer, recommendations, candidatesByRole });
+    const evaluatedCandidates = evaluateCandidates({ diagnosis, optimizer, recommendations, mappedCandidates });
+    const recommendation = presentForReport({ optimizer, recommendations, mappedCandidates, evaluatedCandidates });
+    const report = buildStrategicReport({ diagnosis, correction, protection, recommendation: recommendation.section });
 
     return `
       <section class="result-summary__strategy" aria-labelledby="composition-analysis-title">
@@ -49,7 +60,18 @@
               <h4>${escapeHtml(section.title)}</h4>
               <p class="result-summary__answer">${escapeHtml(section.answer)}</p>
               <p>${escapeHtml(section.explanation)}</p>
+              ${section.improves ? `<p class="result-summary__action"><strong>Refuerza:</strong> ${escapeHtml(section.improves)}</p>` : ""}
               ${section.action ? `<p class="result-summary__action"><strong>Protección:</strong> ${escapeHtml(section.action)}</p>` : ""}
+              ${Array.isArray(section.candidates) ? `<ol class="result-summary__recommendation-list" aria-label="Candidatos priorizados">
+                ${section.candidates.map((candidate) => `
+                  <li>
+                    <strong>${escapeHtml(candidate.champion)}</strong>
+                    <small>${escapeHtml(candidate.reason)}</small>
+                    ${candidate.strengths.length ? `<small><b>Aporta:</b> ${escapeHtml(candidate.strengths.join(" · "))}</small>` : ""}
+                    ${candidate.limitations.length ? `<small class="result-summary__limitation"><b>Límite:</b> ${escapeHtml(candidate.limitations.join(" · "))}</small>` : ""}
+                  </li>
+                `).join("")}
+              </ol>` : ""}
             </article>
           `).join("")}
         </div>

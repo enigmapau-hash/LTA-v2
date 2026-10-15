@@ -52,13 +52,14 @@ async function main(){
   const strategy=page.locator(".result-summary__strategy");await strategy.waitFor({state:"visible"});
   assert.equal((await strategy.locator(".result-summary__eyebrow").textContent()).trim(),"Informe estratégico","el informe presenta el análisis integrado de v2");
   assert.equal((await strategy.locator("h3").first().innerText()).trim(),"Cómo jugarla");
-  assert.deepEqual(await strategy.locator("[data-report-section]").evaluateAll(nodes=>nodes.map(node=>node.dataset.reportSection)),["diagnosis","correction","protection"],"el informe ordena diagnóstico, corrección y protección");
+  assert.deepEqual(await strategy.locator("[data-report-section]").evaluateAll(nodes=>nodes.map(node=>node.dataset.reportSection)),["diagnosis","correction","protection"],"el informe ordena diagnóstico, recomendación y protección");
   assert.doesNotMatch(await strategy.innerText(),/confianza (?:alta|media|baja)|\b\d+%/i,"el informe adapta el tono sin mostrar niveles o porcentajes");
-  for(const heading of ["Diagnóstico","Mejora prioritaria","Protección estratégica"]){assert.equal(await strategy.getByRole("heading",{name:heading,exact:true}).count(),1,"el informe muestra "+heading);}
+  for(const heading of ["Diagnóstico","Recomendación estratégica","Protección estratégica"]){assert.equal(await strategy.getByRole("heading",{name:heading,exact:true}).count(),1,"el informe muestra "+heading);}
   for(const heading of ["Win condition","Sinergia interna","Debilidades","Recomendaciones","Picks","Bans","Plan de partida","Fortalezas","Riesgos"]){assert.equal(await strategy.getByRole("heading",{name:heading,exact:true}).count(),0,"el informe no repite el bloque "+heading);}
-  assert.equal(await strategy.locator(".result-summary__strategy-card").count(),3,"el resumen estratégico conserva solo tres bloques útiles");
-  assert.match(await strategy.innerText(),/Plan probable: Front to Back · Cómo ganar: Proteger al ADC y forzar teamfights\./i);assert.match(await strategy.innerText(),/Orientación: reforzar presión lateral/i);assert.match(await strategy.innerText(),/Poca presión lateral/i);assert.match(await strategy.innerText(),/Split Push/i);
-  assert.equal(await strategy.locator("ul, ol").count(),0,"el informe no vuelve a mostrar listas internas de candidatos o señales");
+  assert.equal(await strategy.locator(".result-summary__strategy-card").count(),3,"la recomendación ocupa el bloque de mejora existente y evita añadir una cuarta tarjeta");
+  assert.match(await strategy.innerText(),/Plan probable: Front to Back · Cómo ganar: Proteger al ADC y forzar teamfights\./i);assert.match(await strategy.innerText(),/Necesidad: presión lateral · Perfil: Presión lateral/i);assert.match(await strategy.innerText(),/Refuerza:/i);assert.match(await strategy.innerText(),/Split Push/i);
+  assert.equal(await strategy.locator("ul, ol").count(),1,"solo se muestra la lista breve y acotada de candidatos priorizados");
+  assert.ok(await strategy.locator(".result-summary__recommendation-list li").count()<=4,"la recomendación muestra como máximo cuatro candidatos");
   assert.equal(await page.locator(".result-summary__header").evaluate(n=>getComputedStyle(n).display),"none","el estado de validación se omite en composiciones completas");
   assert.equal(await page.locator(".result-summary.is-ready").evaluate(n=>getComputedStyle(n).paddingTop),"0px","el informe completo evita un marco exterior redundante");
   assert.equal(await strategy.evaluate(n=>getComputedStyle(n).borderTopWidth),"1px","la tarjeta estratégica mantiene su contorno visible");

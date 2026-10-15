@@ -73,6 +73,18 @@
     };
   }
 
+  function recommendationSection(recommendation) {
+    if (!recommendation || !Array.isArray(recommendation.candidates) || !recommendation.candidates.length) return null;
+    return {
+      id: "correction",
+      title: "Recomendación estratégica",
+      answer: `Necesidad: ${recommendation.need} · Perfil: ${recommendation.profile}`,
+      explanation: recommendation.reason,
+      improves: recommendation.improves,
+      candidates: recommendation.candidates,
+    };
+  }
+
   function protectionSection(protection) {
     const threats = Array.isArray(protection?.threats) ? protection.threats : [];
     const threat = threats.find((item) => item?.priority === "principal") || threats[0];
@@ -94,7 +106,7 @@
   }
 
   function adaptSectionTone(section, level) {
-    if (level === "alta") return section;
+    if (level === "alta" || Array.isArray(section.candidates)) return section;
     const action = section.action
       ? level === "media"
         ? `Como orientación, ${section.action.charAt(0).toLocaleLowerCase("es")}${section.action.slice(1)}`
@@ -145,9 +157,10 @@
       secondaryObservation,
     });
     const closing = strategicClosingEngine.buildStrategicClosing({ strategicState });
+    const strategicRecommendation = recommendationSection(input.recommendation);
     const sections = [
       diagnosisSection(diagnosis, { ...diagnosticSummary, summary: diagnosisExplanation }),
-      correctionSection(input.correction),
+      strategicRecommendation || correctionSection(input.correction),
       protectionSection(input.protection),
     ].map((section) => adaptSectionTone(section, confidence.conclusions[section.id]?.level));
     return {
