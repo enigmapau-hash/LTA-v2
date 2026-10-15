@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v2.12.1",
-    track: "Actualización funcional",
+    version: "v3.0.0",
+    track: "Alpha",
     label: "Versión",
     updated: "2026-10-15",
-    summary: ["Precisar la explicación de estabilidad con las piezas clave"],
+    summary: ["Inicio del desarrollo de v3", "Preparación documental"],
     pending: [],
   };
 

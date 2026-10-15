@@ -2,13 +2,17 @@
 
 Analiza composiciones de League of Legends y ofrece una lectura estratégica clara para entender cómo jugarlas.
 
+## Inicio de v3
+
+El desarrollo de LTA v3 comienza en estado alpha. La v2 se mantiene como versión estable de referencia. La documentación de v3 se elaborará antes de implementar nuevas funcionalidades.
+
 ## Evolución de v2
 
 La v2 amplía la lectura estratégica de composiciones completas con diagnóstico, corrección prioritaria y protección explicable. En composiciones incompletas mantiene recomendaciones para los puestos vacíos. La evolución se documenta en la especificación funcional y la arquitectura de [`docs/`](docs/README.md).
 
 ## Características
 
-- Versión visible: `v2.12.1`
+- Versión visible: `v3.0.0`
 - No permite campeones repetidos.
 - Muestra iconos oficiales de campeones cuando están disponibles.
 - El selector, la vista rápida y el resultado se actualizan sin recargar.
