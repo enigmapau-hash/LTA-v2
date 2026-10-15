@@ -8,6 +8,7 @@
     "version:check": "node tools/check-version-sync.cjs",
     "test:composition-engine": "node tools/check-composition-engine.cjs",
     "test:composition-optimizer": "node tools/check-composition-optimizer.cjs",
+    "test:strategic-recommendation": "node tools/check-strategic-recommendation-engine.cjs",
     "test:diagnostic-engine": "node tools/check-diagnostic-engine.cjs",
     "test:composition-stability": "node tools/check-composition-stability-engine.cjs",
     "test:win-condition-coherence": "node tools/check-win-condition-coherence-engine.cjs",
