@@ -10,7 +10,9 @@
   const recommendProfiles = window.LTAStrategicRecommendationEngine?.recommendProfiles;
   const mapCandidates = window.LTAChampionshipCandidateMapper?.mapCandidates;
   const evaluateCandidates = window.LTACandidateEvaluator?.evaluateCandidates;
+  const presentRecommendations = window.LTAStrategicRecommendationPresenter?.presentRecommendations;
   const presentForReport = window.LTAStrategicRecommendationPresenterIntegration?.presentForReport;
+  const polishRecommendation = window.LTAStrategicRecommendationPolisher?.polishRecommendation;
   const buildStrategicReport = window.LTAStrategicReportBuilder?.buildStrategicReport;
 
   let refreshQueued = false;
@@ -23,7 +25,7 @@
   }
 
   function renderStrategicReport(items) {
-    if (![diagnoseComposition, proposeCorrections, protectComposition, optimizeComposition, recommendProfiles, mapCandidates, evaluateCandidates, presentForReport, buildStrategicReport].every((fn) => typeof fn === "function")) return "";
+    if (![diagnoseComposition, proposeCorrections, protectComposition, optimizeComposition, recommendProfiles, mapCandidates, evaluateCandidates, presentRecommendations, presentForReport, polishRecommendation, buildStrategicReport].every((fn) => typeof fn === "function")) return "";
     const picks = items.map((item) => ({
       role: item.role,
       champion: item.champion,
@@ -45,7 +47,10 @@
     const candidatesByRole = window.LTAStrategicReportCandidatesByRole || {};
     const mappedCandidates = mapCandidates({ optimizer, recommendations, candidatesByRole });
     const evaluatedCandidates = evaluateCandidates({ diagnosis, optimizer, recommendations, mappedCandidates });
-    const recommendation = presentForReport({ optimizer, recommendations, mappedCandidates, evaluatedCandidates });
+    const presentation = presentRecommendations({ optimizer, recommendations, mappedCandidates, evaluatedCandidates });
+    const integration = presentForReport({ optimizer, recommendations, mappedCandidates, evaluatedCandidates, presentation });
+    const polished = polishRecommendation({ optimizer, recommendations, mappedCandidates, evaluatedCandidates, presentation, integration });
+    const recommendation = polished.status === "polished" ? polished : integration;
     const report = buildStrategicReport({ diagnosis, correction, protection, recommendation: recommendation.section });
 
     return `
