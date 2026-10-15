@@ -2,37 +2,58 @@
 
 ## Objetivo
 
-Preparar la especificación funcional de LTA v3. El contenido se definirá posteriormente.
+Definir la filosofía y el alcance funcional de LTA v3. Esta primera parte no especifica arquitectura ni capacidades concretas.
 
 ## Índice
 
-1. [Misión y objetivos](#1-misión-y-objetivos)
-2. [Usuarios y necesidades](#2-usuarios-y-necesidades)
+1. [Resumen ejecutivo](#1-resumen-ejecutivo)
+2. [Misión](#2-misión)
 3. [Alcance](#3-alcance)
-4. [Flujos funcionales](#4-flujos-funcionales)
-5. [Entradas y salidas](#5-entradas-y-salidas)
-6. [Principios y límites](#6-principios-y-límites)
+4. [Fuera del alcance](#4-fuera-del-alcance)
+5. [Principios de diseño](#5-principios-de-diseño)
 
-## 1. Misión y objetivos
+## 1. Resumen ejecutivo
 
-Pendiente de definir.
+La v3 evoluciona LTA desde un analizador estratégico de composiciones hacia un asesor que ayuda a optimizarlas. Su propósito es ayudar al usuario a construir una mejor versión de su composición y a entender las consecuencias estratégicas de las decisiones, manteniendo un informe breve y la sencillez del producto.
 
-## 2. Usuarios y necesidades
+La v2 permanece como referencia estable. Esta especificación define la filosofía y los límites del producto antes de concretar su evolución funcional.
 
-Pendiente de definir.
+## 2. Misión
+
+Ayudar al usuario a construir la mejor versión posible de una composición explicando las consecuencias estratégicas de cada decisión.
 
 ## 3. Alcance
 
-Pendiente de definir.
+LTA v3 orientará la optimización de composiciones completas. La evolución del producto se centrará en:
 
-## 4. Flujos funcionales
+- Hacer que el informe estratégico ayude a valorar cómo mejorar una composición.
+- Mejorar el sistema de recomendaciones para que contribuya a la composición como conjunto.
+- Explicar las consecuencias estratégicas de las decisiones y el razonamiento que las sustenta.
+- Mantener una lectura breve, clara y centrada en lo útil para el usuario.
 
-Pendiente de definir.
+## 4. Fuera del alcance
 
-## 5. Entradas y salidas
+La v3 no incluye:
 
-Pendiente de definir.
+- Champion Select en tiempo real.
+- Adaptación dinámica pick a pick.
+- Recomendaciones durante el draft.
+- Análisis del rival durante la selección de campeones.
 
-## 6. Principios y límites
+## 5. Principios de diseño
 
-Pendiente de definir.
+### Optimización estratégica
+
+> La mejor composición no es la más equilibrada, sino la que ejecuta su plan con el menor número posible de debilidades evitables.
+
+### Conservación del plan
+
+> LTA preserva la identidad estratégica siempre que sea viable.
+
+### Explicación antes que recomendación
+
+> El usuario debe entender el problema antes de conocer las posibles soluciones.
+
+### Optimización de composiciones
+
+> LTA optimiza composiciones; no recomienda campeones de forma aislada.
