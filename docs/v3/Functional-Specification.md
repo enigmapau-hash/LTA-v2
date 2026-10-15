@@ -96,7 +96,8 @@ Según la composición y las conclusiones que resulten útiles, LTA podrá gener
 
 - Un informe estratégico que explique el estado de la composición.
 - Una necesidad estratégica prioritaria que indique qué aspecto del plan conviene reforzar y qué problema busca evitar.
-- Perfiles estratégicos compatibles y ordenados que respondan a esa necesidad, antes de proponer campeones o roles.
+- Perfiles estratégicos compatibles y ordenados que respondan a esa necesidad, seguidos de candidatos agrupados por perfil.
+- Una justificación breve del encaje de cada candidato y del aspecto del plan que refuerza; estos grupos no constituyen todavía una recomendación visible final ni un análisis de draft.
 - Recomendaciones para mejorarla y candidatos por rol cuando corresponda.
 - Una propuesta de optimización para una composición completa.
 - Advertencias sobre riesgos o debilidades estratégicas.

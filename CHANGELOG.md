@@ -2,6 +2,9 @@
 
 ## v3.0.0
 
+### Capability 3 — Championship Candidate Mapper
+- Relacionar los perfiles estratégicos priorizados con candidatos de campeón agrupados y justificados usando los atributos existentes.
+
 ### Capability 2 — Strategic Recommendation Engine
 - Añadir recomendaciones internas y ordenadas de perfiles estratégicos basadas en la necesidad prioritaria, sin seleccionar campeones ni roles.
 
