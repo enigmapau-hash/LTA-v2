@@ -36,6 +36,9 @@ jobs:
       - name: Validate the internal Composition Optimizer
         run: node tools/check-composition-optimizer.cjs
 
+      - name: Validate the internal Strategic Recommendation Engine
+        run: node tools/check-strategic-recommendation-engine.cjs
+
       - name: Validate composition stability
         run: node tools/check-composition-stability-engine.cjs
 

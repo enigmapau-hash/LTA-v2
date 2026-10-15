@@ -38,7 +38,7 @@ El Composition Optimizer determina qué necesidad estratégica representa la mej
 
 ### Recommendation Layer
 
-Traduce la necesidad estratégica en alternativas concretas y justificadas. Su alcance funcional contempla candidatos por rol, propuestas para optimizar composiciones completas y propuestas de bans. Este módulo entrega recomendaciones; no sustituye el análisis de la composición.
+El Strategic Recommendation Engine traduce la necesidad del Composition Optimizer en entre dos y cuatro perfiles estratégicos ordenados, con el motivo y el aspecto del plan que mejora cada uno. En esta primera capacidad consume también el diagnóstico ya calculado para contextualizar los perfiles; no recalcula señales y no selecciona campeones ni roles. El alcance posterior del módulo contempla candidatos por rol, propuestas para optimizar composiciones completas y propuestas de bans. Este módulo entrega recomendaciones; no sustituye el análisis de la composición.
 
 ### Report Layer
 
@@ -50,7 +50,7 @@ La información estratégica pasa entre los módulos en una secuencia clara:
 
 1. **Composition Analysis** comprende la composición y produce las señales base de su estado estratégico.
 2. **Optimization Layer** consume esas señales y la corrección estratégica existente para producir una única necesidad de mejora prioritaria.
-3. **Recommendation Layer** convierte esa necesidad en recomendaciones concretas y justificables.
+3. **Recommendation Layer** convierte esa necesidad en perfiles estratégicos priorizados y justificables.
 4. **Report Layer** presenta el resultado final al usuario.
 
 Cada módulo consume las salidas que necesita de los anteriores. Ninguno vuelve a calcular una señal o decisión ya producida, salvo que sea necesario para mantener una conclusión válida.

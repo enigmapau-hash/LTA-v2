@@ -2,6 +2,9 @@
 
 ## v3.0.0
 
+### Capability 2 — Strategic Recommendation Engine
+- Añadir recomendaciones internas y ordenadas de perfiles estratégicos basadas en la necesidad prioritaria, sin seleccionar campeones ni roles.
+
 ### Capability 1 — Composition Optimizer
 - Añadir una capa interna que expresa una única necesidad estratégica prioritaria a partir del diagnóstico y la corrección existentes, sin elegir campeones ni roles.
 
