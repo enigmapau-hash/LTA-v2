@@ -42,7 +42,7 @@ El Strategic Recommendation Engine traduce la necesidad del Composition Optimize
 
 ### Report Layer
 
-El Strategic Recommendation Presenter Integration adapta la salida compacta ya preparada por Recommendation Layer al bloque de mejora del informe. Muestra la necesidad, el perfil principal y hasta cuatro candidatos priorizados con su motivo, fortalezas relevantes y limitaciones útiles. Ocupa el bloque de mejora existente para evitar duplicar la prioridad estratégica. El Report Layer presenta las conclusiones del análisis y recomendaciones; no vuelve a analizar la composición ni recalcula decisiones estratégicas.
+El Strategic Recommendation Presenter Integration adapta la salida compacta ya preparada por Recommendation Layer al bloque de mejora del informe. El Strategic Recommendation Polisher recibe esa integración y las salidas previas de optimización, perfiles, mapeo, evaluación y presentación; elimina duplicidades de texto o candidatos y normaliza la concisión, conservando orden y prioridad. No genera alternativas ni recalcula señales. El informe muestra la necesidad, el perfil principal y hasta cuatro candidatos priorizados con su motivo, fortalezas relevantes y limitaciones útiles. Ocupa el bloque de mejora existente para evitar duplicar la prioridad estratégica. El Report Layer presenta las conclusiones; no vuelve a analizar la composición ni recalcula decisiones estratégicas.
 
 ## 3. Flujo entre módulos
 
@@ -51,7 +51,8 @@ La información estratégica pasa entre los módulos en una secuencia clara:
 1. **Composition Analysis** comprende la composición y produce las señales base de su estado estratégico.
 2. **Optimization Layer** consume esas señales y la corrección estratégica existente para producir una única necesidad de mejora prioritaria.
 3. **Recommendation Layer** convierte esa necesidad en perfiles estratégicos, agrupa candidatos por perfil, los evalúa con las señales existentes y prepara una presentación compacta del perfil principal.
-4. **Strategic Recommendation Presenter Integration** adapta la salida del Presenter a la presentación visible del bloque de mejora; **Report Layer** la muestra junto con el diagnóstico y la protección.
+4. **Strategic Recommendation Presenter Integration** adapta la salida del Presenter al bloque de mejora; **Strategic Recommendation Polisher** quita repeticiones evidentes de esa salida sin alterar su decisión ni su orden.
+5. **Report Layer** muestra el resultado refinado junto con el diagnóstico y la protección.
 
 Cada módulo consume las salidas que necesita de los anteriores. Ninguno vuelve a calcular una señal o decisión ya producida, salvo que sea necesario para mantener una conclusión válida.
 
@@ -78,6 +79,7 @@ Los límites entre módulos se mantienen explícitos:
 - **Optimization Layer** determina la necesidad estratégica prioritaria; no elige campeones ni presenta el resultado al usuario.
 - **Recommendation Layer** responde a la necesidad identificada con perfiles y candidatos evaluados y prepara su presentación compacta; no vuelve a generar candidatos, reanaliza la composición desde cero ni sustituye el diagnóstico.
 - **Strategic Recommendation Presenter Integration** adapta la presentación preparada al formato del informe; no decide prioridades ni recalcula el análisis.
+- **Strategic Recommendation Polisher** refina concisión y duplicidades visibles; no cambia prioridades, candidatos ni conclusiones.
 - **Report Layer** comunica los resultados recibidos; no vuelve a analizar la composición ni decide qué recomendación es mejor.
 
 ## 6. Principios de coherencia

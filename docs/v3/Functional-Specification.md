@@ -101,6 +101,7 @@ Según la composición y las conclusiones que resulten útiles, LTA podrá gener
 - Para cada candidato, el motivo principal, las fortalezas que aporta y las limitaciones conocidas en sus atributos. La recomendación principal se integra en el bloque de mejora del informe, sin constituir un análisis de draft.
 - Una presentación compacta que destaque el perfil estratégico principal y sus candidatos priorizados, con el motivo y el aspecto del plan que refuerza.
 - La recomendación principal integrada en el bloque de mejora del informe: necesidad estratégica, perfil prioritario y hasta cuatro candidatos con motivo, fortalezas relevantes y limitaciones conocidas cuando aporten valor.
+- Una versión refinada de esa presentación que reduce repeticiones evidentes y conserva la necesidad, el perfil y los candidatos útiles ya priorizados, sin crear recomendaciones nuevas.
 - Recomendaciones para mejorarla y candidatos por rol cuando corresponda.
 - Una propuesta de optimización para una composición completa.
 - Advertencias sobre riesgos o debilidades estratégicas.

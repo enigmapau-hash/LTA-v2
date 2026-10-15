@@ -12,7 +12,7 @@
   "use strict";
 
   function presentForReport(input = {}) {
-    const result = presenter.presentRecommendations(input);
+    const result = input.presentation || presenter.presentRecommendations(input);
     if (result.status !== "presented") return { status: result.status, section: null };
 
     const profile = result.primaryProfile;

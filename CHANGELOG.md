@@ -2,6 +2,9 @@
 
 ## v3.0.0
 
+### Capability 7 — Strategic Recommendation Polisher
+- Refinar la recomendación integrada en el informe para reducir duplicidades y mantener claros la necesidad, el perfil y los candidatos ya priorizados.
+
 ### Capability 6 — Strategic Recommendation Presenter Integration
 - Integrar en el bloque de mejora del informe la necesidad estratégica, el perfil prioritario y hasta cuatro candidatos justificados, sin añadir una sección redundante.
 
