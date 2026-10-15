@@ -109,14 +109,13 @@ assert.deepEqual(recommendProfiles({
 }), { status: "no-priority", profiles: [] });
 
 assert.deepEqual(recommendProfiles(clearInputs), clearRecommendations, "Los perfiles deben ser deterministas");
-assert.deepEqual(
-  recommendProfiles({
-    ...clearInputs,
-    diagnosis: { ...clearInputs.diagnosis, plan: { ...clearInputs.diagnosis.plan, secondaryIdentity: "Poke" } },
-  }),
-  clearRecommendations,
-  "Una identidad secundaria no debe provocar un nuevo análisis ni cambiar la necesidad prioritaria"
-);
+const withSecondaryIdentity = recommendProfiles({
+  ...clearInputs,
+  diagnosis: { ...clearInputs.diagnosis, plan: { ...clearInputs.diagnosis.plan, secondaryIdentity: "Poke" } },
+});
+assert.deepEqual(withSecondaryIdentity.profiles, clearRecommendations.profiles,
+  "Una identidad secundaria no debe provocar un nuevo análisis ni cambiar la necesidad prioritaria");
+assert.equal(withSecondaryIdentity.plan.secondaryIdentity, "Poke", "La identidad ya calculada se transporta para su consumo posterior");
 
 const needIds = ["engage", "frontline", "sustained-damage", "side-lane", "peel", "pick", "early-pressure", "scaling"];
 for (const id of needIds) {

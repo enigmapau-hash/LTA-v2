@@ -2,6 +2,10 @@
 
 ## v3.0.0
 
+### Capability 8 — Strategic Composition Optimizer
+- Proponer una versión completa revisada con una sustitución prioritaria del mismo rol, usando candidatos y señales ya evaluados y preservando la identidad cuando existe respaldo.
+- Indicar cuándo la identidad de una composición inicialmente incoherente queda pendiente de confirmar, en vez de presentarla como una conclusión analizada.
+
 ### Calidad de recomendaciones
 - Excluir campeones ya seleccionados y reducir alternativas redundantes, priorizando evidencia estratégica diversa.
 - Ajustar el orden y la justificación de candidatos según su relación con la necesidad, el plan, la condición de victoria y los atributos existentes.

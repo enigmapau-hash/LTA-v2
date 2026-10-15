@@ -96,6 +96,36 @@
     return { status, profiles: [] };
   }
 
+  function assessCandidates(candidates, profile, diagnosis) {
+    return (Array.isArray(candidates) ? candidates : [])
+      .map((candidate) => candidateAssessment(candidate, profile, diagnosis))
+      .sort((a, b) => Number(a.contradictsPlan) - Number(b.contradictsPlan)
+        || Number(b.supportsWinCondition) - Number(a.supportsWinCondition)
+        || Number(b.supportsPrimary) - Number(a.supportsPrimary)
+        || Number(b.supportsSecondary) - Number(a.supportsSecondary)
+        || b.fieldCoverage - a.fieldCoverage
+        || b.signalCount - a.signalCount
+        || a.candidate.priority - b.candidate.priority);
+  }
+
+  function presentAssessment(item, index) {
+    return {
+      champion: item.candidate.champion,
+      priority: index + 1,
+      contradictsPlan: item.contradictsPlan,
+      strategicFit: item.supportsPrimary
+        ? "primary-identity"
+        : item.supportsWinCondition
+          ? "win-condition"
+          : item.supportsSecondary
+            ? "secondary-identity"
+            : "unconfirmed",
+      reason: item.reason,
+      strengths: [...item.candidate.strengths],
+      limitations: item.limitations,
+    };
+  }
+
   function evaluateCandidates(input = {}) {
     if (input.optimizer?.status !== "prioritized") return notEvaluated("no-priority");
     if (input.recommendations?.status !== "recommended") return notEvaluated("no-profiles");
@@ -108,16 +138,11 @@
       const mappedProfile = mappedById.get(recommendedProfile.id);
       if (!mappedProfile) continue;
 
-      const assessed = mappedProfile.candidates.map((candidate) =>
-        candidateAssessment(candidate, mappedProfile, input.diagnosis)
-      );
-      assessed.sort((a, b) => Number(a.contradictsPlan) - Number(b.contradictsPlan)
-        || Number(b.supportsWinCondition) - Number(a.supportsWinCondition)
-        || Number(b.supportsPrimary) - Number(a.supportsPrimary)
-        || Number(b.supportsSecondary) - Number(a.supportsSecondary)
-        || b.fieldCoverage - a.fieldCoverage
-        || b.signalCount - a.signalCount
-        || a.candidate.priority - b.candidate.priority);
+      const assessed = assessCandidates(mappedProfile.candidates, mappedProfile, input.diagnosis);
+      const alternativesByRole = Object.fromEntries(Object.entries(mappedProfile.alternativesByRole || {}).map(([role, candidates]) => {
+        const evaluated = assessCandidates(candidates, mappedProfile, input.diagnosis);
+        return [role, evaluated.map(presentAssessment)];
+      }));
 
       if (!assessed.length) continue;
       profiles.push({
@@ -126,13 +151,8 @@
         priority: mappedProfile.priority,
         reason: mappedProfile.reason,
         improves: mappedProfile.improves,
-        candidates: assessed.map((item, index) => ({
-          champion: item.candidate.champion,
-          priority: index + 1,
-          reason: item.reason,
-          strengths: [...item.candidate.strengths],
-          limitations: item.limitations,
-        })),
+        candidates: assessed.map(presentAssessment),
+        alternativesByRole,
       });
     }
 
