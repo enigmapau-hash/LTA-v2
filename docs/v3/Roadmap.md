@@ -1,33 +1,43 @@
 # LTA v3 — Roadmap
 
-## Objetivo
+## Objetivo del Roadmap
 
-Preparar el roadmap de LTA v3. Las etapas y prioridades se acordarán posteriormente.
+Este Roadmap organiza la evolución funcional prevista para LTA v3. No define detalles técnicos ni prescribe cómo se implementará cada capacidad.
+
+Las capabilities serán independientes y cada una deberá aportar valor por sí misma. Se desarrollarán mediante PRs independientes y mantendrán la filosofía aprobada para LTA: optimizar composiciones, preservar su plan estratégico cuando sea viable y explicar las recomendaciones con claridad.
 
 ## Índice
 
-1. [Visión de evolución](#1-visión-de-evolución)
-2. [Etapas](#2-etapas)
-3. [Prioridades](#3-prioridades)
-4. [Criterios de avance](#4-criterios-de-avance)
-5. [Pendientes y dependencias](#5-pendientes-y-dependencias)
+1. Objetivo del Roadmap
+2. Grandes fases
+3. Principios del Roadmap
 
-## 1. Visión de evolución
+## Grandes fases
 
-Pendiente de definir.
+### Fase 1 — Optimización de composiciones
 
-## 2. Etapas
+Esta fase se centra en ayudar a mejorar una composición y entender las consecuencias estratégicas de esa mejora. Incluye:
 
-Pendiente de definir.
+- mejora del informe estratégico;
+- optimización estratégica;
+- recomendaciones.
 
-## 3. Prioridades
+### Fase 2 — Asistencia avanzada
 
-Pendiente de definir.
+Esta fase amplía la ayuda para completar y ajustar composiciones. Incluye:
 
-## 4. Criterios de avance
+- propuestas de picks;
+- sugerencias de bans;
+- advertencias estratégicas;
+- optimización completa de composiciones.
 
-Pendiente de definir.
+### Fase 3 — Extensiones futuras
 
-## 5. Pendientes y dependencias
+Fase reservada para funcionalidades posteriores. Su alcance se definirá más adelante.
 
-Pendiente de definir.
+## Principios del Roadmap
+
+- Cada capability debe ser pequeña.
+- Cada capability debe poder revisarse por separado.
+- La estabilidad tiene prioridad sobre la velocidad.
+- La documentación precede a la implementación.
