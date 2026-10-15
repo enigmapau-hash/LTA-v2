@@ -2,6 +2,9 @@
 
 ## v3.0.0
 
+### Capability 5 — Strategic Recommendation Presenter
+- Preparar una presentación compacta del perfil estratégico principal y sus candidatos ya evaluados, con motivo y mejora del plan.
+
 ### Capability 4 — Candidate Evaluator
 - Evaluar y priorizar los candidatos ya agrupados según los perfiles, la identidad, la condición de victoria y las contradicciones diagnosticadas; conservar fortalezas y limitaciones conocidas.
 

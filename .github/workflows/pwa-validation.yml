@@ -45,6 +45,9 @@ jobs:
       - name: Validate the Candidate Evaluator
         run: node tools/check-candidate-evaluator.cjs
 
+      - name: Validate the Strategic Recommendation Presenter
+        run: node tools/check-strategic-recommendation-presenter.cjs
+
       - name: Validate composition stability
         run: node tools/check-composition-stability-engine.cjs
 
