@@ -75,6 +75,8 @@ LTA v3 seguirá un proceso lógico orientado a mejorar la composición como conj
 6. Propone las mejores alternativas disponibles para esa mejora.
 7. Justifica cada recomendación y sus consecuencias estratégicas.
 
+La prioridad de mejora se expresa primero como una única necesidad estratégica. Esta etapa no selecciona campeones ni roles y no genera recomendaciones visibles.
+
 ## 7. Información analizada
 
 LTA analizará la composición y las señales estratégicas aprobadas para entender cómo funciona como equipo:
@@ -93,6 +95,7 @@ LTA analizará la composición y las señales estratégicas aprobadas para enten
 Según la composición y las conclusiones que resulten útiles, LTA podrá generar:
 
 - Un informe estratégico que explique el estado de la composición.
+- Una necesidad estratégica prioritaria que indique qué aspecto del plan conviene reforzar y qué problema busca evitar.
 - Recomendaciones para mejorarla y candidatos por rol cuando corresponda.
 - Una propuesta de optimización para una composición completa.
 - Advertencias sobre riesgos o debilidades estratégicas.
