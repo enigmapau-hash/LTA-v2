@@ -99,6 +99,7 @@ Según la composición y las conclusiones que resulten útiles, LTA podrá gener
 - Perfiles estratégicos compatibles y ordenados que respondan a esa necesidad, seguidos de candidatos agrupados por perfil.
 - Candidatos priorizados dentro de cada perfil según su ajuste a la necesidad, la identidad, la condición de victoria y las señales de contradicción ya disponibles.
 - Para cada candidato, el motivo principal, las fortalezas que aporta y las limitaciones conocidas en sus atributos. Estos resultados no constituyen todavía una recomendación visible final ni un análisis de draft.
+- Una presentación compacta que destaque el perfil estratégico principal y sus candidatos priorizados, con el motivo y el aspecto del plan que refuerza.
 - Recomendaciones para mejorarla y candidatos por rol cuando corresponda.
 - Una propuesta de optimización para una composición completa.
 - Advertencias sobre riesgos o debilidades estratégicas.

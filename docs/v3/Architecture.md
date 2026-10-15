@@ -38,7 +38,7 @@ El Composition Optimizer determina qué necesidad estratégica representa la mej
 
 ### Recommendation Layer
 
-El Strategic Recommendation Engine traduce la necesidad del Composition Optimizer en entre dos y cuatro perfiles estratégicos ordenados, con el motivo y el aspecto del plan que mejora cada uno. El Championship Candidate Mapper transforma esos perfiles en grupos de dos a cuatro campeones candidatos por perfil y conserva los atributos disponibles de cada candidato. El Candidate Evaluator refina y prioriza los candidatos recibidos, relacionándolos con la necesidad, identidad, condición de victoria y contradicciones ya diagnosticadas; explica el ajuste y conserva las fortalezas y limitaciones conocidas. No vuelve a generar candidatos ni a analizar la composición. El alcance posterior del módulo contempla propuestas para optimizar composiciones completas y propuestas de bans. Este módulo entrega recomendaciones; no sustituye el análisis de la composición.
+El Strategic Recommendation Engine traduce la necesidad del Composition Optimizer en entre dos y cuatro perfiles estratégicos ordenados, con el motivo y el aspecto del plan que mejora cada uno. El Championship Candidate Mapper transforma esos perfiles en grupos de dos a cuatro campeones candidatos por perfil y conserva los atributos disponibles de cada candidato. El Candidate Evaluator refina y prioriza los candidatos recibidos, relacionándolos con la necesidad, identidad, condición de victoria y contradicciones ya diagnosticadas; explica el ajuste y conserva las fortalezas y limitaciones conocidas. El Strategic Recommendation Presenter selecciona el perfil principal y prepara sus candidatos evaluados en una salida compacta, con la justificación y el aspecto del plan que mejora. Consume las salidas previas sin volver al análisis ni generar candidatos. El alcance posterior del módulo contempla propuestas para optimizar composiciones completas y propuestas de bans. Este módulo entrega recomendaciones; no sustituye el análisis de la composición.
 
 ### Report Layer
 
@@ -50,8 +50,8 @@ La información estratégica pasa entre los módulos en una secuencia clara:
 
 1. **Composition Analysis** comprende la composición y produce las señales base de su estado estratégico.
 2. **Optimization Layer** consume esas señales y la corrección estratégica existente para producir una única necesidad de mejora prioritaria.
-3. **Recommendation Layer** convierte esa necesidad en perfiles estratégicos, agrupa candidatos por perfil y los evalúa con las señales existentes de la composición.
-4. **Report Layer** presenta el resultado final al usuario.
+3. **Recommendation Layer** convierte esa necesidad en perfiles estratégicos, agrupa candidatos por perfil, los evalúa con las señales existentes y prepara una presentación compacta del perfil principal.
+4. **Report Layer** puede consumir esa salida preparada al presentar el resultado al usuario.
 
 Cada módulo consume las salidas que necesita de los anteriores. Ninguno vuelve a calcular una señal o decisión ya producida, salvo que sea necesario para mantener una conclusión válida.
 
@@ -76,7 +76,7 @@ Los límites entre módulos se mantienen explícitos:
 
 - **Composition Analysis** comprende y diagnostica la composición; no recomienda campeones ni decide cómo presentar las recomendaciones.
 - **Optimization Layer** determina la necesidad estratégica prioritaria; no elige campeones ni presenta el resultado al usuario.
-- **Recommendation Layer** responde a la necesidad identificada con perfiles y candidatos evaluados; no vuelve a generar candidatos, reanaliza la composición desde cero ni sustituye el diagnóstico.
+- **Recommendation Layer** responde a la necesidad identificada con perfiles y candidatos evaluados y prepara su presentación compacta; no vuelve a generar candidatos, reanaliza la composición desde cero ni sustituye el diagnóstico.
 - **Report Layer** comunica los resultados recibidos; no vuelve a analizar la composición ni decide qué recomendación es mejor.
 
 ## 6. Principios de coherencia
