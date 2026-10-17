@@ -106,6 +106,7 @@ Según la composición y las conclusiones que resulten útiles, LTA podrá gener
 - Una versión refinada de esa presentación que reduce repeticiones evidentes y conserva la necesidad, el perfil y los candidatos útiles ya priorizados, sin crear recomendaciones nuevas.
 - Recomendaciones para mejorarla y candidatos por rol cuando corresponda.
 - Una propuesta de optimización para una composición completa.
+- Una propuesta de evolución completa que identifica la pieza menos alineada, la sustituye por una alternativa priorizada del mismo rol y explica la mejora y la limitación que corrige. La identidad estratégica se conserva cuando las señales disponibles la respaldan; si no puede confirmarse sin un nuevo análisis, se indica expresamente.
 - Advertencias sobre riesgos o debilidades estratégicas.
 - Propuestas de bans como orientación estratégica.
 

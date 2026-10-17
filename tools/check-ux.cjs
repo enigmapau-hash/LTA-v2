@@ -50,6 +50,7 @@ async function main(){
   await page.waitForFunction(()=>document.querySelector("#statusPill")?.textContent==="Análisis actualizado");
   await page.waitForFunction(expected=>expected.every(champion=>Array.from(document.querySelectorAll(".composition-table .champion-name")).some(node=>node.textContent.trim()===champion)),Object.values(referencePicks));
   const strategy=page.locator(".result-summary__strategy");await strategy.waitFor({state:"visible"});
+  assert.match(await strategy.innerText(),/Composición propuesta:/i,"el informe incorpora la sustitución prioritaria cuando está respaldada");
   assert.equal((await strategy.locator(".result-summary__eyebrow").textContent()).trim(),"Informe estratégico","el informe presenta el análisis integrado de v2");
   assert.equal((await strategy.locator("h3").first().innerText()).trim(),"Cómo jugarla");
   assert.deepEqual(await strategy.locator("[data-report-section]").evaluateAll(nodes=>nodes.map(node=>node.dataset.reportSection)),["diagnosis","correction","protection"],"el informe ordena diagnóstico, recomendación y protección");

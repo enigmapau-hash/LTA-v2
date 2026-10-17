@@ -65,6 +65,7 @@ function evaluate(picks) {
     recommendations,
     candidatesByRole,
     selectedChampions: picks.map((item) => item.champion),
+    currentPicks: picks,
   });
   return { picks, diagnosis, optimizer, recommendations, result };
 }
@@ -90,6 +91,10 @@ const clear = composition({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botl
 const clearEvaluation = evaluate(clear);
 assert.equal(clearEvaluation.diagnosis.plan.primaryIdentity, "Front to Back");
 verify(clearEvaluation.result);
+assert.equal(clearEvaluation.result.composition.status, "complete");
+assert.equal(clearEvaluation.result.composition.picks.length, 5);
+assert.ok(clearEvaluation.result.profiles.every((profile) => Object.values(profile.alternativesByRole).every((items) => items.length <= 3)),
+  "El mapeo conserva una reserva breve de alternativas por rol para optimizar el equipo completo");
 assert.ok(clearEvaluation.result.profiles.flatMap((profile) => profile.candidates)
   .every((candidate) => !clear.some((pick) => pick.champion === candidate.champion)), "No se recomiendan campeones ya elegidos");
 assert.ok(clearEvaluation.result.profiles.every((profile) => clearEvaluation.recommendations.profiles.some((recommended) => recommended.id === profile.id)));
@@ -116,6 +121,7 @@ for (const evaluation of [clearEvaluation, hybridEvaluation, incoherentEvaluatio
     recommendations: evaluation.recommendations,
     candidatesByRole,
     selectedChampions: evaluation.picks.map((item) => item.champion),
+    currentPicks: evaluation.picks,
   });
   assert.deepEqual(repeated, evaluation.result, "El mapeo debe ser determinista");
 }

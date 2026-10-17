@@ -13,6 +13,7 @@
   const presentRecommendations = window.LTAStrategicRecommendationPresenter?.presentRecommendations;
   const presentForReport = window.LTAStrategicRecommendationPresenterIntegration?.presentForReport;
   const polishRecommendation = window.LTAStrategicRecommendationPolisher?.polishRecommendation;
+  const optimizeStrategicComposition = window.LTAStrategicCompositionOptimizer?.optimizeStrategicComposition;
   const buildStrategicReport = window.LTAStrategicReportBuilder?.buildStrategicReport;
 
   let refreshQueued = false;
@@ -25,7 +26,7 @@
   }
 
   function renderStrategicReport(items) {
-    if (![diagnoseComposition, proposeCorrections, protectComposition, optimizeComposition, recommendProfiles, mapCandidates, evaluateCandidates, presentRecommendations, presentForReport, polishRecommendation, buildStrategicReport].every((fn) => typeof fn === "function")) return "";
+    if (![diagnoseComposition, proposeCorrections, protectComposition, optimizeComposition, recommendProfiles, mapCandidates, evaluateCandidates, presentRecommendations, presentForReport, polishRecommendation, optimizeStrategicComposition, buildStrategicReport].every((fn) => typeof fn === "function")) return "";
     const picks = items.map((item) => ({
       role: item.role,
       champion: item.champion,
@@ -50,13 +51,29 @@
       recommendations,
       candidatesByRole,
       selectedChampions: picks.map((pick) => pick.champion),
+      currentPicks: picks,
     });
     const evaluatedCandidates = evaluateCandidates({ diagnosis, optimizer, recommendations, mappedCandidates });
     const presentation = presentRecommendations({ optimizer, recommendations, mappedCandidates, evaluatedCandidates });
     const integration = presentForReport({ optimizer, recommendations, mappedCandidates, evaluatedCandidates, presentation });
     const polished = polishRecommendation({ optimizer, recommendations, mappedCandidates, evaluatedCandidates, presentation, integration });
     const recommendation = polished.status === "polished" ? polished : integration;
-    const report = buildStrategicReport({ diagnosis, correction, protection, recommendation: recommendation.section });
+    const compositionOptimization = optimizeStrategicComposition({
+      optimizer,
+      recommendations,
+      mappedCandidates,
+      evaluatedCandidates,
+      presentation,
+      integration,
+      polished,
+    });
+    const report = buildStrategicReport({
+      diagnosis,
+      correction,
+      protection,
+      recommendation: recommendation.section,
+      compositionOptimization,
+    });
 
     return `
       <section class="result-summary__strategy" aria-labelledby="composition-analysis-title">
@@ -70,6 +87,8 @@
               <h4>${escapeHtml(section.title)}</h4>
               <p class="result-summary__answer">${escapeHtml(section.answer)}</p>
               <p>${escapeHtml(section.explanation)}</p>
+              ${section.compositionOptimization ? `<p class="result-summary__action"><strong>Composición propuesta:</strong> ${escapeHtml(section.compositionOptimization.change.role)}: ${escapeHtml(section.compositionOptimization.change.from)} → ${escapeHtml(section.compositionOptimization.change.to)}. Refuerza ${escapeHtml(section.compositionOptimization.improvement)}; corrige ${escapeHtml(section.compositionOptimization.limitationCorrected)}.</p>
+                <p>${escapeHtml(section.compositionOptimization.identity.status === "preserved" ? `Identidad conservada: ${section.compositionOptimization.identity.primary}.` : `Identidad propuesta sin confirmar: ${section.compositionOptimization.identity.proposed || "pendiente"}.`)}</p>` : ""}
               ${section.improves ? `<p class="result-summary__action"><strong>Refuerza:</strong> ${escapeHtml(section.improves)}</p>` : ""}
               ${section.action ? `<p class="result-summary__action"><strong>Protección:</strong> ${escapeHtml(section.action)}</p>` : ""}
               ${Array.isArray(section.candidates) ? `<ol class="result-summary__recommendation-list" aria-label="Candidatos priorizados">
