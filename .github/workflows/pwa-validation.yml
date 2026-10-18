@@ -60,6 +60,9 @@ jobs:
       - name: Validate the Strategic Risk Analyzer
         run: node tools/check-strategic-risk-analyzer.cjs
 
+      - name: Validate the Strategic Counterplay Advisor
+        run: node tools/check-strategic-counterplay-advisor.cjs
+
       - name: Validate composition stability
         run: node tools/check-composition-stability-engine.cjs
 
