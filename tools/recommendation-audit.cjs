@@ -1,0 +1,269 @@
+#!/usr/bin/env node
+"use strict";
+
+const fs = require("node:fs");
+const path = require("node:path");
+const XLSX = require("../vendor/xlsx.full.min.js");
+const { diagnoseComposition } = require("../src/domain/diagnostic-engine.js");
+const { proposeCorrections } = require("../src/domain/correction-engine.js");
+const { optimizeComposition } = require("../src/domain/composition-optimizer.js");
+const { recommendProfiles } = require("../src/domain/strategic-recommendation-engine.js");
+const { mapCandidates } = require("../src/domain/championship-candidate-mapper.js");
+const { evaluateCandidates } = require("../src/domain/candidate-evaluator.js");
+const { generateRepresentativeCompositions } = require("./recommendation-audit-fixtures.cjs");
+
+const ROLE_SHEETS = Object.freeze({
+  top: "Tabla Top",
+  jungle: "Tabla Jungla",
+  mid: "Tabla Mid",
+  botline: "Tabla Botline",
+  support: "Tabla Support",
+});
+const REPEAT_CASE_THRESHOLD = 3;
+const PAIR_OVERLAP_THRESHOLD = 0.5;
+const PAIR_MIN_SHARED_CHAMPIONS = 2;
+const root = path.resolve(__dirname, "..");
+
+function loadCandidateCatalog(workbookPath = path.join(root, "Draft Pool.xlsx")) {
+  const workbook = XLSX.read(fs.readFileSync(workbookPath), { type: "buffer" });
+  return Object.fromEntries(Object.entries(ROLE_SHEETS).map(([role, sheetName]) => {
+    const sheet = workbook.Sheets[sheetName];
+    if (!sheet) throw new Error("No se encontró la hoja " + sheetName + " en el catálogo.");
+    const candidates = XLSX.utils.sheet_to_json(sheet, { defval: "" }).map((row) => ({
+      champion: String(row["Campeón"] || "").trim(),
+      identity: String(row["Identidad"] || "").trim(),
+      function: String(row["Función"] || "").trim(),
+      tempo: String(row["Ritmo"] || "").trim(),
+      strengths: String(row["Fortalezas"] || "").trim(),
+      weaknesses: String(row["Debilidades"] || "").trim(),
+    })).filter((candidate) => candidate.champion);
+    return [role, candidates];
+  }));
+}
+
+function normalize(value) {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
+}
+
+function runPipeline(picks, candidatesByRole) {
+  const diagnosis = diagnoseComposition(picks);
+  const correction = proposeCorrections({ picks, diagnosis, candidatesByRole });
+  const optimizer = optimizeComposition({ diagnosis, correction });
+  const recommendations = recommendProfiles({ diagnosis, optimizer });
+  const mappedCandidates = mapCandidates({
+    optimizer,
+    recommendations,
+    candidatesByRole,
+    selectedChampions: picks.map((pick) => pick.champion),
+    currentPicks: picks,
+  });
+  const evaluatedCandidates = evaluateCandidates({ diagnosis, optimizer, recommendations, mappedCandidates });
+  return { diagnosis, recommendations, mappedCandidates, evaluatedCandidates };
+}
+
+function roundRatio(value) {
+  return Number(value.toFixed(3));
+}
+
+function auditRecommendations(candidatesByRole) {
+  const fixtures = generateRepresentativeCompositions(candidatesByRole);
+  const cases = fixtures.map((fixture) => {
+    const result = runPipeline(fixture.picks, candidatesByRole);
+    const profiles = Array.isArray(result.evaluatedCandidates.profiles) ? result.evaluatedCandidates.profiles : [];
+    const mentions = profiles.flatMap((profile) => (profile.candidates || []).map((candidate) => ({
+      champion: String(candidate.champion || "").trim(),
+      profile: profile.id,
+      priority: candidate.priority,
+    }))).filter((candidate) => candidate.champion);
+    const mappedById = new Map((result.mappedCandidates.profiles || []).map((profile) => [profile.id, profile]));
+    const rolePairs = profiles.flatMap((profile) => Object.entries(
+      mappedById.get(profile.id)?.alternativesByRole || {}
+    ).filter(([, alternatives]) => alternatives.length > 0).map(([role]) => profile.id + ":" + role));
+
+    return {
+      id: fixture.id,
+      label: fixture.label,
+      diagnosis: result.diagnosis.status,
+      identity: result.diagnosis.plan?.primaryIdentity || null,
+      coherence: result.diagnosis.coherence?.status || "unknown",
+      recommendationStatus: result.recommendations.status,
+      profiles: profiles.map((profile) => profile.id),
+      mentions,
+      champions: [...new Set(mentions.map((item) => normalize(item.champion)))].sort(),
+      rolePairs: [...new Set(rolePairs)].sort(),
+    };
+  });
+
+  const championStats = new Map();
+  for (const item of cases) {
+    for (const mention of item.mentions) {
+      const key = normalize(mention.champion);
+      const stat = championStats.get(key) || { champion: mention.champion, mentions: 0, cases: new Set(), profiles: new Set() };
+      stat.mentions += 1;
+      stat.cases.add(item.id);
+      stat.profiles.add(mention.profile);
+      championStats.set(key, stat);
+    }
+  }
+
+  const champions = [...championStats.values()].map((stat) => ({
+    champion: stat.champion,
+    mentions: stat.mentions,
+    cases: stat.cases.size,
+    profiles: stat.profiles.size,
+  })).sort((left, right) => right.cases - left.cases
+    || right.mentions - left.mentions
+    || left.champion.localeCompare(right.champion, "es"));
+  const repeatedChampions = champions.filter((item) => item.cases >= REPEAT_CASE_THRESHOLD);
+
+  const similarPairs = [];
+  for (let leftIndex = 0; leftIndex < cases.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < cases.length; rightIndex += 1) {
+      const left = cases[leftIndex];
+      const right = cases[rightIndex];
+      const shared = left.champions.filter((champion) => right.champions.includes(champion));
+      const union = new Set([...left.champions, ...right.champions]).size;
+      const jaccard = union ? shared.length / union : 0;
+      if (shared.length >= PAIR_MIN_SHARED_CHAMPIONS && jaccard >= PAIR_OVERLAP_THRESHOLD) {
+        similarPairs.push({ left: left.label, right: right.label, shared: shared.length, overlap: roundRatio(jaccard) });
+      }
+    }
+  }
+  similarPairs.sort((left, right) => right.overlap - left.overlap
+    || right.shared - left.shared
+    || left.left.localeCompare(right.left, "es")
+    || left.right.localeCompare(right.right, "es"));
+
+  const totalMentions = cases.reduce((sum, item) => sum + item.mentions.length, 0);
+  const totalProfileRolePairs = cases.reduce((sum, item) => sum + item.profiles.length * Object.keys(ROLE_SHEETS).length, 0);
+  const coveredProfileRolePairs = cases.reduce((sum, item) => sum + item.rolePairs.length, 0);
+  const recommendedCases = cases.filter((item) => item.recommendationStatus === "recommended" && item.mentions.length > 0).length;
+  const profileCounts = new Map();
+  for (const item of cases) for (const profile of item.profiles) profileCounts.set(profile, (profileCounts.get(profile) || 0) + 1);
+
+  return {
+    cases,
+    champions,
+    repeatedChampions,
+    similarPairs,
+    metrics: {
+      compositionCount: cases.length,
+      recommendedCaseCount: recommendedCases,
+      recommendationCoverage: roundRatio(recommendedCases / cases.length),
+      totalCandidateMentions: totalMentions,
+      uniqueRecommendedChampions: championStats.size,
+      championDiversity: totalMentions ? roundRatio(championStats.size / totalMentions) : 0,
+      profileRoleCoverage: totalProfileRolePairs ? roundRatio(coveredProfileRolePairs / totalProfileRolePairs) : 0,
+      distinctProfiles: profileCounts.size,
+      similarPairCount: similarPairs.length,
+    },
+    profileCounts: [...profileCounts.entries()].map(([profile, casesCount]) => ({ profile, cases: casesCount }))
+      .sort((left, right) => right.cases - left.cases || left.profile.localeCompare(right.profile, "es")),
+    thresholds: {
+      repeatedChampionCases: REPEAT_CASE_THRESHOLD,
+      pairSharedChampions: PAIR_MIN_SHARED_CHAMPIONS,
+      pairJaccard: PAIR_OVERLAP_THRESHOLD,
+    },
+  };
+}
+
+function renderMarkdown(audit) {
+  const { metrics, cases, champions, repeatedChampions, similarPairs, profileCounts, thresholds } = audit;
+  const pct = (ratio) => (ratio * 100).toFixed(1) + "%";
+  const lines = [
+    "# Auditoría de recomendaciones estratégicas",
+    "",
+    "Informe reproducible generado a partir del catálogo de campeones incluido en el proyecto.",
+    "",
+    "## Metodología",
+    "",
+    "La herramienta genera diez composiciones de referencia desde nombres de campeones presentes en el catálogo: Front to Back, Dive, Pick, Poke, Split Push, Teamfight, escalado, Early Game, híbrida e incoherente. Los atributos de cada pieza se leen del catálogo; no se duplican ni se inventan para la auditoría.",
+    "",
+    "Para cada equipo ejecuta la cadena existente de diagnóstico, corrección, Composition Optimizer, Strategic Recommendation Engine, Candidate Mapper y Candidate Evaluator. La auditoría no cambia esos motores ni selecciona alternativas nuevas. Cuenta como recomendación cada candidato evaluado dentro de su perfil estratégico.",
+    "",
+    "La generación y ordenación son deterministas. Para regenerar este informe ejecuta node tools/recommendation-audit.cjs --write; para verificar contratos y reproducibilidad ejecuta node tools/check-recommendation-audit.cjs.",
+    "",
+    "## Métricas",
+    "",
+    "| Métrica | Resultado | Interpretación |",
+    "| --- | ---: | --- |",
+    "| Composiciones auditadas | " + metrics.compositionCount + " | Casos representativos declarados en el generador. |",
+    "| Cobertura de recomendaciones | " + metrics.recommendedCaseCount + "/" + metrics.compositionCount + " (" + pct(metrics.recommendationCoverage) + ") | Casos que produjeron al menos un perfil con candidatos evaluados. |",
+    "| Menciones de candidatos | " + metrics.totalCandidateMentions + " | Apariciones en listas por perfil; un campeón puede aparecer en varios perfiles. |",
+    "| Campeones distintos recomendados | " + metrics.uniqueRecommendedChampions + " | Diversidad total del catálogo recomendado. |",
+    "| Diversidad de campeones | " + pct(metrics.championDiversity) + " | Campeones únicos dividido por todas las menciones por perfil. |",
+    "| Cobertura de rol por perfil | " + pct(metrics.profileRoleCoverage) + " | Pares perfil/rol con al menos una alternativa, entre los pares de perfiles recomendados. |",
+    "| Perfiles estratégicos distintos | " + metrics.distinctProfiles + " | Variedad de perfiles ofrecidos por la cadena en el conjunto auditado. |",
+    "| Pares de composiciones con alta repetición | " + metrics.similarPairCount + " | Pares que comparten al menos " + thresholds.pairSharedChampions + " campeones recomendados y Jaccard ≥ " + pct(thresholds.pairJaccard) + ". |",
+    "",
+    "### Perfiles recomendados",
+    "",
+    "| Perfil | Composiciones |",
+    "| --- | ---: |",
+    ...profileCounts.map((item) => "| " + item.profile + " | " + item.cases + "/" + metrics.compositionCount + " |"),
+    "",
+    "### Frecuencia de campeones",
+    "",
+    "Conteo completo sobre composiciones distintas, además de apariciones en perfiles.",
+    "",
+    "| Campeón | Composiciones | Menciones por perfil | Perfiles |",
+    "| --- | ---: | ---: | ---: |",
+    ...champions.map((item) => "| " + item.champion + " | " + item.cases + "/" + metrics.compositionCount + " | " + item.mentions + " | " + item.profiles + " |"),
+    "",
+    "### Repetición y diversidad entre composiciones",
+    "",
+    "Señal de repetición por campeón: aparece en al menos " + thresholds.repeatedChampionCases + " composiciones distintas. Es una alerta exploratoria, no significa por sí sola que una recomendación sea incorrecta.",
+    "",
+    repeatedChampions.length
+      ? "Campeones con aparición frecuente: " + repeatedChampions.map((item) => item.champion + " (" + item.cases + "/" + metrics.compositionCount + ")").join(", ") + "."
+      : "No se detectaron campeones que superen el umbral de repetición definido.",
+    "",
+    similarPairs.length ? "Pares con recomendaciones de alta coincidencia:" : "No se detectaron pares por encima del umbral de coincidencia.",
+    ...(similarPairs.length ? [
+      "",
+      "| Composición A | Composición B | Campeones compartidos | Jaccard |",
+      "| --- | --- | ---: | ---: |",
+      ...similarPairs.map((item) => "| " + item.left + " | " + item.right + " | " + item.shared + " | " + pct(item.overlap) + " |"),
+    ] : []),
+    "",
+    "## Casos incluidos",
+    "",
+    "| Caso | Identidad detectada | Coherencia | Estado de recomendación | Perfiles |",
+    "| --- | --- | --- | --- | --- |",
+    ...cases.map((item) => "| " + item.label + " | " + (item.identity || "Sin identidad") + " | " + item.coherence + " | " + item.recommendationStatus + " | " + (item.profiles.length ? item.profiles.join(", ") : "—") + " |"),
+    "",
+    "## Limitaciones",
+    "",
+    "- El conjunto es pequeño y curado; representa referencias estratégicas concretas, no todo el espacio posible de composiciones.",
+    "- El resultado depende de los atributos y el catálogo actuales. No refleja popularidad, winrate, datos online ni contexto de rival.",
+    "- La frecuencia mide exposición dentro de las salidas evaluadas, no calidad competitiva ni probabilidad de victoria.",
+    "- La similitud compara nombres de campeones recomendados; no evalúa equivalencia táctica.",
+    "- Los umbrales de repetición son señales para revisión manual, no criterios de aprobación ni fallos automáticos del motor.",
+    "- La cobertura perfil/rol no califica la calidad ni el orden de cada candidato.",
+    "",
+    "## Cómo interpretar los resultados",
+    "",
+    "Usa cobertura para localizar casos en los que la cadena no logra ofrecer candidatos y diversidad para observar cuánto rota el catálogo recomendado. Las frecuencias altas y los pares similares sirven para priorizar una revisión humana de redundancias. Una concentración puede ser razonable si el catálogo o los atributos respaldan repetidamente a una misma pieza; las métricas no justifican cambiar pesos o comportamiento sin una investigación adicional.",
+    "",
+    "La auditoría es una herramienta interna de observación. Sus cifras no se muestran en la aplicación y no alteran las recomendaciones.",
+    "",
+  ];
+  return lines.join("\n");
+}
+
+function main() {
+  const audit = auditRecommendations(loadCandidateCatalog());
+  const markdown = renderMarkdown(audit);
+  if (process.argv.includes("--write")) {
+    const outputPath = path.join(root, "docs", "quality", "Recommendation-Audit.md");
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+    fs.writeFileSync(outputPath, markdown, "utf8");
+    console.log("Informe de auditoría actualizado: " + path.relative(root, outputPath));
+    return;
+  }
+  process.stdout.write(markdown);
+}
+
+if (require.main === module) main();
+
+module.exports = { ROLE_SHEETS, loadCandidateCatalog, auditRecommendations, renderMarkdown };
