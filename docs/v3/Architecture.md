@@ -58,6 +58,8 @@ El Ban Prioritizer relaciona los estilos de amenaza priorizados por el Strategic
 
 El Ban Recommendation Presenter recibe exclusivamente la salida del Ban Prioritizer. Conserva hasta tres bans válidos, ordenados por severidad y prioridad recibida, y prepara para cada uno el campeón, la amenaza, el motivo y el impacto esperado. Elimina entradas incompletas o repetidas y no vuelve a seleccionar, evaluar ni recalcular bans.
 
+El Strategic Report Ban Integration consume esa presentación y añade como máximo los dos primeros bans válidos al bloque de protección existente. Conserva su orden y sus explicaciones, y no vuelve a priorizar ni calcular bans. Si no hay una presentación utilizable, deja el informe sin contenido adicional.
+
 ### Report Layer
 
 El Strategic Recommendation Presenter Integration adapta la salida compacta ya preparada por Recommendation Layer al bloque de mejora del informe. El Strategic Recommendation Polisher recibe esa integración y las salidas previas de optimización, perfiles, mapeo, evaluación y presentación; elimina duplicidades de texto o candidatos y normaliza la concisión, conservando orden y prioridad. No genera alternativas ni recalcula señales. El informe muestra la necesidad, el perfil principal y hasta cuatro candidatos priorizados con su motivo, fortalezas relevantes y limitaciones útiles. Ocupa el bloque de mejora existente para evitar duplicar la prioridad estratégica. El Report Layer presenta las conclusiones; no vuelve a analizar la composición ni recalcula decisiones estratégicas.
@@ -76,7 +78,8 @@ La información estratégica pasa entre los módulos en una secuencia clara:
 8. **Strategic Counterplay Advisor** convierte los riesgos priorizados en estilos de amenaza y pautas generales de protección, sin inferir una composición rival.
 9. **Ban Prioritizer** relaciona esas amenazas con campeones del catálogo ya disponible para priorizar hasta tres bans, sin consultar nuevamente el origen de datos ni deducir una composición rival.
 10. **Ban Recommendation Presenter** compacta y ordena la salida calculada, sin cambiar los bans.
-11. **Report Layer** muestra la recomendación y, cuando existe una propuesta de recomposición respaldada, la integra en el bloque de mejora existente junto con el diagnóstico y la protección. Conserva los riesgos, las contramedidas y la presentación de bans como metadatos internos hasta que una integración visible aporte valor sin duplicar el informe.
+11. **Strategic Report Ban Integration** integra hasta dos bans prioritarios dentro del bloque de protección, o no añade contenido si no hay bans utilizables.
+12. **Report Layer** muestra la recomendación y, cuando existe una propuesta de recomposición respaldada, la integra en el bloque de mejora existente junto con el diagnóstico y la protección. Presenta los bans dentro de la protección sin volver a calcularlos.
 
 Cada módulo consume las salidas que necesita de los anteriores. Ninguno vuelve a calcular una señal o decisión ya producida, salvo que sea necesario para mantener una conclusión válida.
 
@@ -110,6 +113,7 @@ Los límites entre módulos se mantienen explícitos:
 - **Strategic Counterplay Advisor** traduce vulnerabilidades existentes a amenazas generales y contramedidas; no diagnostica riesgos nuevos, analiza un rival concreto ni formula bans.
 - **Ban Prioritizer** selecciona campeones del catálogo que respaldan los estilos de amenaza existentes; no recalcula riesgos, lee el Excel, analiza un rival concreto ni simula la Champion Select.
 - **Ban Recommendation Presenter** ordena y compacta los bans ya priorizados; no modifica su prioridad estratégica ni genera candidatos.
+- **Strategic Report Ban Integration** incorpora al bloque de protección los bans preparados por Presenter; no prioriza ni recalcula amenazas o bans.
 - **Report Layer** comunica los resultados recibidos; no vuelve a analizar la composición ni decide qué recomendación es mejor.
 
 ## 6. Principios de coherencia

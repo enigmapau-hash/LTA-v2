@@ -163,6 +163,27 @@
   margin-top: 6px;
 }
 
+.result-summary__ban-integration {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+}
+
+.result-summary__ban-integration > p {
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.result-summary__ban-integration ul {
+  display: grid;
+  gap: 4px;
+  padding-left: 18px;
+}
+
+.result-summary__ban-integration li {
+  font-size: 0.78rem;
+}
+
 .result-summary__recommendation-list {
   display: grid;
   gap: 8px;

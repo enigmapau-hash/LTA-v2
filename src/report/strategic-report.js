@@ -17,13 +17,16 @@
   const strategicClosingEngine = typeof module === "object" && module.exports
     ? require("../domain/strategic-closing-engine.js")
     : root.LTAStrategicClosingEngine;
-  const builder = factory(explanations, confidenceEngine, diagnosticSummaryEngine, secondaryObservationEngine, strategicStateEngine, strategicClosingEngine);
+  const banIntegration = typeof module === "object" && module.exports
+    ? require("./strategic-report-ban-integration.js")
+    : root.LTAStrategicReportBanIntegration;
+  const builder = factory(explanations, confidenceEngine, diagnosticSummaryEngine, secondaryObservationEngine, strategicStateEngine, strategicClosingEngine, banIntegration);
   if (typeof module === "object" && module.exports) {
     module.exports = builder;
   } else {
     root.LTAStrategicReportBuilder = Object.freeze(builder);
   }
-})(typeof window !== "undefined" ? window : globalThis, function (explanations, confidenceEngine, diagnosticSummaryEngine, secondaryObservationEngine, strategicStateEngine, strategicClosingEngine) {
+})(typeof window !== "undefined" ? window : globalThis, function (explanations, confidenceEngine, diagnosticSummaryEngine, secondaryObservationEngine, strategicStateEngine, strategicClosingEngine, banIntegration) {
   "use strict";
 
   function diagnosisSection(diagnosis, summary) {
@@ -91,24 +94,23 @@
     };
   }
 
-  function protectionSection(protection) {
+  function protectionSection(protection, banPresentation) {
     const threats = Array.isArray(protection?.threats) ? protection.threats : [];
     const threat = threats.find((item) => item?.priority === "principal") || threats[0];
-    if (!threat) {
-      return {
-        id: "protection",
-        title: "Protección",
-        answer: "Sin una amenaza prioritaria",
-        explanation: explanations.explainProtection(protection),
-      };
-    }
-    return {
+    const section = !threat ? {
+      id: "protection",
+      title: "Protección",
+      answer: "Sin una amenaza prioritaria",
+      explanation: explanations.explainProtection(protection),
+    } : {
       id: "protection",
       title: "Protección estratégica",
       answer: `Proteger el plan frente a ${String(threat.style || "la amenaza principal")}`,
       explanation: explanations.explainProtection(protection),
       action: String(threat.protection || ""),
     };
+    const integratedBans = banIntegration.integrateStrategicReportBans({ banPresentation });
+    return { ...section, ...(integratedBans ? { strategicBans: integratedBans.bans } : {}) };
   }
 
   function adaptSectionTone(section, level) {
@@ -167,7 +169,7 @@
     const sections = [
       diagnosisSection(diagnosis, { ...diagnosticSummary, summary: diagnosisExplanation }),
       strategicRecommendation || correctionSection(input.correction),
-      protectionSection(input.protection),
+      protectionSection(input.protection, input.strategicBanPresentation),
     ].map((section) => adaptSectionTone(section, confidence.conclusions[section.id]?.level));
     return {
       status: diagnosis?.status === "assessed" ? "assessed" : "not-assessable",

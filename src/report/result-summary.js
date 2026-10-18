@@ -131,6 +131,12 @@
                 <p>${escapeHtml(section.compositionOptimization.identity.status === "preserved" ? `Identidad conservada: ${section.compositionOptimization.identity.primary}.` : `Identidad propuesta sin confirmar: ${section.compositionOptimization.identity.proposed || "pendiente"}.`)}</p>` : ""}
               ${section.improves ? `<p class="result-summary__action"><strong>Refuerza:</strong> ${escapeHtml(section.improves)}</p>` : ""}
               ${section.action ? `<p class="result-summary__action"><strong>Protección:</strong> ${escapeHtml(section.action)}</p>` : ""}
+              ${section.strategicBans?.length ? `<div class="result-summary__ban-integration" aria-label="Bans estratégicos">
+                <p><strong>Bans prioritarios</strong></p>
+                <ul>
+                  ${section.strategicBans.map((ban) => `<li><strong>${escapeHtml(ban.champion)}</strong> · Amenaza: ${escapeHtml(ban.threat)}. ${escapeHtml(ban.reason)} Si se banea: ${escapeHtml(ban.expectedImpact)}</li>`).join("")}
+                </ul>
+              </div>` : ""}
               ${Array.isArray(section.candidates) ? `<ol class="result-summary__recommendation-list" aria-label="Candidatos priorizados">
                 ${section.candidates.map((candidate) => `
                   <li>
