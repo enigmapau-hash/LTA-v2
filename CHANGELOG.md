@@ -2,6 +2,10 @@
 
 ## v3.0.0
 
+### Capability 10 — Strategic Risk Analyzer
+- Priorizar los riesgos propios de la composición según la cobertura de la necesidad principal y la confirmación de una identidad común.
+- Explicar la severidad y el aspecto del plan amenazado, dejando la salida como metadato interno sin añadir bloques al informe.
+
 ### Capability 9 — Strategic Team Recomposer
 - Recomponer el equipo completo comparando las cinco piezas y las alternativas por rol ya evaluadas, con posibilidad de conservar o cambiar varias.
 - Explicar la mejora conjunta, la debilidad prioritaria que aborda y si la identidad estratégica se conserva o queda pendiente de confirmar.
