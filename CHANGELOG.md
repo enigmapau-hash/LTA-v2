@@ -2,6 +2,10 @@
 
 ## v3.0.0
 
+### Capability 15 — Strategic Report Closing
+- Cerrar el informe con una frase que explicita el estado frágil y la orientación principal ya calculada.
+- Omitir el cierre en estados sólidos, de riesgo, incompletos, sin orientación clara o cuando repite contenido visible.
+
 ### Capability 14 — Strategic Report Ban Integration
 - Integrar hasta dos bans prioritarios en el bloque de protección del informe, con amenaza, motivo e impacto esperado.
 - Omitir la integración cuando no hay bans válidos; no se añade una sección estratégica separada.
