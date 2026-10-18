@@ -66,6 +66,9 @@ jobs:
       - name: Validate the Ban Prioritizer
         run: node tools/check-ban-prioritizer.cjs
 
+      - name: Validate the Ban Recommendation Presenter
+        run: node tools/check-ban-recommendation-presenter.cjs
+
       - name: Validate composition stability
         run: node tools/check-composition-stability-engine.cjs
 
