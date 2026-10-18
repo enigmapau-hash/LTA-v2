@@ -2,6 +2,10 @@
 
 ## v3.0.0
 
+### Capability 12 — Ban Prioritizer
+- Priorizar hasta tres campeones del catálogo existente que potencian las amenazas estratégicas ya detectadas, con severidad, motivo e impacto esperado.
+- Excluir campeones propios, evitar bans repetidos y conservar la salida como metadato interno del informe.
+
 ### Capability 11 — Strategic Counterplay Advisor
 - Traducir los riesgos propios ya priorizados a estilos de amenaza generales y contramedidas breves, manteniendo severidad y foco del plan sin analizar un rival concreto.
 - Conservar la salida del advisor como metadato interno del informe, sin añadir un bloque visible.
