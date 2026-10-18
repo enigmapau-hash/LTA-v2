@@ -105,8 +105,8 @@ Según la composición y las conclusiones que resulten útiles, LTA podrá gener
 - La recomendación principal integrada en el bloque de mejora del informe: necesidad estratégica, perfil prioritario y hasta cuatro candidatos con motivo, fortalezas relevantes y limitaciones conocidas cuando aporten valor.
 - Una versión refinada de esa presentación que reduce repeticiones evidentes y conserva la necesidad, el perfil y los candidatos útiles ya priorizados, sin crear recomendaciones nuevas.
 - Recomendaciones para mejorarla y candidatos por rol cuando corresponda.
-- Una propuesta de optimización para una composición completa.
-- Una propuesta de evolución completa que identifica la pieza menos alineada, la sustituye por una alternativa priorizada del mismo rol y explica la mejora y la limitación que corrige. La identidad estratégica se conserva cuando las señales disponibles la respaldan; si no puede confirmarse sin un nuevo análisis, se indica expresamente.
+- Una propuesta de optimización que identifica una sustitución prioritaria del mismo rol para reforzar la necesidad estratégica.
+- Una recomposición estratégica del equipo completo que valora la aportación conjunta de las cinco piezas y puede conservar o sustituir varias. Explica la identidad resultante, la mejora global y la debilidad que corrige. Mantiene la identidad del plan cuando los candidatos disponibles la respaldan; si la composición no tiene una identidad clara, deja la identidad propuesta pendiente de confirmar mediante un análisis completo.
 - Advertencias sobre riesgos o debilidades estratégicas.
 - Propuestas de bans como orientación estratégica.
 
