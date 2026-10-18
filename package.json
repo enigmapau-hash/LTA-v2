@@ -20,6 +20,7 @@
     "test:strategic-counterplay-advisor": "node tools/check-strategic-counterplay-advisor.cjs",
     "test:ban-prioritizer": "node tools/check-ban-prioritizer.cjs",
     "test:ban-recommendation-presenter": "node tools/check-ban-recommendation-presenter.cjs",
+    "test:strategic-report-ban-integration": "node tools/check-strategic-report-ban-integration.cjs",
     "test:diagnostic-engine": "node tools/check-diagnostic-engine.cjs",
     "test:composition-stability": "node tools/check-composition-stability-engine.cjs",
     "test:win-condition-coherence": "node tools/check-win-condition-coherence-engine.cjs",

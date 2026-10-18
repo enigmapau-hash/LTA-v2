@@ -69,6 +69,9 @@ jobs:
       - name: Validate the Ban Recommendation Presenter
         run: node tools/check-ban-recommendation-presenter.cjs
 
+      - name: Validate strategic report ban integration
+        run: node tools/check-strategic-report-ban-integration.cjs
+
       - name: Validate composition stability
         run: node tools/check-composition-stability-engine.cjs
 

@@ -21,6 +21,7 @@ const { assessStrategicRisks } = require("../src/domain/strategic-risk-analyzer.
 const { adviseCounterplay } = require("../src/domain/strategic-counterplay-advisor.js");
 const { prioritizeBans } = require("../src/domain/ban-prioritizer.js");
 const { presentBanRecommendations } = require("../src/domain/ban-recommendation-presenter.js");
+const { integrateStrategicReportBans } = require("../src/report/strategic-report-ban-integration.js");
 const { buildStrategicReport } = require("../src/report/strategic-report.js");
 
 const root = path.resolve(__dirname, "..");
@@ -74,6 +75,10 @@ for (const [name, selection, expectedCoherence] of references) {
   const result = analyze(selection);
   assert.equal(result.diagnosis.coherence.status, expectedCoherence, `La referencia ${name} conserva su tipo de composición`);
   assert.deepEqual(presentBanRecommendations({ banPrioritizer: result.strategicBans }), result.banPresentation, `La presentación ${name} es determinista`);
+  const protectionSection = result.report.sections.find((section) => section.id === "protection");
+  const expectedIntegration = integrateStrategicReportBans({ banPresentation: result.banPresentation });
+  assert.deepEqual(protectionSection.strategicBans || null, expectedIntegration?.bans || null, `La integración ${name} conserva solo los bans presentados`);
+  assert.equal(result.report.sections.length, 3, "La integración conserva los tres bloques existentes del informe");
   assert.ok(["presented", "no-bans", "not-assessable"].includes(result.banPresentation.status));
   if (result.banPresentation.status === "presented") {
     assert.ok(result.banPresentation.bans.length <= 3);
@@ -113,11 +118,15 @@ const incompleteBans = prioritizeBans({ strategicRisks: incompleteRisks, strateg
 const incomplete = presentBanRecommendations({ banPrioritizer: incompleteBans });
 assert.equal(incompleteBans.status, "pending");
 assert.deepEqual(incomplete, { status: "pending", bans: [] }, "La composición incompleta mantiene la presentación pendiente");
+const incompleteReport = buildStrategicReport({ ...completeBase.reportInput, strategicBanPresentation: incomplete });
+assert.equal(incompleteReport.sections.find((section) => section.id === "protection").strategicBans, undefined, "No se muestran bans cuando la composición sigue incompleta");
 
 const clear = analyze({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" });
 const reportWithoutPresentation = buildStrategicReport(clear.reportInput);
-assert.deepEqual(clear.report.sections, reportWithoutPresentation.sections, "No crea un bloque visible nuevo en el informe");
+assert.equal(clear.report.sections.length, reportWithoutPresentation.sections.length, "Integra bans en un bloque existente sin añadir secciones");
+assert.deepEqual(clear.report.sections.slice(0, 2), reportWithoutPresentation.sections.slice(0, 2), "No altera diagnóstico ni corrección");
+assert.deepEqual(clear.report.sections[2].strategicBans, clear.banPresentation.bans.slice(0, 2), "La integración muestra solo los dos bans prioritarios dentro de protección");
 assert.deepEqual(clear.report.strategicBanPresentation, clear.banPresentation, "El informe conserva la presentación solo como dato interno");
-assert.equal(JSON.stringify(clear.report.sections).includes("strategicBanPresentation"), false);
+assert.equal(JSON.stringify(clear.report.sections).includes("strategicBanPresentation"), false, "No filtra el nombre de la capa interna a los bloques del informe");
 
 console.log("Ban Recommendation Presenter validado: composiciones claras, híbridas e incoherentes, estado incompleto, severidad, compacidad, deduplicación, determinismo e integración interna.");
