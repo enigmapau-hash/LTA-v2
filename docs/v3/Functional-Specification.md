@@ -107,6 +107,7 @@ Según la composición y las conclusiones que resulten útiles, LTA podrá gener
 - Recomendaciones para mejorarla y candidatos por rol cuando corresponda.
 - Una propuesta de optimización que identifica una sustitución prioritaria del mismo rol para reforzar la necesidad estratégica.
 - Una recomposición estratégica del equipo completo que valora la aportación conjunta de las cinco piezas y puede conservar o sustituir varias. Explica la identidad resultante, la mejora global y la debilidad que corrige. Mantiene la identidad del plan cuando los candidatos disponibles la respaldan; si la composición no tiene una identidad clara, deja la identidad propuesta pendiente de confirmar mediante un análisis completo.
+- Una evaluación priorizada de los riesgos propios de la composición, indicando su severidad, qué parte del plan amenazan y por qué. Solo se muestran riesgos respaldados por señales estratégicas existentes; no identifican un rival ni proponen bans.
 - Advertencias sobre riesgos o debilidades estratégicas.
 - Propuestas de bans como orientación estratégica.
 

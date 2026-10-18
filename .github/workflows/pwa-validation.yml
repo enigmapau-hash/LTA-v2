@@ -57,6 +57,9 @@ jobs:
       - name: Validate the Strategic Team Recomposer
         run: node tools/check-strategic-team-recomposer.cjs
 
+      - name: Validate the Strategic Risk Analyzer
+        run: node tools/check-strategic-risk-analyzer.cjs
+
       - name: Validate composition stability
         run: node tools/check-composition-stability-engine.cjs
 

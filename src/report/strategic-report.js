@@ -174,6 +174,7 @@
       title: "Cómo jugarla",
       confidence,
       strategicState,
+      ...(input.strategicRisks?.status === "assessed" ? { strategicRisks: input.strategicRisks } : {}),
       ...(closing ? { closing } : {}),
       sections,
     };

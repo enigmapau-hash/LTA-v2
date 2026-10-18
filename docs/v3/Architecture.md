@@ -42,6 +42,10 @@ El Strategic Recommendation Engine traduce la necesidad del Composition Optimize
 
 El Strategic Composition Optimizer usa esa cadena para proponer una sustitución prioritaria del mismo rol. El Strategic Team Recomposer compara las piezas actuales con las alternativas evaluadas por rol y busca una composición conjunta que respalde mejor el perfil prioritario y las alternativas compatibles. Puede conservar o cambiar varias piezas, mantiene campeones y roles únicos y explica la mejora y la limitación abordada. Conserva la identidad existente cuando los candidatos elegidos están alineados; si el diagnóstico no confirma una identidad, la señala como pendiente, sin ejecutar un nuevo análisis. Ambos optimizadores reutilizan señales transportadas por las capas anteriores y no consultan directamente los datos de origen. El alcance posterior del módulo contempla propuestas de bans. Este módulo entrega recomendaciones; no sustituye el análisis de la composición.
 
+### Strategic Risk Analysis
+
+El Strategic Risk Analyzer consume la necesidad prioritaria, la cobertura de sus perfiles en las piezas actuales y el estado de identidad que ya produce la recomposición. Prioriza riesgos de falta de respaldo para el plan, dependencia de una única pieza y falta de identidad confirmada. Cada riesgo expresa severidad, la parte del plan amenazada y una explicación breve. La capa se abstiene cuando la composición está incompleta o no hay señales suficientes; no evalúa rivales ni propone bans.
+
 ### Report Layer
 
 El Strategic Recommendation Presenter Integration adapta la salida compacta ya preparada por Recommendation Layer al bloque de mejora del informe. El Strategic Recommendation Polisher recibe esa integración y las salidas previas de optimización, perfiles, mapeo, evaluación y presentación; elimina duplicidades de texto o candidatos y normaliza la concisión, conservando orden y prioridad. No genera alternativas ni recalcula señales. El informe muestra la necesidad, el perfil principal y hasta cuatro candidatos priorizados con su motivo, fortalezas relevantes y limitaciones útiles. Ocupa el bloque de mejora existente para evitar duplicar la prioridad estratégica. El Report Layer presenta las conclusiones; no vuelve a analizar la composición ni recalcula decisiones estratégicas.
@@ -56,7 +60,8 @@ La información estratégica pasa entre los módulos en una secuencia clara:
 4. **Strategic Recommendation Presenter Integration** adapta la salida del Presenter al bloque de mejora; **Strategic Recommendation Polisher** quita repeticiones evidentes de esa salida sin alterar su decisión ni su orden.
 5. **Strategic Composition Optimizer** consume la cadena ya preparada y propone una sustitución prioritaria del mismo rol cuando existe una mejora respaldada.
 6. **Strategic Team Recomposer** consume las alternativas evaluadas por rol y su evidencia para seleccionar conjuntamente las cinco piezas del equipo revisado; puede proponer varios cambios y conserva la identidad cuando está respaldada.
-7. **Report Layer** muestra la recomendación y, cuando existe una propuesta de recomposición respaldada, la integra en el bloque de mejora existente junto con el diagnóstico y la protección.
+7. **Strategic Risk Analyzer** reutiliza las salidas de optimización, recomendación y recomposición para priorizar las vulnerabilidades propias de la composición, sin volver a calcular el análisis base.
+8. **Report Layer** muestra la recomendación y, cuando existe una propuesta de recomposición respaldada, la integra en el bloque de mejora existente junto con el diagnóstico y la protección. Conserva los riesgos como metadatos internos hasta que una integración visible aporte valor sin duplicar el informe.
 
 Cada módulo consume las salidas que necesita de los anteriores. Ninguno vuelve a calcular una señal o decisión ya producida, salvo que sea necesario para mantener una conclusión válida.
 
@@ -86,6 +91,7 @@ Los límites entre módulos se mantienen explícitos:
 - **Strategic Recommendation Polisher** refina concisión y duplicidades visibles; no cambia prioridades, candidatos ni conclusiones.
 - **Strategic Composition Optimizer** propone una sustitución con la misma prioridad estratégica y el mismo rol; no vuelve a ejecutar el análisis base ni afirma una identidad de equipo no confirmada por las señales disponibles.
 - **Strategic Team Recomposer** compara alternativas por rol para valorar el equipo como conjunto; no vuelve a analizar la composición, consulta el origen de datos ni presenta una identidad no confirmada como un hecho.
+- **Strategic Risk Analyzer** prioriza vulnerabilidades de la composición con señales ya calculadas; no ejecuta el diagnóstico, no atribuye intenciones a un rival y no formula bans.
 - **Report Layer** comunica los resultados recibidos; no vuelve a analizar la composición ni decide qué recomendación es mejor.
 
 ## 6. Principios de coherencia
