@@ -2,6 +2,10 @@
 
 ## v3.0.0
 
+### Capability 11 — Strategic Counterplay Advisor
+- Traducir los riesgos propios ya priorizados a estilos de amenaza generales y contramedidas breves, manteniendo severidad y foco del plan sin analizar un rival concreto.
+- Conservar la salida del advisor como metadato interno del informe, sin añadir un bloque visible.
+
 ### Capability 10 — Strategic Risk Analyzer
 - Priorizar los riesgos propios de la composición según la cobertura de la necesidad principal y la confirmación de una identidad común.
 - Explicar la severidad y el aspecto del plan amenazado, dejando la salida como metadato interno sin añadir bloques al informe.

@@ -175,6 +175,7 @@
       confidence,
       strategicState,
       ...(input.strategicRisks?.status === "assessed" ? { strategicRisks: input.strategicRisks } : {}),
+      ...(input.strategicCounterplay?.status === "advised" ? { strategicCounterplay: input.strategicCounterplay } : {}),
       ...(closing ? { closing } : {}),
       sections,
     };
