@@ -61,6 +61,7 @@ function evaluate(picks) {
   const optimizer = optimizeComposition({ diagnosis, correction });
   const recommendations = recommendProfiles({ diagnosis, optimizer });
   const result = mapCandidates({
+    diagnosis,
     optimizer,
     recommendations,
     candidatesByRole,
@@ -117,6 +118,7 @@ verify(incoherentEvaluation.result);
 
 for (const evaluation of [clearEvaluation, hybridEvaluation, incoherentEvaluation]) {
   const repeated = mapCandidates({
+    diagnosis: evaluation.diagnosis,
     optimizer: evaluation.optimizer,
     recommendations: evaluation.recommendations,
     candidatesByRole,
@@ -152,6 +154,30 @@ assert.ok(!(variedNames.includes("Alpha") && variedNames.includes("Beta")), "No 
 assert.ok(!(variedNames.includes("Gamma") && variedNames.includes("Delta")), "La lista evita duplicar el mismo perfil funcional");
 assert.equal(new Set(variedNames.map((name) => name.toLocaleLowerCase("es"))).size, variedNames.length,
   "Un campeón disponible en varias posiciones solo aparece una vez");
+
+const compositionAware = mapCandidates({
+  diagnosis: {
+    plan: { primaryIdentity: "Front to Back", secondaryIdentity: "" },
+    winCondition: { primary: { identity: "Front to Back" } },
+    winConditionCoherence: { status: "coherent" },
+    contradictions: { status: "coherent", identities: [] },
+  },
+  optimizer: { status: "prioritized", priority: { need: { id: "frontToBack", label: "Juego frontal" } } },
+  recommendations: { status: "recommended", plan: { primaryIdentity: "Front to Back" }, profiles: [{ id: "frontToBack", label: "Juego frontal", priority: 1, reason: "Sostener el plan.", improves: "la ejecución frontal" }] },
+  candidatesByRole: {
+    top: [
+      { champion: "Context Fit", identity: "Front to Back", strengths: "Frontline" },
+      { champion: "Catalog Fit", identity: "Poke", strengths: "Frontline · DPS", function: "Front to Back" },
+    ],
+    jungle: [{ champion: "DPS Option", identity: "Mage", strengths: "DPS" }],
+    mid: [{ champion: "Frontline Option", identity: "Tank", strengths: "Frontline" }],
+  },
+});
+assert.equal(compositionAware.profiles[0].candidates[0].champion, "Context Fit",
+  "La identidad del equipo debe pesar más que una ventaja genérica de señales en el catálogo");
+assert.ok(compositionAware.profiles[0].candidates.some((candidate) => candidate.champion === "Catalog Fit"),
+  "El contexto debe ordenar candidatos compatibles sin eliminar alternativas relevantes");
+
 const selectedAlpha = mapCandidates({
   optimizer: { status: "prioritized", priority: { need: { id: "pick", label: "Pick" } } },
   recommendations: { status: "recommended", profiles: [{ id: "pick", label: "Pick", priority: 1, reason: "Abrir una ventaja.", improves: "encontrar objetivos" }] },

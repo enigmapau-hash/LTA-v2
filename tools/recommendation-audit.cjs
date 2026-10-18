@@ -22,6 +22,16 @@ const ROLE_SHEETS = Object.freeze({
 const REPEAT_CASE_THRESHOLD = 3;
 const PAIR_OVERLAP_THRESHOLD = 0.5;
 const PAIR_MIN_SHARED_CHAMPIONS = 2;
+// Historical snapshot captured from the PR #23 report before the first recalibration.
+const PRE_QUALITY_PASS_BASELINE = Object.freeze({
+  candidateMentions: 83,
+  uniqueChampions: 32,
+  championDiversity: 0.386,
+  profileRoleCoverage: 0.953,
+  repeatedChampions: 17,
+  similarPairs: 7,
+  maxChampionCases: 5,
+});
 const root = path.resolve(__dirname, "..");
 
 function loadCandidateCatalog(workbookPath = path.join(root, "Draft Pool.xlsx")) {
@@ -51,6 +61,7 @@ function runPipeline(picks, candidatesByRole) {
   const optimizer = optimizeComposition({ diagnosis, correction });
   const recommendations = recommendProfiles({ diagnosis, optimizer });
   const mappedCandidates = mapCandidates({
+    diagnosis,
     optimizer,
     recommendations,
     candidatesByRole,
@@ -170,6 +181,13 @@ function auditRecommendations(candidatesByRole) {
 function renderMarkdown(audit) {
   const { metrics, cases, champions, repeatedChampions, similarPairs, profileCounts, thresholds } = audit;
   const pct = (ratio) => (ratio * 100).toFixed(1) + "%";
+  const relativeChange = (before, after) => ((after - before) / before * 100).toFixed(1) + "%";
+  const percentagePointChange = (before, after) => {
+    const difference = (after - before) * 100;
+    return (difference > 0 ? "+" : "") + difference.toFixed(1) + " p.p.";
+  };
+  const afterRepeatedCount = repeatedChampions.length;
+  const afterMaxChampionCases = champions[0]?.cases || 0;
   const lines = [
     "# Auditoría de recomendaciones estratégicas",
     "",
@@ -179,7 +197,7 @@ function renderMarkdown(audit) {
     "",
     "La herramienta genera diez composiciones de referencia desde nombres de campeones presentes en el catálogo: Front to Back, Dive, Pick, Poke, Split Push, Teamfight, escalado, Early Game, híbrida e incoherente. Los atributos de cada pieza se leen del catálogo; no se duplican ni se inventan para la auditoría.",
     "",
-    "Para cada equipo ejecuta la cadena existente de diagnóstico, corrección, Composition Optimizer, Strategic Recommendation Engine, Candidate Mapper y Candidate Evaluator. La auditoría no cambia esos motores ni selecciona alternativas nuevas. Cuenta como recomendación cada candidato evaluado dentro de su perfil estratégico.",
+    "Para cada equipo ejecuta la cadena existente de diagnóstico, corrección, Composition Optimizer, Strategic Recommendation Engine, Candidate Mapper y Candidate Evaluator. La recomendación mantiene el perfil más directo para la necesidad prioritaria y elige una alternativa compatible con la identidad ya diagnosticada. El mapeo prioriza el ajuste a identidad y win condition antes de usar la cantidad genérica de señales como desempate. Cuenta como recomendación cada candidato evaluado dentro de su perfil estratégico.",
     "",
     "La generación y ordenación son deterministas. Para regenerar este informe ejecuta node tools/recommendation-audit.cjs --write; para verificar contratos y reproducibilidad ejecuta node tools/check-recommendation-audit.cjs.",
     "",
@@ -195,6 +213,22 @@ function renderMarkdown(audit) {
     "| Cobertura de rol por perfil | " + pct(metrics.profileRoleCoverage) + " | Pares perfil/rol con al menos una alternativa, entre los pares de perfiles recomendados. |",
     "| Perfiles estratégicos distintos | " + metrics.distinctProfiles + " | Variedad de perfiles ofrecidos por la cadena en el conjunto auditado. |",
     "| Pares de composiciones con alta repetición | " + metrics.similarPairCount + " | Pares que comparten al menos " + thresholds.pairSharedChampions + " campeones recomendados y Jaccard ≥ " + pct(thresholds.pairJaccard) + ". |",
+    "",
+    "### Comparación con la línea base anterior al Quality Pass 1",
+    "",
+    "La línea base conserva las métricas generadas por la herramienta en la PR #23, antes de esta recalibración.",
+    "",
+    "| Métrica | Antes | Después | Cambio |",
+    "| --- | ---: | ---: | ---: |",
+    "| Menciones de candidatos | " + PRE_QUALITY_PASS_BASELINE.candidateMentions + " | " + metrics.totalCandidateMentions + " | " + relativeChange(PRE_QUALITY_PASS_BASELINE.candidateMentions, metrics.totalCandidateMentions) + " |",
+    "| Campeones distintos | " + PRE_QUALITY_PASS_BASELINE.uniqueChampions + " | " + metrics.uniqueRecommendedChampions + " | " + relativeChange(PRE_QUALITY_PASS_BASELINE.uniqueChampions, metrics.uniqueRecommendedChampions) + " |",
+    "| Diversidad de campeones | " + pct(PRE_QUALITY_PASS_BASELINE.championDiversity) + " | " + pct(metrics.championDiversity) + " | " + percentagePointChange(PRE_QUALITY_PASS_BASELINE.championDiversity, metrics.championDiversity) + " |",
+    "| Cobertura de rol por perfil | " + pct(PRE_QUALITY_PASS_BASELINE.profileRoleCoverage) + " | " + pct(metrics.profileRoleCoverage) + " | " + percentagePointChange(PRE_QUALITY_PASS_BASELINE.profileRoleCoverage, metrics.profileRoleCoverage) + " |",
+    "| Campeones repetidos en ≥3 composiciones | " + PRE_QUALITY_PASS_BASELINE.repeatedChampions + " | " + afterRepeatedCount + " | " + relativeChange(PRE_QUALITY_PASS_BASELINE.repeatedChampions, afterRepeatedCount) + " |",
+    "| Pares con alta coincidencia | " + PRE_QUALITY_PASS_BASELINE.similarPairs + " | " + metrics.similarPairCount + " | " + relativeChange(PRE_QUALITY_PASS_BASELINE.similarPairs, metrics.similarPairCount) + " |",
+    "| Máxima frecuencia de un campeón | " + PRE_QUALITY_PASS_BASELINE.maxChampionCases + "/10 | " + afterMaxChampionCases + "/10 | " + relativeChange(PRE_QUALITY_PASS_BASELINE.maxChampionCases, afterMaxChampionCases) + " |",
+    "",
+    "La concentración repetida baja: los pares con alta coincidencia pasan de " + PRE_QUALITY_PASS_BASELINE.similarPairs + " a " + metrics.similarPairCount + " y los campeones frecuentes de " + PRE_QUALITY_PASS_BASELINE.repeatedChampions + " a " + afterRepeatedCount + ". La cobertura de rol por perfil retrocede " + Math.abs((metrics.profileRoleCoverage - PRE_QUALITY_PASS_BASELINE.profileRoleCoverage) * 100).toFixed(1) + " p.p. y el catálogo único recomendado disminuye en " + (PRE_QUALITY_PASS_BASELINE.uniqueChampions - metrics.uniqueRecommendedChampions) + "; conviene vigilar estos dos costes en auditorías futuras.",
     "",
     "### Perfiles recomendados",
     "",

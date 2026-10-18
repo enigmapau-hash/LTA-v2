@@ -61,7 +61,7 @@ function evaluate(picks) {
   const correction = proposeCorrections({ picks, diagnosis, candidatesByRole });
   const optimizer = optimizeComposition({ diagnosis, correction });
   const recommendations = recommendProfiles({ diagnosis, optimizer });
-  const mappedCandidates = mapCandidates({ optimizer, recommendations, candidatesByRole });
+  const mappedCandidates = mapCandidates({ diagnosis, optimizer, recommendations, candidatesByRole });
   const result = evaluateCandidates({ diagnosis, optimizer, recommendations, mappedCandidates });
   return { diagnosis, optimizer, recommendations, mappedCandidates, result };
 }

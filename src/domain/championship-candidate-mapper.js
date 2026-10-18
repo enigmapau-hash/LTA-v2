@@ -70,10 +70,43 @@
   }
 
   function candidateOrder(left, right) {
-    return right.signals.length - left.signals.length
+    return right.contextFit - left.contextFit
+      || right.signals.length - left.signals.length
       || right.matchedFields.length - left.matchedFields.length
       || ROLE_ORDER.indexOf(left.role) - ROLE_ORDER.indexOf(right.role)
       || left.champion.localeCompare(right.champion, "es");
+  }
+
+  function normalizeIdentity(value) {
+    return normalize(value).replace(/\s+/g, " ").trim();
+  }
+
+  function identityMatches(candidateIdentity, targetIdentity) {
+    const candidate = normalizeIdentity(candidateIdentity);
+    const target = normalizeIdentity(targetIdentity);
+    if (!candidate || !target) return false;
+    return candidate === target || candidate.split(" · ").includes(target) || candidate.includes(target);
+  }
+
+  function contextFit(candidate, diagnosis) {
+    const primary = diagnosis?.plan?.primaryIdentity;
+    const secondary = diagnosis?.plan?.secondaryIdentity;
+    const winCondition = diagnosis?.winCondition?.primary?.identity;
+    const supportsPrimary = identityMatches(candidate.identity, primary);
+    const supportsSecondary = identityMatches(candidate.identity, secondary);
+    const supportsWinCondition = diagnosis?.winConditionCoherence?.status !== "contradictory"
+      && identityMatches(candidate.identity, winCondition);
+    const opposingIdentities = (diagnosis?.contradictions?.identities || [])
+      .filter((identity) => !identityMatches(identity, primary));
+    const contradictsPlan = diagnosis?.contradictions?.status === "contradictory"
+      && opposingIdentities.some((identity) => identityMatches(candidate.identity, identity));
+
+    // Give composition evidence precedence over generic catalog signal counts.
+    // The final tie-breakers still prefer stronger profile evidence and remain stable.
+    return (supportsPrimary ? 4 : 0)
+      + (supportsWinCondition ? 2 : 0)
+      + (supportsSecondary ? 1 : 0)
+      - (contradictsPlan ? 8 : 0);
   }
 
   function selectDiverseCandidates(ranked) {
@@ -129,7 +162,14 @@
 
         const key = normalize(champion);
         const existing = ranked.get(key);
-        const item = { champion, role: candidate.role, signals, matchedFields, candidate };
+        const item = {
+          champion,
+          role: candidate.role,
+          signals,
+          matchedFields,
+          contextFit: contextFit(candidate, input.diagnosis),
+          candidate,
+        };
         if (!existing || candidateOrder(item, existing) < 0) ranked.set(key, item);
       }
 
