@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.1.0
+
+### Added
+- Recalibración contextual de las recomendaciones estratégicas
+
+
 ## v3.0.0
 
 ### Capability 15 — Strategic Report Closing
