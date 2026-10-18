@@ -39,6 +39,9 @@ jobs:
       - name: Validate the internal Strategic Recommendation Engine
         run: node tools/check-strategic-recommendation-engine.cjs
 
+      - name: Validate recommendation audit reproducibility
+        run: node tools/check-recommendation-audit.cjs
+
       - name: Validate the Championship Candidate Mapper
         run: node tools/check-championship-candidate-mapper.cjs
 
