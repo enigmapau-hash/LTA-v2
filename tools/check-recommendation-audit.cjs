@@ -26,6 +26,10 @@ assert.ok(first.metrics.recommendationCoverage >= 0 && first.metrics.recommendat
 assert.ok(first.metrics.championDiversity >= 0 && first.metrics.championDiversity <= 1);
 assert.ok(first.metrics.profileRoleCoverage >= 0 && first.metrics.profileRoleCoverage <= 1);
 assert.equal(first.metrics.compositionCount, 10);
+assert.ok(first.metrics.totalCandidateMentions < 83, "Quality Pass 1 debe reducir menciones redundantes frente a la línea base");
+assert.ok(first.metrics.championDiversity > 0.386, "Quality Pass 1 debe aumentar la diversidad frente a la línea base");
+assert.ok(first.metrics.similarPairCount < 7, "Quality Pass 1 debe reducir pares de composiciones con alta coincidencia");
+assert.ok(first.champions[0].cases < 5, "Ningún campeón debe repetirse tanto como el máximo de la línea base");
 
 for (const item of first.cases) {
   const selected = new Set(REPRESENTATIVE_COMPOSITIONS.find((fixture) => fixture.id === item.id)
@@ -47,6 +51,9 @@ assert.ok(first.similarPairs.every((pair) => pair.shared >= first.thresholds.pai
   && pair.overlap >= first.thresholds.pairJaccard));
 assert.equal(renderMarkdown(first), renderMarkdown(second), "El informe Markdown debe ser idéntico entre ejecuciones");
 assert.match(renderMarkdown(first), /Metodología[\s\S]*Métricas[\s\S]*Limitaciones[\s\S]*Cómo interpretar/);
+assert.match(renderMarkdown(first), /Comparación con la línea base anterior al Quality Pass 1/);
+assert.match(renderMarkdown(first), /38\.6% \| 55\.4% \| \+16\.8 p\.p\./,
+  "El informe conserva la comparación de diversidad antes/después");
 
 const noRecommendations = auditRecommendations(Object.fromEntries(Object.keys(catalog).map((role) => [
   role,

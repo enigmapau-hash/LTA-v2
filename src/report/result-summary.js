@@ -52,6 +52,7 @@
     const recommendations = recommendProfiles({ diagnosis, optimizer });
     const candidatesByRole = window.LTAStrategicReportCandidatesByRole || {};
     const mappedCandidates = mapCandidates({
+      diagnosis,
       optimizer,
       recommendations,
       candidatesByRole,

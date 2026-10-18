@@ -35,8 +35,48 @@
     scaling: ["scaling", "frontline", "peel"],
   });
 
+  const PROFILE_PREFERENCES_BY_IDENTITY = Object.freeze({
+    "front to back": ["peel", "frontline", "frontToBack", "scaling", "mapControl"],
+    dive: ["pick", "followUp", "engage"],
+    pick: ["mapControl", "followUp", "sustainedDamage", "frontToBack"],
+    poke: ["disengage", "peel", "zoneControl", "frontline"],
+    "split push": ["mapControl", "sideLane", "pick", "followUp"],
+    teamfight: ["followUp", "frontline", "engage", "frontToBack"],
+    escalado: ["scaling", "frontline", "peel"],
+    "early game": ["earlyPressure", "pick", "engage"],
+  });
+
   function notRecommended(status) {
     return { status, profiles: [] };
+  }
+
+  function normalize(value) {
+    return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es").trim();
+  }
+
+  function contextualProfiles(profileIds, diagnosis) {
+    const direct = profileIds[0];
+    const alternatives = profileIds.slice(1);
+    if (!alternatives.length) return [direct];
+
+    const identities = [
+      diagnosis?.plan?.primaryIdentity,
+      diagnosis?.plan?.secondaryIdentity,
+      diagnosis?.winConditionCoherence?.status === "contradictory" ? "" : diagnosis?.winCondition?.primary?.identity,
+    ].map(normalize).filter(Boolean);
+    const preferenceLists = identities.map((identity) => PROFILE_PREFERENCES_BY_IDENTITY[identity] || []);
+    const preferredAlternative = alternatives.map((id, index) => ({
+      id,
+      index,
+      contextRank: preferenceLists.reduce((rank, preferences) => {
+        const position = preferences.indexOf(id);
+        return position < 0 ? rank : Math.min(rank, position);
+      }, Number.MAX_SAFE_INTEGER),
+    })).sort((left, right) => left.contextRank - right.contextRank || left.index - right.index)[0];
+
+    return [direct, preferredAlternative.contextRank === Number.MAX_SAFE_INTEGER
+      ? alternatives[0]
+      : preferredAlternative.id];
   }
 
   function recommendProfiles(input = {}) {
@@ -54,7 +94,8 @@
     const identity = diagnosis.plan?.clear
       ? String(diagnosis.plan.primaryIdentity || "").trim()
       : "";
-    const profiles = profileIds.map((id, index) => {
+    const selectedProfileIds = contextualProfiles(profileIds, diagnosis);
+    const profiles = selectedProfileIds.map((id, index) => {
       const profile = PROFILE_CATALOGUE[id];
       const alignment = identity ? ` para el plan ${identity}` : "";
       return {
