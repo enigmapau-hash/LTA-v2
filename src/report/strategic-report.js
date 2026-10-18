@@ -73,7 +73,7 @@
     };
   }
 
-  function recommendationSection(recommendation, compositionOptimization) {
+  function recommendationSection(recommendation, compositionOptimization, teamRecomposition) {
     if (!recommendation || !Array.isArray(recommendation.candidates) || !recommendation.candidates.length) return null;
     return {
       id: "correction",
@@ -84,6 +84,9 @@
       candidates: recommendation.candidates,
       ...(compositionOptimization?.status === "optimized" && compositionOptimization.proposal
         ? { compositionOptimization: compositionOptimization.proposal }
+        : {}),
+      ...(teamRecomposition?.status === "recomposed" && teamRecomposition.proposal
+        ? { teamRecomposition: teamRecomposition.proposal }
         : {}),
     };
   }
@@ -160,7 +163,7 @@
       secondaryObservation,
     });
     const closing = strategicClosingEngine.buildStrategicClosing({ strategicState });
-    const strategicRecommendation = recommendationSection(input.recommendation, input.compositionOptimization);
+    const strategicRecommendation = recommendationSection(input.recommendation, input.compositionOptimization, input.teamRecomposition);
     const sections = [
       diagnosisSection(diagnosis, { ...diagnosticSummary, summary: diagnosisExplanation }),
       strategicRecommendation || correctionSection(input.correction),

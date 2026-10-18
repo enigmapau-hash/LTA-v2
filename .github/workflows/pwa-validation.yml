@@ -54,6 +54,9 @@ jobs:
       - name: Validate the Strategic Recommendation Polisher
         run: node tools/check-strategic-recommendation-polisher.cjs
 
+      - name: Validate the Strategic Team Recomposer
+        run: node tools/check-strategic-team-recomposer.cjs
+
       - name: Validate composition stability
         run: node tools/check-composition-stability-engine.cjs
 

@@ -2,6 +2,10 @@
 
 ## v3.0.0
 
+### Capability 9 — Strategic Team Recomposer
+- Recomponer el equipo completo comparando las cinco piezas y las alternativas por rol ya evaluadas, con posibilidad de conservar o cambiar varias.
+- Explicar la mejora conjunta, la debilidad prioritaria que aborda y si la identidad estratégica se conserva o queda pendiente de confirmar.
+
 ### Capability 8 — Strategic Composition Optimizer
 - Proponer una versión completa revisada con una sustitución prioritaria del mismo rol, usando candidatos y señales ya evaluados y preservando la identidad cuando existe respaldo.
 - Indicar cuándo la identidad de una composición inicialmente incoherente queda pendiente de confirmar, en vez de presentarla como una conclusión analizada.
