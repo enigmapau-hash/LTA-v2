@@ -38,11 +38,11 @@ assert.equal(hybrid.report.closing, undefined, "El matiz híbrido ya aporta el c
 const incoherentPicks = composition({ top: "Fiora", jungle: "Elise", mid: "Xerath", botline: "Draven", support: "Lulu" });
 const incoherent = reportFor(incoherentPicks);
 assert.equal(incoherent.report.strategicState.status, "fragile");
-assert.equal(incoherent.report.closing, "Antes de jugar, definid un enfoque común.");
+assert.equal(incoherent.report.closing.text, "Composición frágil: antes de jugar, definid un enfoque común.");
 
 const contradictory = reportFor(composition({ top: "Ambessa", jungle: "Evelynn", mid: "Ziggs", botline: "Tristana", support: "Heimerdinger" }));
 assert.equal(contradictory.report.strategicState.status, "fragile");
-assert.equal(contradictory.report.closing, "Elegid qué identidad debe guiar las peleas.");
+assert.equal(contradictory.report.closing.text, "Composición frágil: elegid qué identidad debe guiar las peleas.");
 
 const stabilityClosing = buildStrategicClosing({ strategicState: { status: "fragile", reason: "key-pick-dependency" } });
 assert.equal(stabilityClosing, "Preparad una alternativa si falta la pieza que sostiene el plan.");
@@ -50,11 +50,11 @@ assert.equal(buildStrategicClosing({ strategicState: { status: "risk", reason: "
 assert.equal(buildStrategicClosing({ strategicState: { status: "not-assessed", reason: "key-pick-dependency" } }), null);
 assert.equal(buildStrategicClosing({ strategicState: { status: "fragile" } }), null, "Sin motivo clasificado no inventa un cierre");
 
-for (const closing of [incoherent.report.closing, contradictory.report.closing, stabilityClosing]) {
+for (const closing of [incoherent.report.closing.text, contradictory.report.closing.text, stabilityClosing]) {
   assert.ok(closing.split(/\s+/).length <= 11, "El cierre debe ser breve");
   assert.doesNotMatch(closing, /%|puntuaci[oó]n|probabilidad|candidatos|\bTop:|\bJungla:/i);
 }
-assert.notEqual(incoherent.report.closing, incoherent.report.sections[0].explanation, "El cierre aporta una acción y no repite el diagnóstico");
+assert.notEqual(incoherent.report.closing.text, incoherent.report.sections[0].explanation, "El cierre aporta una acción y no repite el diagnóstico");
 assert.notEqual(hybrid.report.closing, hybrid.report.sections[0].explanation, "No repite el resumen ni el matiz secundario");
 assert.deepEqual(reportFor(incoherentPicks).report.closing, incoherent.report.closing);
 assert.deepEqual(incoherent.report.sections.map((section) => section.id), ["diagnosis", "correction", "protection"], "El cierre no crea otra sección de informe");

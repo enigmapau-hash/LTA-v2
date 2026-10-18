@@ -150,7 +150,7 @@
             </article>
           `).join("")}
         </div>
-        ${report.closing ? `<p class="result-summary__strategic-closing">${escapeHtml(report.closing)}</p>` : ""}
+        ${report.closing?.status === "presented" ? `<p class="result-summary__strategic-closing">${escapeHtml(report.closing.text)}</p>` : ""}
       </section>
     `;
   }

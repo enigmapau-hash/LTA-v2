@@ -80,6 +80,7 @@ La información estratégica pasa entre los módulos en una secuencia clara:
 10. **Ban Recommendation Presenter** compacta y ordena la salida calculada, sin cambiar los bans.
 11. **Strategic Report Ban Integration** integra hasta dos bans prioritarios dentro del bloque de protección, o no añade contenido si no hay bans utilizables.
 12. **Report Layer** muestra la recomendación y, cuando existe una propuesta de recomposición respaldada, la integra en el bloque de mejora existente junto con el diagnóstico y la protección. Presenta los bans dentro de la protección sin volver a calcularlos.
+13. **Strategic Report Closing** consume el estado estratégico y la orientación de cierre ya calculados. Añade una lectura final breve solo para fragilidad confirmada y omite el texto si no aporta valor o duplica un bloque visible.
 
 Cada módulo consume las salidas que necesita de los anteriores. Ninguno vuelve a calcular una señal o decisión ya producida, salvo que sea necesario para mantener una conclusión válida.
 
@@ -114,6 +115,7 @@ Los límites entre módulos se mantienen explícitos:
 - **Ban Prioritizer** selecciona campeones del catálogo que respaldan los estilos de amenaza existentes; no recalcula riesgos, lee el Excel, analiza un rival concreto ni simula la Champion Select.
 - **Ban Recommendation Presenter** ordena y compacta los bans ya priorizados; no modifica su prioridad estratégica ni genera candidatos.
 - **Strategic Report Ban Integration** incorpora al bloque de protección los bans preparados por Presenter; no prioriza ni recalcula amenazas o bans.
+- **Strategic Report Closing** comunica el estado global y la orientación ya disponibles; no clasifica de nuevo la composición ni añade un cierre cuando no existe una razón clara para mostrarlo.
 - **Report Layer** comunica los resultados recibidos; no vuelve a analizar la composición ni decide qué recomendación es mejor.
 
 ## 6. Principios de coherencia

@@ -20,13 +20,16 @@
   const banIntegration = typeof module === "object" && module.exports
     ? require("./strategic-report-ban-integration.js")
     : root.LTAStrategicReportBanIntegration;
-  const builder = factory(explanations, confidenceEngine, diagnosticSummaryEngine, secondaryObservationEngine, strategicStateEngine, strategicClosingEngine, banIntegration);
+  const closingIntegration = typeof module === "object" && module.exports
+    ? require("./strategic-report-closing.js")
+    : root.LTAStrategicReportClosing;
+  const builder = factory(explanations, confidenceEngine, diagnosticSummaryEngine, secondaryObservationEngine, strategicStateEngine, strategicClosingEngine, banIntegration, closingIntegration);
   if (typeof module === "object" && module.exports) {
     module.exports = builder;
   } else {
     root.LTAStrategicReportBuilder = Object.freeze(builder);
   }
-})(typeof window !== "undefined" ? window : globalThis, function (explanations, confidenceEngine, diagnosticSummaryEngine, secondaryObservationEngine, strategicStateEngine, strategicClosingEngine, banIntegration) {
+})(typeof window !== "undefined" ? window : globalThis, function (explanations, confidenceEngine, diagnosticSummaryEngine, secondaryObservationEngine, strategicStateEngine, strategicClosingEngine, banIntegration, closingIntegration) {
   "use strict";
 
   function diagnosisSection(diagnosis, summary) {
@@ -164,13 +167,18 @@
       diagnosticSummary,
       secondaryObservation,
     });
-    const closing = strategicClosingEngine.buildStrategicClosing({ strategicState });
     const strategicRecommendation = recommendationSection(input.recommendation, input.compositionOptimization, input.teamRecomposition);
     const sections = [
       diagnosisSection(diagnosis, { ...diagnosticSummary, summary: diagnosisExplanation }),
       strategicRecommendation || correctionSection(input.correction),
       protectionSection(input.protection, input.strategicBanPresentation),
     ].map((section) => adaptSectionTone(section, confidence.conclusions[section.id]?.level));
+    const closingGuidance = strategicClosingEngine.buildStrategicClosing({ strategicState });
+    const closing = closingIntegration.integrateStrategicReportClosing({
+      strategicState,
+      guidance: closingGuidance,
+      sections,
+    });
     return {
       status: diagnosis?.status === "assessed" ? "assessed" : "not-assessable",
       title: "Cómo jugarla",

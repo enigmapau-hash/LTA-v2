@@ -112,6 +112,7 @@ Según la composición y las conclusiones que resulten útiles, LTA podrá gener
 - Una lista breve y priorizada de campeones del catálogo disponible que potencian las amenazas detectadas, con la severidad, el motivo y el impacto estratégico esperado de cada ban. No simula una selección rival completa.
 - Una presentación compacta de los bans priorizados que conserva el orden por severidad e impacto, con el campeón, la amenaza, el motivo y el efecto esperado. Reutiliza los bans calculados y no vuelve a analizar la composición; su salida se prepara para el informe sin añadir todavía un bloque visible.
 - Cuando aporta valor, el informe incorpora hasta dos de esos bans dentro del bloque de protección, indicando qué amenaza castigan, por qué importan y el impacto esperado si se banean. No crea una sección independiente ni muestra contenido si no hay bans utilizables.
+- Cuando el estado estratégico es frágil y existe una orientación clara, el cierre del informe resume ese estado y la acción principal en una frase breve. Omite el cierre para composiciones sólidas, con riesgo, incompletas o cuando repetiría contenido ya visible.
 - Advertencias sobre riesgos o debilidades estratégicas.
 - Propuestas de bans como orientación estratégica.
 
