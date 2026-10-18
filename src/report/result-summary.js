@@ -17,6 +17,7 @@
   const recomposeStrategicTeam = window.LTAStrategicTeamRecomposer?.recomposeStrategicTeam;
   const assessStrategicRisks = window.LTAStrategicRiskAnalyzer?.assessStrategicRisks;
   const adviseCounterplay = window.LTAStrategicCounterplayAdvisor?.adviseCounterplay;
+  const prioritizeBans = window.LTABanPrioritizer?.prioritizeBans;
   const buildStrategicReport = window.LTAStrategicReportBuilder?.buildStrategicReport;
 
   let refreshQueued = false;
@@ -29,7 +30,7 @@
   }
 
   function renderStrategicReport(items) {
-    if (![diagnoseComposition, proposeCorrections, protectComposition, optimizeComposition, recommendProfiles, mapCandidates, evaluateCandidates, presentRecommendations, presentForReport, polishRecommendation, optimizeStrategicComposition, recomposeStrategicTeam, assessStrategicRisks, adviseCounterplay, buildStrategicReport].every((fn) => typeof fn === "function")) return "";
+    if (![diagnoseComposition, proposeCorrections, protectComposition, optimizeComposition, recommendProfiles, mapCandidates, evaluateCandidates, presentRecommendations, presentForReport, polishRecommendation, optimizeStrategicComposition, recomposeStrategicTeam, assessStrategicRisks, adviseCounterplay, prioritizeBans, buildStrategicReport].every((fn) => typeof fn === "function")) return "";
     const picks = items.map((item) => ({
       role: item.role,
       champion: item.champion,
@@ -91,6 +92,12 @@
       teamRecomposition,
     });
     const strategicCounterplay = adviseCounterplay({ strategicRisks });
+    const strategicBans = prioritizeBans({
+      strategicRisks,
+      strategicCounterplay,
+      mappedCandidates,
+      championCatalog: candidatesByRole,
+    });
     const report = buildStrategicReport({
       diagnosis,
       correction,
@@ -100,6 +107,7 @@
       teamRecomposition,
       strategicRisks,
       strategicCounterplay,
+      strategicBans,
     });
 
     return `
