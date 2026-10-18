@@ -2,6 +2,10 @@
 
 ## v3.0.0
 
+### Capability 13 — Ban Recommendation Presenter
+- Preparar una presentación compacta y determinista de los bans priorizados, ordenada por severidad e impacto ya calculados.
+- Conservar campeón, amenaza, motivo e impacto como metadatos internos del informe, sin añadir un bloque visible.
+
 ### Capability 12 — Ban Prioritizer
 - Priorizar hasta tres campeones del catálogo existente que potencian las amenazas estratégicas ya detectadas, con severidad, motivo e impacto esperado.
 - Excluir campeones propios, evitar bans repetidos y conservar la salida como metadato interno del informe.

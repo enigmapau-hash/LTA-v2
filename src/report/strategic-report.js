@@ -177,6 +177,7 @@
       ...(input.strategicRisks?.status === "assessed" ? { strategicRisks: input.strategicRisks } : {}),
       ...(input.strategicCounterplay?.status === "advised" ? { strategicCounterplay: input.strategicCounterplay } : {}),
       ...(input.strategicBans?.status === "prioritized" ? { strategicBans: input.strategicBans } : {}),
+      ...(input.strategicBanPresentation?.status === "presented" ? { strategicBanPresentation: input.strategicBanPresentation } : {}),
       ...(closing ? { closing } : {}),
       sections,
     };
