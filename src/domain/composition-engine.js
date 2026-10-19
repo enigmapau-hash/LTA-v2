@@ -210,6 +210,38 @@
     return { primaryScore, primary, secondary };
   }
 
+  function sharedDraftSignalWeight(picks, candidate, archetype) {
+    if (!archetype || !picks.length) return 0;
+    return archetype.signals.reduce((weight, signal) => {
+      const candidateSupports = matchesSignal(candidate, signal);
+      const existingSupport = picks.some((pick) => matchesSignal(pick, signal));
+      return candidateSupports && existingSupport ? weight + signal.weight : weight;
+    }, 0);
+  }
+
+  function draftAffinity(picks, candidate, proposedScores, primary, topScore, emerging, emergingScoreBefore, emergingIdentity) {
+    const proposedDirection = primary?.id || topScore?.id;
+    const baseAffinity = primary?.score || topScore?.score || 0;
+    if (!emerging) return baseAffinity;
+
+    const emergingArchetype = ARCHETYPES.find((item) => item.id === emerging.id);
+    const emergingScoreAfter = proposedScores.find((item) => item.id === emerging.id)?.score || 0;
+    const marginalSupport = Math.max(0, Math.min(100, (emergingScoreAfter - emergingScoreBefore) * 2));
+    const sharedWeight = sharedDraftSignalWeight(picks, candidate, emergingArchetype);
+    const totalWeight = (emergingArchetype?.signals || []).reduce((sum, signal) => sum + signal.weight, 0);
+    const synergyFit = totalWeight ? Math.min(100, sharedWeight / totalWeight * 100) : 0;
+    const candidateIdentityFit = normalize(candidate.identity) === normalize(emergingArchetype?.label);
+    const continuityFit = proposedDirection === emerging.id ? 100 : emergingScoreAfter >= baseAffinity - 8 ? 50 : 0;
+    const contextAffinity = baseAffinity * 0.4
+      + emergingScoreAfter * 0.25
+      + marginalSupport * 0.15
+      + synergyFit * 0.12
+      + continuityFit * 0.05
+      + (candidateIdentityFit ? 3 : 0);
+    const contradictionPenalty = emergingIdentity && proposedDirection !== emergingIdentity.id ? 8 : 0;
+    return Math.max(0, Math.min(100, Math.round(contextAffinity - contradictionPenalty)));
+  }
+
   function assessPlanSupport(picks, primary, primaryScore) {
     const isComplete = picks.length === 5 && picks.every((pick) => pick.champion && pick.champion !== "—");
     if (!primary || !isComplete) return null;
@@ -341,6 +373,12 @@
     const picks = Array.isArray(input) ? input.filter(Boolean) : [];
     const selectedRoles = new Set(picks.map((pick) => String(pick.role || "").toLowerCase()));
     const selectedChampions = new Set(picks.map((pick) => normalize(pick.champion)).filter(Boolean));
+    const emergingScores = picks.length ? rankArchetypes(picks) : [];
+    const emerging = emergingScores[0] || null;
+    const emergingScoreBefore = emerging
+      ? rankArchetypes(picks, 5).find((item) => item.id === emerging.id)?.score || 0
+      : 0;
+    const emergingIdentity = picks.length ? selectIdentities(emergingScores).primary : null;
     const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 3;
 
     return Object.entries(candidatesByRole || {})
@@ -360,7 +398,7 @@
           ranked.set(key, {
             role,
             champion,
-            affinity: primaryScore?.score || topScore?.score || 0,
+            affinity: draftAffinity(picks, candidatePick, scores, primaryScore, topScore, emerging, emergingScoreBefore, emergingIdentity),
             identity: primary?.label || null,
             direction: archetype?.label || null,
             coherent: Boolean(primary),

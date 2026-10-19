@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.1.0",
+    version: "v3.2.0",
     track: "Actualización funcional",
     label: "Versión",
-    updated: "2026-10-18",
-    summary: ["Recalibración contextual de las recomendaciones estratégicas"],
+    updated: "2026-10-19",
+    summary: ["Recalibración contextual de las recomendaciones durante el draft"],
     pending: [],
   };
 

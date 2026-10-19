@@ -11,6 +11,7 @@ const { recommendProfiles } = require("../src/domain/strategic-recommendation-en
 const { mapCandidates } = require("../src/domain/championship-candidate-mapper.js");
 const { evaluateCandidates } = require("../src/domain/candidate-evaluator.js");
 const { generateRepresentativeCompositions } = require("./recommendation-audit-fixtures.cjs");
+const { recommendPicks, analyzeComposition } = require("../src/domain/composition-engine.js");
 
 const ROLE_SHEETS = Object.freeze({
   top: "Tabla Top",
@@ -31,6 +32,22 @@ const PRE_QUALITY_PASS_BASELINE = Object.freeze({
   repeatedChampions: 17,
   similarPairs: 7,
   maxChampionCases: 5,
+});
+// Captured from the same 40 draft states before Quality Pass 2 recalibration.
+const PRE_QUALITY_PASS_2_DRAFT_BASELINE = Object.freeze({
+  totalCandidateMentions: 300,
+  uniqueRecommendedChampions: 66,
+  championDiversity: 0.22,
+  repetitionRate: 0.403,
+  repeatedChampionCount: 10,
+  maxChampionContexts: 27,
+  recommendationCoverage: 1,
+  contextAlignment: 0.765,
+  assessableRecommendations: 285,
+  recommendationChangeRate: 0.85,
+  transitionCount: 60,
+  recommendationStability: 0.618,
+  stableIdentityTransitions: 41,
 });
 const root = path.resolve(__dirname, "..");
 
@@ -178,7 +195,129 @@ function auditRecommendations(candidatesByRole) {
   };
 }
 
-function renderMarkdown(audit) {
+function auditDraftRecommendations(candidatesByRole) {
+  const fixtures = generateRepresentativeCompositions(candidatesByRole);
+  const stages = fixtures.flatMap((fixture) => [1, 2, 3, 4].map((count) => {
+    const picks = fixture.picks.slice(0, count);
+    const recommendations = recommendPicks(picks, candidatesByRole, 3);
+    const identity = analyzeComposition(picks).identity.primary;
+    const roles = Object.fromEntries(Object.entries(recommendations).map(([role, items]) => [
+      role,
+      items.map((item) => ({ champion: item.champion, direction: item.direction, affinity: item.affinity })),
+    ]));
+    return {
+      id: fixture.id + "-" + count,
+      fixtureId: fixture.id,
+      label: fixture.label,
+      count,
+      identity,
+      selected: picks.map((pick) => pick.champion),
+      roles,
+    };
+  }));
+
+  const mentions = stages.flatMap((stage) => Object.entries(stage.roles).flatMap(([role, items]) =>
+    items.map((item) => ({ ...item, fixtureId: stage.fixtureId, stage: stage.count, role }))
+  ));
+  const championCounts = new Map();
+  for (const mention of mentions) {
+    const key = normalize(mention.champion);
+    const entry = championCounts.get(key) || { champion: mention.champion, mentions: 0, contexts: new Set() };
+    entry.mentions += 1;
+    entry.contexts.add([mention.fixtureId, mention.stage, mention.role].join("/"));
+    championCounts.set(key, entry);
+  }
+  const champions = [...championCounts.values()].map((item) => ({
+    champion: item.champion,
+    mentions: item.mentions,
+    contexts: item.contexts.size,
+  })).sort((left, right) => right.contexts - left.contexts
+    || right.mentions - left.mentions
+    || left.champion.localeCompare(right.champion, "es"));
+
+  let expectedRoleSlots = 0;
+  let coveredRoleSlots = 0;
+  let alignedRecommendations = 0;
+  let assessableRecommendations = 0;
+  let repeatedMentions = 0;
+  let transitionCount = 0;
+  let changedTransitions = 0;
+  let stableIdentityTransitions = 0;
+  let stableIdentityOverlap = 0;
+  const byFixture = new Map(fixtures.map((fixture) => [fixture.id, []]));
+
+  for (const stage of stages) byFixture.get(stage.fixtureId).push(stage);
+  for (const stage of stages) {
+    const availableRoles = Object.keys(candidatesByRole).filter((role) => !stage.selected.some((champion) =>
+      normalize(champion) === normalize(fixtures.find((fixture) => fixture.id === stage.fixtureId).picks.find((pick) => pick.role === role)?.champion)
+    ));
+    expectedRoleSlots += availableRoles.length;
+    for (const role of availableRoles) {
+      const items = stage.roles[role] || [];
+      if (items.length) coveredRoleSlots += 1;
+      for (const item of items) {
+        if (stage.identity) {
+          assessableRecommendations += 1;
+          if (normalize(item.direction) === normalize(stage.identity)) alignedRecommendations += 1;
+        }
+      }
+    }
+  }
+
+  for (const fixtureStages of byFixture.values()) {
+    fixtureStages.sort((left, right) => left.count - right.count);
+    for (let index = 1; index < fixtureStages.length; index += 1) {
+      const previous = fixtureStages[index - 1];
+      const current = fixtureStages[index];
+      const commonRoles = Object.keys(previous.roles).filter((role) => Object.hasOwn(current.roles, role));
+      for (const role of commonRoles) {
+        const previousNames = previous.roles[role].map((item) => normalize(item.champion));
+        const currentNames = current.roles[role].map((item) => normalize(item.champion));
+        transitionCount += 1;
+        if (previousNames.join("|") !== currentNames.join("|")) changedTransitions += 1;
+        if (previous.identity && previous.identity === current.identity) {
+          stableIdentityTransitions += 1;
+          const common = previousNames.filter((name) => currentNames.includes(name)).length;
+          stableIdentityOverlap += previousNames.length ? common / previousNames.length : 0;
+        }
+      }
+    }
+  }
+
+  const repeatThreshold = Math.max(6, Math.ceil(stages.length / 5));
+  const repeatedChampions = champions.filter((item) => item.contexts >= repeatThreshold);
+  const contextsInRepeatedSuggestions = repeatedChampions.reduce((sum, item) => sum + item.contexts, 0);
+  repeatedMentions = mentions.filter((item) => repeatedChampions.some((repeated) => normalize(repeated.champion) === normalize(item.champion))).length;
+  const totalMentions = mentions.length;
+
+  return {
+    stages,
+    champions,
+    repeatedChampions,
+    metrics: {
+      compositionCount: fixtures.length,
+      stageCount: stages.length,
+      totalCandidateMentions: totalMentions,
+      uniqueRecommendedChampions: championCounts.size,
+      championDiversity: totalMentions ? roundRatio(championCounts.size / totalMentions) : 0,
+      repetitionRate: totalMentions ? roundRatio(repeatedMentions / totalMentions) : 0,
+      repeatedChampionCount: repeatedChampions.length,
+      maxChampionContexts: champions[0]?.contexts || 0,
+      recommendationCoverage: expectedRoleSlots ? roundRatio(coveredRoleSlots / expectedRoleSlots) : 0,
+      contextAlignment: assessableRecommendations ? roundRatio(alignedRecommendations / assessableRecommendations) : 0,
+      assessableRecommendations,
+      contextAdaptation: assessableRecommendations ? roundRatio(alignedRecommendations / assessableRecommendations) : 0,
+      recommendationChangeRate: transitionCount ? roundRatio(changedTransitions / transitionCount) : 0,
+      transitionCount,
+      recommendationStability: stableIdentityTransitions ? roundRatio(stableIdentityOverlap / stableIdentityTransitions) : 0,
+      stableIdentityTransitions,
+      repeatedContexts: contextsInRepeatedSuggestions,
+    },
+    thresholds: { repeatedContexts: repeatThreshold },
+  };
+}
+
+function renderMarkdown(audit, draftAudit = null) {
   const { metrics, cases, champions, repeatedChampions, similarPairs, profileCounts, thresholds } = audit;
   const pct = (ratio) => (ratio * 100).toFixed(1) + "%";
   const relativeChange = (before, after) => ((after - before) / before * 100).toFixed(1) + "%";
@@ -282,12 +421,59 @@ function renderMarkdown(audit) {
     "La auditoría es una herramienta interna de observación. Sus cifras no se muestran en la aplicación y no alteran las recomendaciones.",
     "",
   ];
+  if (draftAudit) {
+    const draft = draftAudit.metrics;
+    const baseline = PRE_QUALITY_PASS_2_DRAFT_BASELINE;
+    const draftPct = (ratio) => (ratio * 100).toFixed(1) + "%";
+    const draftDelta = (before, after) => {
+      const difference = (after - before) * 100;
+      return (difference > 0 ? "+" : "") + difference.toFixed(1) + " p.p.";
+    };
+    lines.splice(lines.length - 1, 0,
+      "",
+      "## Auditoría del draft",
+      "",
+      "La auditoría recorre los primeros cuatro picks de cada una de las diez composiciones representativas: 40 estados y hasta 100 combinaciones de estado/rol. En las transiciones compara los tres candidatos por rol que sigue libre.",
+      "",
+      "La alineación contextual mide qué proporción de candidatos apunta a la identidad que ya se puede reconocer en el draft parcial. La adaptación mide cuántas listas por rol cambian tras añadir un pick; la estabilidad mide el solapamiento medio de los tres candidatos cuando la identidad se mantiene. La adaptación no se interpreta aislada: debe leerse junto con alineación y estabilidad.",
+      "",
+      "| Métrica | Resultado actual | Interpretación |",
+      "| --- | ---: | --- |",
+      "| Estados de draft | " + draft.stageCount + " | 10 arquetipos de referencia por 4 tamaños de draft. |",
+      "| Cobertura de rol | " + draftPct(draft.recommendationCoverage) + " | Roles aún vacíos con tres recomendaciones disponibles. |",
+      "| Diversidad | " + draftPct(draft.championDiversity) + " | Campeones únicos dividido por todas las menciones en los estados auditados. |",
+      "| Adaptación al contexto | " + draftPct(draft.contextAdaptation) + " | Candidatos cuya dirección coincide con la identidad reconocible; " + draft.assessableRecommendations + " menciones evaluables. |",
+      "| Cambio de listas entre picks | " + draftPct(draft.recommendationChangeRate) + " | Listas por rol común que cambian al añadir el siguiente campeón. |",
+      "| Estabilidad con identidad constante | " + draftPct(draft.recommendationStability) + " | Solapamiento medio del top 3 entre transiciones que mantienen identidad; " + draft.stableIdentityTransitions + " comparaciones. |",
+      "| Repetición de sugerencias | " + draftPct(draft.repetitionRate) + " | Menciones pertenecientes a campeones que aparecen en " + draftAudit.thresholds.repeatedContexts + " o más contextos draft/rol. |",
+      "| Campeones distintos / máxima repetición | " + draft.uniqueRecommendedChampions + " / " + draft.maxChampionContexts + " contextos | Variedad del catálogo y máxima frecuencia entre estados. |",
+      "| Cobertura de etapas | " + draft.stageCount + "/" + (draft.compositionCount * 4) + " | Estados con recomendaciones desde 1 hasta 4 picks. |",
+      "",
+      "### Comparación con la línea base anterior al Quality Pass 2",
+      "",
+      "| Métrica | Antes | Después | Cambio |",
+      "| --- | ---: | ---: | ---: |",
+      "| Diversidad | " + draftPct(baseline.championDiversity) + " | " + draftPct(draft.championDiversity) + " | " + draftDelta(baseline.championDiversity, draft.championDiversity) + " |",
+      "| Adaptación al contexto | " + draftPct(baseline.contextAlignment) + " | " + draftPct(draft.contextAdaptation) + " | " + draftDelta(baseline.contextAlignment, draft.contextAdaptation) + " |",
+      "| Cambio de listas entre picks | " + draftPct(baseline.recommendationChangeRate) + " | " + draftPct(draft.recommendationChangeRate) + " | " + draftDelta(baseline.recommendationChangeRate, draft.recommendationChangeRate) + " |",
+      "| Estabilidad con identidad constante | " + draftPct(baseline.recommendationStability) + " | " + draftPct(draft.recommendationStability) + " | " + draftDelta(baseline.recommendationStability, draft.recommendationStability) + " |",
+      "| Repetición de sugerencias | " + draftPct(baseline.repetitionRate) + " | " + draftPct(draft.repetitionRate) + " | " + draftDelta(baseline.repetitionRate, draft.repetitionRate) + " |",
+      "| Cobertura de rol | " + draftPct(baseline.recommendationCoverage) + " | " + draftPct(draft.recommendationCoverage) + " | " + draftDelta(baseline.recommendationCoverage, draft.recommendationCoverage) + " |",
+      "| Menciones / campeones distintos | " + baseline.totalCandidateMentions + " / " + baseline.uniqueRecommendedChampions + " | " + draft.totalCandidateMentions + " / " + draft.uniqueRecommendedChampions + " | — |",
+      "",
+      "### Limitaciones de la auditoría de draft",
+      "",
+      "Los estados parciales son prefijos de composiciones de referencia, no todos los órdenes posibles de selección. La identidad emergente es la lectura provisional del mismo analizador con los picks disponibles; si aún no hay una identidad, esa fila no se incluye en la alineación. El cambio de una lista no equivale por sí solo a una mejora: debe acompañarse de alineación o de una identidad que haya cambiado. La estabilidad mide continuidad de alternativas, no garantiza calidad competitiva.",
+      ""
+    );
+  }
   return lines.join("\n");
 }
 
 function main() {
   const audit = auditRecommendations(loadCandidateCatalog());
-  const markdown = renderMarkdown(audit);
+  const draftAudit = auditDraftRecommendations(loadCandidateCatalog());
+  const markdown = `${renderMarkdown(audit, draftAudit).trimEnd()}\n`;
   if (process.argv.includes("--write")) {
     const outputPath = path.join(root, "docs", "quality", "Recommendation-Audit.md");
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
@@ -300,4 +486,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { ROLE_SHEETS, loadCandidateCatalog, auditRecommendations, renderMarkdown };
+module.exports = { ROLE_SHEETS, loadCandidateCatalog, auditRecommendations, auditDraftRecommendations, renderMarkdown };

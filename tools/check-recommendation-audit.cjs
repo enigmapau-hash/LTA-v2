@@ -3,15 +3,18 @@
 
 const assert = require("node:assert/strict");
 const { REPRESENTATIVE_COMPOSITIONS } = require("./recommendation-audit-fixtures.cjs");
-const { loadCandidateCatalog, auditRecommendations, renderMarkdown } = require("./recommendation-audit.cjs");
+const { loadCandidateCatalog, auditRecommendations, auditDraftRecommendations, renderMarkdown } = require("./recommendation-audit.cjs");
 
 const catalog = loadCandidateCatalog();
 const snapshot = structuredClone(catalog);
 const first = auditRecommendations(catalog);
 const second = auditRecommendations(catalog);
+const firstDraft = auditDraftRecommendations(catalog);
+const secondDraft = auditDraftRecommendations(catalog);
 
 assert.deepEqual(catalog, snapshot, "La auditoría no modifica el catálogo ni los atributos de origen");
 assert.deepEqual(first, second, "Los resultados agregados deben ser deterministas");
+assert.deepEqual(firstDraft, secondDraft, "La auditoría de draft debe ser determinista");
 assert.equal(first.cases.length, REPRESENTATIVE_COMPOSITIONS.length);
 assert.deepEqual(first.cases.map((item) => item.id), REPRESENTATIVE_COMPOSITIONS.map((item) => item.id));
 assert.ok(first.cases.every((item) => item.diagnosis === "assessed"), "Todos los fixtures completos deben poder diagnosticarse");
@@ -31,6 +34,26 @@ assert.ok(first.metrics.championDiversity > 0.386, "Quality Pass 1 debe aumentar
 assert.ok(first.metrics.similarPairCount < 7, "Quality Pass 1 debe reducir pares de composiciones con alta coincidencia");
 assert.ok(first.champions[0].cases < 5, "Ningún campeón debe repetirse tanto como el máximo de la línea base");
 
+assert.equal(firstDraft.stages.length, 40, "La auditoría incluye estados de 1, 2, 3 y 4 picks para cada fixture");
+assert.deepEqual(firstDraft.stages.map((item) => item.count).slice(0, 4), [1, 2, 3, 4]);
+assert.equal(firstDraft.metrics.totalCandidateMentions, 300, "Evalúa tres candidatos por cada rol vacío en los 40 estados");
+assert.equal(firstDraft.metrics.recommendationCoverage, 1, "Todos los roles pendientes de los estados auditados deben recibir candidatos");
+assert.ok(firstDraft.metrics.championDiversity > 0.22, "Quality Pass 2 debe aumentar la diversidad durante el draft");
+assert.ok(firstDraft.metrics.repetitionRate < 0.403, "Quality Pass 2 debe reducir las menciones dominadas por campeones repetidos");
+assert.ok(firstDraft.metrics.contextAdaptation > 0.765, "Las recomendaciones deben alinearse más con la identidad emergente");
+assert.ok(firstDraft.metrics.recommendationChangeRate >= 0.6, "Las listas deben responder a una proporción sustancial de los picks añadidos");
+assert.ok(firstDraft.metrics.recommendationStability > 0.618, "Las alternativas deben mantener más continuidad cuando la identidad no cambia");
+for (const stage of firstDraft.stages) {
+  const selected = new Set(stage.selected.map((name) => name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es")));
+  for (const items of Object.values(stage.roles)) {
+    assert.equal(items.length, 3, "Cada rol vacío conserva tres candidatos");
+    for (const item of items) {
+      assert.equal(selected.has(item.champion.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es")), false,
+        "La auditoría de draft no recomienda picks ya seleccionados");
+    }
+  }
+}
+
 for (const item of first.cases) {
   const selected = new Set(REPRESENTATIVE_COMPOSITIONS.find((fixture) => fixture.id === item.id)
     .picks && Object.values(REPRESENTATIVE_COMPOSITIONS.find((fixture) => fixture.id === item.id).picks)
@@ -49,10 +72,11 @@ assert.deepEqual(first.champions, [...first.champions].sort((left, right) => rig
 assert.ok(first.repeatedChampions.every((item) => item.cases >= first.thresholds.repeatedChampionCases));
 assert.ok(first.similarPairs.every((pair) => pair.shared >= first.thresholds.pairSharedChampions
   && pair.overlap >= first.thresholds.pairJaccard));
-assert.equal(renderMarkdown(first), renderMarkdown(second), "El informe Markdown debe ser idéntico entre ejecuciones");
-assert.match(renderMarkdown(first), /Metodología[\s\S]*Métricas[\s\S]*Limitaciones[\s\S]*Cómo interpretar/);
-assert.match(renderMarkdown(first), /Comparación con la línea base anterior al Quality Pass 1/);
-assert.match(renderMarkdown(first), /38\.6% \| 55\.4% \| \+16\.8 p\.p\./,
+assert.equal(renderMarkdown(first, firstDraft), renderMarkdown(second, secondDraft), "El informe Markdown debe ser idéntico entre ejecuciones");
+assert.match(renderMarkdown(first, firstDraft), /Metodología[\s\S]*Métricas[\s\S]*Limitaciones[\s\S]*Cómo interpretar/);
+assert.match(renderMarkdown(first, firstDraft), /Comparación con la línea base anterior al Quality Pass 1/);
+assert.match(renderMarkdown(first, firstDraft), /Auditoría del draft[\s\S]*Comparación con la línea base anterior al Quality Pass 2/);
+assert.match(renderMarkdown(first, firstDraft), /38\.6% \| 55\.4% \| \+16\.8 p\.p\./,
   "El informe conserva la comparación de diversidad antes/después");
 
 const noRecommendations = auditRecommendations(Object.fromEntries(Object.keys(catalog).map((role) => [
@@ -64,4 +88,4 @@ assert.deepEqual(auditRecommendations(Object.fromEntries(Object.keys(catalog).ma
   catalog[role].map((champion) => ({ ...champion, strengths: "", function: "", tempo: "", identity: "" })),
 ]))), noRecommendations, "El estado sin señales mantiene la salida determinista");
 
-console.log("Recommendation Audit validada: fixtures del catálogo, exclusión de picks propios, cobertura, diversidad, repetición y Markdown deterministas.");
+console.log("Recommendation Audit validada: fixtures completos y parciales, cobertura, adaptación, estabilidad, diversidad, repetición y Markdown deterministas.");

@@ -209,7 +209,7 @@ const frontToBackPicks = results.get("Front to Back").picks;
 const partialRecommendationCases = [
   { count: 1, role: "jungle", expectedDirection: "Front to Back" },
   { count: 2, role: "mid", expectedDirection: "Front to Back" },
-  { count: 3, role: "botline", expectedDirection: "Teamfight" },
+  { count: 3, role: "botline", expectedDirection: "Front to Back" },
   { count: 4, role: "support", expectedDirection: "Front to Back", expectedChampion: "Lulu" },
 ];
 
@@ -250,5 +250,16 @@ assert.equal(
   undefined,
   "Una composición completa no debe recomendar cambios para roles ocupados"
 );
+
+const earlyFrontToBack = recommendPicks([frontToBackPicks[0]], candidatesByRole).mid;
+const earlyPressure = recommendPicks([results.get("Early Game").picks[0]], candidatesByRole).mid;
+assert.ok(earlyFrontToBack.every((item) => item.direction === "Front to Back"),
+  "Con un pick de Front to Back, las recomendaciones deben seguir la identidad que empieza a formarse");
+assert.ok(earlyPressure.every((item) => item.direction === "Early Game"),
+  "Con un pick de early game, las recomendaciones deben seguir la identidad que empieza a formarse");
+assert.notDeepEqual(earlyFrontToBack.map((item) => item.champion), earlyPressure.map((item) => item.champion),
+  "Cambiar el primer campeón debe cambiar de forma coherente las recomendaciones del draft");
+assert.deepEqual(recommendPicks([frontToBackPicks[0]], candidatesByRole), recommendPicks([frontToBackPicks[0]], candidatesByRole),
+  "El ranking contextual de draft debe seguir siendo determinista");
 
 console.log("Composition Engine validado: 8 arquetipos, composición híbrida/descompensada y recomendaciones deterministas para 1-4 picks.");
