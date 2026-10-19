@@ -136,3 +136,37 @@ Pares con recomendaciones de alta coincidencia:
 Usa cobertura para localizar casos en los que la cadena no logra ofrecer candidatos y diversidad para observar cuánto rota el catálogo recomendado. Las frecuencias altas y los pares similares sirven para priorizar una revisión humana de redundancias. Una concentración puede ser razonable si el catálogo o los atributos respaldan repetidamente a una misma pieza; las métricas no justifican cambiar pesos o comportamiento sin una investigación adicional.
 
 La auditoría es una herramienta interna de observación. Sus cifras no se muestran en la aplicación y no alteran las recomendaciones.
+
+## Auditoría del draft
+
+La auditoría recorre los primeros cuatro picks de cada una de las diez composiciones representativas: 40 estados y hasta 100 combinaciones de estado/rol. En las transiciones compara los tres candidatos por rol que sigue libre.
+
+La alineación contextual mide qué proporción de candidatos apunta a la identidad que ya se puede reconocer en el draft parcial. La adaptación mide cuántas listas por rol cambian tras añadir un pick; la estabilidad mide el solapamiento medio de los tres candidatos cuando la identidad se mantiene. La adaptación no se interpreta aislada: debe leerse junto con alineación y estabilidad.
+
+| Métrica | Resultado actual | Interpretación |
+| --- | ---: | --- |
+| Estados de draft | 40 | 10 arquetipos de referencia por 4 tamaños de draft. |
+| Cobertura de rol | 100.0% | Roles aún vacíos con tres recomendaciones disponibles. |
+| Diversidad | 24.0% | Campeones únicos dividido por todas las menciones en los estados auditados. |
+| Adaptación al contexto | 97.2% | Candidatos cuya dirección coincide con la identidad reconocible; 285 menciones evaluables. |
+| Cambio de listas entre picks | 65.0% | Listas por rol común que cambian al añadir el siguiente campeón. |
+| Estabilidad con identidad constante | 82.1% | Solapamiento medio del top 3 entre transiciones que mantienen identidad; 41 comparaciones. |
+| Repetición de sugerencias | 36.3% | Menciones pertenecientes a campeones que aparecen en 8 o más contextos draft/rol. |
+| Campeones distintos / máxima repetición | 72 / 27 contextos | Variedad del catálogo y máxima frecuencia entre estados. |
+| Cobertura de etapas | 40/40 | Estados con recomendaciones desde 1 hasta 4 picks. |
+
+### Comparación con la línea base anterior al Quality Pass 2
+
+| Métrica | Antes | Después | Cambio |
+| --- | ---: | ---: | ---: |
+| Diversidad | 22.0% | 24.0% | +2.0 p.p. |
+| Adaptación al contexto | 76.5% | 97.2% | +20.7 p.p. |
+| Cambio de listas entre picks | 85.0% | 65.0% | -20.0 p.p. |
+| Estabilidad con identidad constante | 61.8% | 82.1% | +20.3 p.p. |
+| Repetición de sugerencias | 40.3% | 36.3% | -4.0 p.p. |
+| Cobertura de rol | 100.0% | 100.0% | 0.0 p.p. |
+| Menciones / campeones distintos | 300 / 66 | 300 / 72 | — |
+
+### Limitaciones de la auditoría de draft
+
+Los estados parciales son prefijos de composiciones de referencia, no todos los órdenes posibles de selección. La identidad emergente es la lectura provisional del mismo analizador con los picks disponibles; si aún no hay una identidad, esa fila no se incluye en la alineación. El cambio de una lista no equivale por sí solo a una mejora: debe acompañarse de alineación o de una identidad que haya cambiado. La estabilidad mide continuidad de alternativas, no garantiza calidad competitiva.

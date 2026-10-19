@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.2.0
+
+### Added
+- Recalibración contextual de las recomendaciones durante el draft
+
 ## v3.1.0
 
 ### Added
