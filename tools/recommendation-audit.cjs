@@ -11,7 +11,8 @@ const { recommendProfiles } = require("../src/domain/strategic-recommendation-en
 const { mapCandidates } = require("../src/domain/championship-candidate-mapper.js");
 const { evaluateCandidates } = require("../src/domain/candidate-evaluator.js");
 const { generateRepresentativeCompositions } = require("./recommendation-audit-fixtures.cjs");
-const { recommendPicks, analyzeComposition } = require("../src/domain/composition-engine.js");
+const compositionEngine = require("../src/domain/composition-engine.js");
+const { recommendPicks, analyzeComposition } = compositionEngine;
 
 const ROLE_SHEETS = Object.freeze({
   top: "Tabla Top",
@@ -50,6 +51,8 @@ const PRE_QUALITY_PASS_2_DRAFT_BASELINE = Object.freeze({
   stableIdentityTransitions: 41,
 });
 const PRE_QUALITY_PASS_3_DRAFT_BASELINE = Object.freeze({
+  totalCandidateMentions: 300,
+  uniqueRecommendedChampions: 72,
   secondaryIdentityRate: 0.9,
   identityStability: 22 / 27,
   crossIdentityDifferentiation: 0.973,
@@ -61,6 +64,22 @@ const PRE_QUALITY_PASS_3_DRAFT_BASELINE = Object.freeze({
   categoryCount: 8,
   topCategoryShare: 83 / 300,
   categories: Object.freeze({ "Front to Back": 83, Pick: 34, Dive: 23, Teamfight: 42, Poke: 27, "Early Game": 42, "Split Push": 36, Escalado: 13 }),
+});
+const PRE_QUALITY_PASS_4_DRAFT_BASELINE = Object.freeze({
+  secondaryIdentityRate: 0.4,
+  championDiversity: 0.24,
+  repetitionRate: 0.363,
+  crossIdentityDifferentiation: 0.972,
+  recommendationStability: 0.829,
+  contextAlignment: 0.979,
+  recommendationChangeRate: 0.65,
+  identityStability: 0.815,
+  distinctCategories: 8,
+  topCategoryShare: 0.27,
+  nearCompositionDifferentiation: 0.939,
+  nearCompositionPairs: 189,
+  signalGuidedOrderRate: 0,
+  categories: Object.freeze({ "Front to Back": 81, "Early Game": 42, Teamfight: 42, "Split Push": 36, Pick: 34, Poke: 27, Dive: 23, Escalado: 15 }),
 });
 const root = path.resolve(__dirname, "..");
 
@@ -208,12 +227,72 @@ function auditRecommendations(candidatesByRole) {
   };
 }
 
-function auditDraftRecommendations(candidatesByRole) {
+function auditNearCompositionDifferentiation(fixtures, candidatesByRole, engine = compositionEngine) {
+  const comparisons = new Map();
+  const normalizePicks = (picks) => picks.map((pick) => normalize(pick.champion)).sort().join("|");
+  const overlap = (left, right) => {
+    const leftSet = new Set(left.map((item) => normalize(item.champion)));
+    const rightSet = new Set(right.map((item) => normalize(item.champion)));
+    const shared = [...leftSet].filter((champion) => rightSet.has(champion)).length;
+    const union = new Set([...leftSet, ...rightSet]).size;
+    return union ? shared / union : 0;
+  };
+
+  for (const fixture of fixtures) {
+    for (const count of [2, 3, 4]) {
+      const basePicks = fixture.picks.slice(0, count);
+      const baseIdentity = engine.analyzeComposition(basePicks).identity.primary;
+      if (!baseIdentity) continue;
+      const baseRecommendations = engine.recommendPicks(basePicks, candidatesByRole, 3);
+      for (let pickIndex = 0; pickIndex < basePicks.length; pickIndex += 1) {
+        const original = basePicks[pickIndex];
+        for (const alternativeFixture of fixtures) {
+          const replacement = alternativeFixture.picks[pickIndex];
+          if (!replacement || normalize(replacement.champion) === normalize(original.champion)
+            || basePicks.some((pick, index) => index !== pickIndex
+              && normalize(pick.champion) === normalize(replacement.champion))) continue;
+
+          const variantPicks = basePicks.map((pick, index) => index === pickIndex ? replacement : pick);
+          const variantIdentity = engine.analyzeComposition(variantPicks).identity.primary;
+          if (!variantIdentity || variantIdentity === baseIdentity) continue;
+          const signatures = [normalizePicks(basePicks), normalizePicks(variantPicks)].sort();
+          const pairKey = count + ":" + signatures.join("::");
+          if (comparisons.has(pairKey)) continue;
+
+          const variantRecommendations = engine.recommendPicks(variantPicks, candidatesByRole, 3);
+          const roleOverlaps = Object.keys(baseRecommendations)
+            .filter((role) => variantRecommendations[role]?.length)
+            .map((role) => overlap(baseRecommendations[role], variantRecommendations[role]));
+          if (!roleOverlaps.length) continue;
+          comparisons.set(pairKey, {
+            identityA: baseIdentity,
+            identityB: variantIdentity,
+            overlap: roleOverlaps.reduce((sum, value) => sum + value, 0) / roleOverlaps.length,
+          });
+        }
+      }
+    }
+  }
+
+  const pairs = [...comparisons.values()];
+  const meanOverlap = pairs.length
+    ? pairs.reduce((sum, pair) => sum + pair.overlap, 0) / pairs.length
+    : 0;
+  return {
+    pairCount: pairs.length,
+    meanOverlap: roundRatio(meanOverlap),
+    differentiation: roundRatio(1 - meanOverlap),
+  };
+}
+
+function auditDraftRecommendations(candidatesByRole, engine = compositionEngine) {
+  const auditRecommendPicks = engine.recommendPicks;
+  const auditAnalyzeComposition = engine.analyzeComposition;
   const fixtures = generateRepresentativeCompositions(candidatesByRole);
   const stages = fixtures.flatMap((fixture) => [1, 2, 3, 4].map((count) => {
     const picks = fixture.picks.slice(0, count);
-    const recommendations = recommendPicks(picks, candidatesByRole, 3);
-    const compositionIdentity = analyzeComposition(picks).identity;
+    const recommendations = auditRecommendPicks(picks, candidatesByRole, 3);
+    const compositionIdentity = auditAnalyzeComposition(picks).identity;
     const roles = Object.fromEntries(Object.entries(recommendations).map(([role, items]) => [
       role,
       items.map((item) => ({ champion: item.champion, direction: item.direction, affinity: item.affinity })),
@@ -260,10 +339,25 @@ function auditDraftRecommendations(candidatesByRole) {
   let stableIdentityOverlap = 0;
   let identityTransitions = 0;
   let stablePrimaryIdentityTransitions = 0;
+  let signalPairComparisons = 0;
+  let signalGuidedPairCount = 0;
+  let maxSignalGuidedAffinityGap = 0;
   const byFixture = new Map(fixtures.map((fixture) => [fixture.id, []]));
 
   for (const stage of stages) byFixture.get(stage.fixtureId).push(stage);
   for (const stage of stages) {
+    for (const items of Object.values(stage.roles)) {
+      for (let left = 0; left < items.length; left += 1) {
+        for (let right = left + 1; right < items.length; right += 1) {
+          signalPairComparisons += 1;
+          const affinityGap = items[left].affinity - items[right].affinity;
+          if (affinityGap < 0) {
+            signalGuidedPairCount += 1;
+            maxSignalGuidedAffinityGap = Math.max(maxSignalGuidedAffinityGap, Math.abs(affinityGap));
+          }
+        }
+      }
+    }
     const availableRoles = Object.keys(candidatesByRole).filter((role) => !stage.selected.some((champion) =>
       normalize(champion) === normalize(fixtures.find((fixture) => fixture.id === stage.fixtureId).picks.find((pick) => pick.role === role)?.champion)
     ));
@@ -363,12 +457,17 @@ function auditDraftRecommendations(candidatesByRole) {
         return counts;
       }, {}),
       distinctCategories: new Set(mentions.map((item) => item.direction || "Sin dirección")).size,
+      signalGuidedOrderRate: signalPairComparisons ? roundRatio(signalGuidedPairCount / signalPairComparisons) : 0,
+      signalGuidedPairCount,
+      signalPairComparisons,
+      maxSignalGuidedAffinityGap,
       topCategoryShare: totalMentions ? roundRatio(Math.max(...Object.values(mentions.reduce((counts, item) => {
         const key = item.direction || "Sin dirección";
         counts[key] = (counts[key] || 0) + 1;
         return counts;
       }, {}))) / totalMentions) : 0,
       repeatedContexts: contextsInRepeatedSuggestions,
+      nearCompositionDifferentiation: auditNearCompositionDifferentiation(fixtures, candidatesByRole, engine),
     },
     thresholds: { repeatedContexts: repeatThreshold },
   };
@@ -481,6 +580,8 @@ function renderMarkdown(audit, draftAudit = null) {
   if (draftAudit) {
     const draft = draftAudit.metrics;
     const baseline = PRE_QUALITY_PASS_2_DRAFT_BASELINE;
+    const afterQp2 = PRE_QUALITY_PASS_3_DRAFT_BASELINE;
+    const afterQp3 = PRE_QUALITY_PASS_4_DRAFT_BASELINE;
     const draftPct = (ratio) => (ratio * 100).toFixed(1) + "%";
     const draftDelta = (before, after) => {
       const difference = (after - before) * 100;
@@ -508,19 +609,21 @@ function renderMarkdown(audit, draftAudit = null) {
       "| Estabilidad con identidad constante | " + draftPct(draft.recommendationStability) + " | Solapamiento medio del top 3 entre transiciones que mantienen identidad; " + draft.stableIdentityTransitions + " comparaciones. |",
       "| Repetición de sugerencias | " + draftPct(draft.repetitionRate) + " | Menciones pertenecientes a campeones que aparecen en " + draftAudit.thresholds.repeatedContexts + " o más contextos draft/rol. |",
       "| Campeones distintos / máxima repetición | " + draft.uniqueRecommendedChampions + " / " + draft.maxChampionContexts + " contextos | Variedad del catálogo y máxima frecuencia entre estados. |",
+      "| Diferenciación entre composiciones cercanas | " + draftPct(draft.nearCompositionDifferentiation.differentiation) + " | 1 menos el solapamiento medio de recomendaciones tras sustituir una pieza y obtener otra identidad; " + draft.nearCompositionDifferentiation.pairCount + " pares. |",
+      "| Órdenes guiados por señales estratégicas | " + draftPct(draft.signalGuidedOrderRate) + " | Pares de candidatos invertidos respecto a su afinidad bruta mediante la huella de señales, dentro de un punto de afinidad; " + draft.signalGuidedPairCount + "/" + draft.signalPairComparisons + " pares. |",
       "| Cobertura de etapas | " + draft.stageCount + "/" + (draft.compositionCount * 4) + " | Estados con recomendaciones desde 1 hasta 4 picks. |",
       "",
       "### Comparación con la línea base anterior al Quality Pass 2",
       "",
       "| Métrica | Antes | Después | Cambio |",
       "| --- | ---: | ---: | ---: |",
-      "| Diversidad | " + draftPct(baseline.championDiversity) + " | " + draftPct(draft.championDiversity) + " | " + draftDelta(baseline.championDiversity, draft.championDiversity) + " |",
-      "| Adaptación al contexto | " + draftPct(baseline.contextAlignment) + " | " + draftPct(draft.contextAdaptation) + " | " + draftDelta(baseline.contextAlignment, draft.contextAdaptation) + " |",
-      "| Cambio de listas entre picks | " + draftPct(baseline.recommendationChangeRate) + " | " + draftPct(draft.recommendationChangeRate) + " | " + draftDelta(baseline.recommendationChangeRate, draft.recommendationChangeRate) + " |",
-      "| Estabilidad con identidad constante | " + draftPct(baseline.recommendationStability) + " | " + draftPct(draft.recommendationStability) + " | " + draftDelta(baseline.recommendationStability, draft.recommendationStability) + " |",
-      "| Repetición de sugerencias | " + draftPct(baseline.repetitionRate) + " | " + draftPct(draft.repetitionRate) + " | " + draftDelta(baseline.repetitionRate, draft.repetitionRate) + " |",
-      "| Cobertura de rol | " + draftPct(baseline.recommendationCoverage) + " | " + draftPct(draft.recommendationCoverage) + " | " + draftDelta(baseline.recommendationCoverage, draft.recommendationCoverage) + " |",
-      "| Menciones / campeones distintos | " + baseline.totalCandidateMentions + " / " + baseline.uniqueRecommendedChampions + " | " + draft.totalCandidateMentions + " / " + draft.uniqueRecommendedChampions + " | — |",
+      "| Diversidad | " + draftPct(baseline.championDiversity) + " | " + draftPct(afterQp2.championDiversity) + " | " + draftDelta(baseline.championDiversity, afterQp2.championDiversity) + " |",
+      "| Adaptación al contexto | " + draftPct(baseline.contextAlignment) + " | " + draftPct(afterQp2.contextAlignment) + " | " + draftDelta(baseline.contextAlignment, afterQp2.contextAlignment) + " |",
+      "| Cambio de listas entre picks | " + draftPct(baseline.recommendationChangeRate) + " | " + draftPct(afterQp2.recommendationChangeRate) + " | " + draftDelta(baseline.recommendationChangeRate, afterQp2.recommendationChangeRate) + " |",
+      "| Estabilidad con identidad constante | " + draftPct(baseline.recommendationStability) + " | " + draftPct(afterQp2.recommendationStability) + " | " + draftDelta(baseline.recommendationStability, afterQp2.recommendationStability) + " |",
+      "| Repetición de sugerencias | " + draftPct(baseline.repetitionRate) + " | " + draftPct(afterQp2.repetitionRate) + " | " + draftDelta(baseline.repetitionRate, afterQp2.repetitionRate) + " |",
+      "| Cobertura de rol | " + draftPct(baseline.recommendationCoverage) + " | " + draftPct(1) + " | " + draftDelta(baseline.recommendationCoverage, 1) + " |",
+      "| Menciones / campeones distintos | " + baseline.totalCandidateMentions + " / " + baseline.uniqueRecommendedChampions + " | " + afterQp2.totalCandidateMentions + " / " + afterQp2.uniqueRecommendedChampions + " | — |",
       "",
     "### Comparación antes/después del Quality Pass 3",
     "",
@@ -528,20 +631,40 @@ function renderMarkdown(audit, draftAudit = null) {
     "",
     "| Métrica | Antes (QP2) | Después (QP3) | Cambio |",
     "| --- | ---: | ---: | ---: |",
-    "| Identidad secundaria asignada | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.secondaryIdentityRate) + " | " + pct(draft.secondaryIdentityRate) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.secondaryIdentityRate, draft.secondaryIdentityRate) + " |",
-    "| Estabilidad de identidad principal | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.identityStability) + " | " + pct(draft.identityStability) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.identityStability, draft.identityStability) + " |",
-    "| Diferenciación entre identidades distintas | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.crossIdentityDifferentiation) + " | " + pct(draft.crossIdentityDifferentiation) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.crossIdentityDifferentiation, draft.crossIdentityDifferentiation) + " |",
-    "| Categorías estratégicas utilizadas | " + PRE_QUALITY_PASS_3_DRAFT_BASELINE.categoryCount + " | " + draft.distinctCategories + " | " + (draft.distinctCategories - PRE_QUALITY_PASS_3_DRAFT_BASELINE.categoryCount >= 0 ? "+" : "") + (draft.distinctCategories - PRE_QUALITY_PASS_3_DRAFT_BASELINE.categoryCount) + " |",
-    "| Concentración en la categoría más frecuente | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.topCategoryShare) + " | " + pct(draft.topCategoryShare) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.topCategoryShare, draft.topCategoryShare) + " |",
-    "| Diversidad de candidatos | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.championDiversity) + " | " + pct(draft.championDiversity) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.championDiversity, draft.championDiversity) + " |",
-    "| Repetición de sugerencias | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.repetitionRate) + " | " + pct(draft.repetitionRate) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.repetitionRate, draft.repetitionRate) + " |",
-    "| Diferenciación contextual (alineación) | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.contextAlignment) + " | " + pct(draft.contextAlignment) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.contextAlignment, draft.contextAlignment) + " |",
-    "| Estabilidad de recomendaciones con identidad constante | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.recommendationStability) + " | " + pct(draft.recommendationStability) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.recommendationStability, draft.recommendationStability) + " |",
+    "| Identidad secundaria asignada | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.secondaryIdentityRate) + " | " + pct(afterQp3.secondaryIdentityRate) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.secondaryIdentityRate, afterQp3.secondaryIdentityRate) + " |",
+    "| Estabilidad de identidad principal | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.identityStability) + " | " + pct(afterQp3.identityStability) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.identityStability, afterQp3.identityStability) + " |",
+    "| Diferenciación entre identidades distintas | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.crossIdentityDifferentiation) + " | " + pct(afterQp3.crossIdentityDifferentiation) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.crossIdentityDifferentiation, afterQp3.crossIdentityDifferentiation) + " |",
+    "| Categorías estratégicas utilizadas | " + PRE_QUALITY_PASS_3_DRAFT_BASELINE.categoryCount + " | " + afterQp3.distinctCategories + " | " + (afterQp3.distinctCategories - PRE_QUALITY_PASS_3_DRAFT_BASELINE.categoryCount >= 0 ? "+" : "") + (afterQp3.distinctCategories - PRE_QUALITY_PASS_3_DRAFT_BASELINE.categoryCount) + " |",
+    "| Concentración en la categoría más frecuente | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.topCategoryShare) + " | " + pct(afterQp3.topCategoryShare) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.topCategoryShare, afterQp3.topCategoryShare) + " |",
+    "| Diversidad de candidatos | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.championDiversity) + " | " + pct(afterQp3.championDiversity) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.championDiversity, afterQp3.championDiversity) + " |",
+    "| Repetición de sugerencias | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.repetitionRate) + " | " + pct(afterQp3.repetitionRate) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.repetitionRate, afterQp3.repetitionRate) + " |",
+    "| Diferenciación contextual (alineación) | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.contextAlignment) + " | " + pct(afterQp3.contextAlignment) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.contextAlignment, afterQp3.contextAlignment) + " |",
+    "| Estabilidad de recomendaciones con identidad constante | " + pct(PRE_QUALITY_PASS_3_DRAFT_BASELINE.recommendationStability) + " | " + pct(afterQp3.recommendationStability) + " | " + percentagePointChange(PRE_QUALITY_PASS_3_DRAFT_BASELINE.recommendationStability, afterQp3.recommendationStability) + " |",
     "",
     "Uso de categorías antes (QP2): " + Object.entries(PRE_QUALITY_PASS_3_DRAFT_BASELINE.categories).map(([name, count]) => name + " " + count).join("; ") + ".",
-    "Uso de categorías después (QP3): " + Object.entries(draft.categoryCounts).sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], "es")).map(([name, count]) => name + " " + count).join("; ") + ".",
+    "Uso de categorías después (QP3): " + Object.entries(afterQp3.categories).map(([name, count]) => name + " " + count).join("; ") + ".",
     "",
     "La reducción de identidades secundarias refleja un umbral más exigente de evidencia: no se etiqueta como híbrida una composición por una señal aislada. La estabilidad de identidad mide continuidad de la identidad principal entre etapas adyacentes con identidad reconocible. La alineación y la estabilidad de recomendaciones permiten comprobar que el ajuste mantiene precisión y continuidad del draft.",
+    "",
+    "### Comparación antes/después del Quality Pass 4",
+    "",
+    "La línea base se ejecuta con el código de `origin/main` previo a QP4 sobre el mismo catálogo y los mismos casos. La nueva selección usa la huella de señales del arquetipo emergente para desempatar recomendaciones cuya afinidad queda a un punto de la mejor, conservando la afinidad como límite de calidad. Para medir composiciones cercanas, el corpus sustituye una pieza en prefijos de 2, 3 y 4 picks; solo compara pares cuya identidad principal cambia y calcula el solapamiento medio del top 3 en los roles todavía vacíos.",
+    "",
+    "| Métrica | Antes (QP3) | Después (QP4) | Cambio |",
+    "| --- | ---: | ---: | ---: |",
+    "| Diversidad de candidatos | " + draftPct(PRE_QUALITY_PASS_4_DRAFT_BASELINE.championDiversity) + " | " + draftPct(draft.championDiversity) + " | " + draftDelta(PRE_QUALITY_PASS_4_DRAFT_BASELINE.championDiversity, draft.championDiversity) + " |",
+    "| Repetición de sugerencias | " + draftPct(PRE_QUALITY_PASS_4_DRAFT_BASELINE.repetitionRate) + " | " + draftPct(draft.repetitionRate) + " | " + draftDelta(PRE_QUALITY_PASS_4_DRAFT_BASELINE.repetitionRate, draft.repetitionRate) + " |",
+    "| Diferenciación entre identidades distintas | " + draftPct(PRE_QUALITY_PASS_4_DRAFT_BASELINE.crossIdentityDifferentiation) + " | " + draftPct(draft.crossIdentityDifferentiation) + " | " + draftDelta(PRE_QUALITY_PASS_4_DRAFT_BASELINE.crossIdentityDifferentiation, draft.crossIdentityDifferentiation) + " |",
+    "| Diferenciación entre composiciones cercanas | " + draftPct(PRE_QUALITY_PASS_4_DRAFT_BASELINE.nearCompositionDifferentiation) + " | " + draftPct(draft.nearCompositionDifferentiation.differentiation) + " | " + draftDelta(PRE_QUALITY_PASS_4_DRAFT_BASELINE.nearCompositionDifferentiation, draft.nearCompositionDifferentiation.differentiation) + " |",
+    "| Pares cercanos auditados | " + PRE_QUALITY_PASS_4_DRAFT_BASELINE.nearCompositionPairs + " | " + draft.nearCompositionDifferentiation.pairCount + " | — |",
+    "| Alineación contextual | " + draftPct(PRE_QUALITY_PASS_4_DRAFT_BASELINE.contextAlignment) + " | " + draftPct(draft.contextAlignment) + " | " + draftDelta(PRE_QUALITY_PASS_4_DRAFT_BASELINE.contextAlignment, draft.contextAlignment) + " |",
+    "| Estabilidad con identidad constante | " + draftPct(PRE_QUALITY_PASS_4_DRAFT_BASELINE.recommendationStability) + " | " + draftPct(draft.recommendationStability) + " | " + draftDelta(PRE_QUALITY_PASS_4_DRAFT_BASELINE.recommendationStability, draft.recommendationStability) + " |",
+    "| Decisiones de orden guiadas por señales | " + draftPct(PRE_QUALITY_PASS_4_DRAFT_BASELINE.signalGuidedOrderRate) + " | " + draftPct(draft.signalGuidedOrderRate) + " | " + draftDelta(PRE_QUALITY_PASS_4_DRAFT_BASELINE.signalGuidedOrderRate, draft.signalGuidedOrderRate) + " |",
+    "| Estabilidad de identidad principal | " + draftPct(PRE_QUALITY_PASS_4_DRAFT_BASELINE.identityStability) + " | " + draftPct(draft.identityStability) + " | " + draftDelta(PRE_QUALITY_PASS_4_DRAFT_BASELINE.identityStability, draft.identityStability) + " |",
+    "| Categorías estratégicas utilizadas | " + PRE_QUALITY_PASS_4_DRAFT_BASELINE.distinctCategories + " | " + draft.distinctCategories + " | " + (draft.distinctCategories - PRE_QUALITY_PASS_4_DRAFT_BASELINE.distinctCategories >= 0 ? "+" : "") + (draft.distinctCategories - PRE_QUALITY_PASS_4_DRAFT_BASELINE.distinctCategories) + " |",
+    "| Concentración en la categoría más frecuente | " + draftPct(PRE_QUALITY_PASS_4_DRAFT_BASELINE.topCategoryShare) + " | " + draftPct(draft.topCategoryShare) + " | " + draftDelta(PRE_QUALITY_PASS_4_DRAFT_BASELINE.topCategoryShare, draft.topCategoryShare) + " |",
+    "",
+    "QP4 amplía el catálogo recomendado y reduce la repetición, a la vez que distingue mejor composiciones cercanas y conserva la estabilidad de identidad y de listas cuando el plan no cambia. La cobertura del corpus estratégico sigue en ocho categorías, sin ampliar el modelo de identidades.",
     "",
     "### Limitaciones de la auditoría de draft",
       "",
@@ -568,4 +691,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { ROLE_SHEETS, loadCandidateCatalog, auditRecommendations, auditDraftRecommendations, renderMarkdown };
+module.exports = { ROLE_SHEETS, loadCandidateCatalog, auditRecommendations, auditDraftRecommendations, auditNearCompositionDifferentiation, renderMarkdown };

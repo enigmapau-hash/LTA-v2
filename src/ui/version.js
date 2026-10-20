@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.3.0",
+    version: "v3.4.0",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-20",
-    summary: ["Refinamiento de identidad y coherencia de recomendaciones durante el draft"],
+    summary: ["Recomendaciones de draft enriquecidas con señales de identidad estratégica"],
     pending: [],
   };
 

@@ -55,6 +55,19 @@ assert.ok(firstDraft.metrics.repetitionRate < 0.403, "La repetición debe seguir
 assert.ok(firstDraft.metrics.repetitionRate <= 0.363, "QP3 no debe aumentar la repetición respecto a QP2");
 assert.ok(firstDraft.metrics.recommendationStability >= 0.821, "QP3 conserva la estabilidad de recomendaciones de QP2 cuando la identidad no cambia");
 assert.ok(firstDraft.metrics.crossIdentityDifferentiation >= 0.972, "Composiciones con identidad distinta mantienen recomendaciones diferenciadas");
+assert.equal(firstDraft.metrics.nearCompositionDifferentiation.pairCount, 189,
+  "La auditoría incluye pares de composiciones cercanas que difieren en una pieza e identidad");
+assert.ok(firstDraft.metrics.nearCompositionDifferentiation.differentiation > 0.939,
+  "Las recomendaciones distinguen mejor composiciones cercanas con identidades distintas que la línea base QP3");
+assert.ok(firstDraft.metrics.championDiversity > 0.24, "QP4 amplía la diversidad frente a QP3");
+assert.ok(firstDraft.metrics.repetitionRate < 0.363, "QP4 reduce la repetición frente a QP3");
+assert.ok(firstDraft.metrics.recommendationStability >= 0.829,
+  "QP4 conserva la estabilidad de recomendaciones de QP3 cuando la identidad no cambia");
+assert.ok(firstDraft.metrics.contextAlignment >= 0.979, "QP4 conserva la alineación contextual de QP3");
+assert.equal(firstDraft.metrics.signalPairComparisons, 300, "La auditoría compara todos los pares de los 100 top 3 por rol");
+assert.ok(firstDraft.metrics.signalGuidedPairCount > 0, "Las señales estratégicas deben resolver algunos órdenes de candidatos similares");
+assert.ok(firstDraft.metrics.signalGuidedOrderRate > 0, "La auditoría refleja el uso efectivo de señales estratégicas");
+assert.ok(firstDraft.metrics.maxSignalGuidedAffinityGap <= 1, "El desempate estratégico no desplaza candidatos más de un punto de afinidad");
 for (const stage of firstDraft.stages) {
   const selected = new Set(stage.selected.map((name) => name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es")));
   for (const items of Object.values(stage.roles)) {
@@ -89,6 +102,11 @@ assert.match(renderMarkdown(first, firstDraft), /Metodología[\s\S]*Métricas[\s
 assert.match(renderMarkdown(first, firstDraft), /Comparación con la línea base anterior al Quality Pass 1/);
 assert.match(renderMarkdown(first, firstDraft), /Auditoría del draft[\s\S]*Comparación con la línea base anterior al Quality Pass 2/);
 assert.match(renderMarkdown(first, firstDraft), /Comparación antes\/después del Quality Pass 3[\s\S]*Estabilidad de identidad principal[\s\S]*Uso de categorías después/);
+assert.match(renderMarkdown(first, firstDraft), /Comparación antes\/después del Quality Pass 4[\s\S]*Diferenciación entre composiciones cercanas[\s\S]*Estabilidad con identidad constante[\s\S]*Decisiones de orden guiadas por señales/);
+assert.match(renderMarkdown(first, firstDraft), /Diversidad \| 22\.0% \| 24\.0% \| \+2\.0 p\.p\./,
+  "La comparación QP2 conserva sus métricas históricas tras nuevas auditorías");
+assert.match(renderMarkdown(first, firstDraft), /Diversidad de candidatos \| 24\.0% \| 24\.0% \| 0\.0 p\.p\./,
+  "La comparación QP3 queda fijada en su resultado histórico");
 assert.match(renderMarkdown(first, firstDraft), /38\.6% \| 55\.4% \| \+16\.8 p\.p\./,
   "El informe conserva la comparación de diversidad antes/después");
 

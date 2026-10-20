@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.4.0
+
+### Added
+- Recomendaciones de draft enriquecidas con señales de identidad estratégica
+
+
 ## v3.3.0
 
 ### Added
