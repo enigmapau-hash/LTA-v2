@@ -38,11 +38,23 @@ assert.equal(firstDraft.stages.length, 40, "La auditoría incluye estados de 1, 
 assert.deepEqual(firstDraft.stages.map((item) => item.count).slice(0, 4), [1, 2, 3, 4]);
 assert.equal(firstDraft.metrics.totalCandidateMentions, 300, "Evalúa tres candidatos por cada rol vacío en los 40 estados");
 assert.equal(firstDraft.metrics.recommendationCoverage, 1, "Todos los roles pendientes de los estados auditados deben recibir candidatos");
+const firstFrontToBackStage = firstDraft.stages.find((stage) => stage.fixtureId === "front-to-back" && stage.count === 1);
+assert.equal(firstFrontToBackStage.identity, "Front to Back");
+assert.equal(firstFrontToBackStage.secondaryIdentity, null, "Un solo pick no debe producir una identidad secundaria especulativa");
 assert.ok(firstDraft.metrics.championDiversity > 0.22, "Quality Pass 2 debe aumentar la diversidad durante el draft");
 assert.ok(firstDraft.metrics.repetitionRate < 0.403, "Quality Pass 2 debe reducir las menciones dominadas por campeones repetidos");
 assert.ok(firstDraft.metrics.contextAdaptation > 0.765, "Las recomendaciones deben alinearse más con la identidad emergente");
 assert.ok(firstDraft.metrics.recommendationChangeRate >= 0.6, "Las listas deben responder a una proporción sustancial de los picks añadidos");
 assert.ok(firstDraft.metrics.recommendationStability > 0.618, "Las alternativas deben mantener más continuidad cuando la identidad no cambia");
+assert.ok(firstDraft.metrics.secondaryIdentityRate <= 0.4, "Una identidad secundaria requiere evidencia compartida por varias piezas");
+assert.ok(firstDraft.metrics.identityStability >= (22 / 27), "El refinamiento no debe reducir la estabilidad de la identidad principal");
+assert.equal(firstDraft.metrics.distinctCategories, 8, "La calibración conserva el uso de las ocho categorías estratégicas del corpus");
+assert.ok(firstDraft.metrics.categoryCounts.Escalado >= 13, "El contexto de draft debe conservar recomendaciones para composiciones de escalado");
+assert.ok(firstDraft.metrics.contextAlignment >= 0.972, "La dirección recomendada debe seguir alineada con la identidad emergente");
+assert.ok(firstDraft.metrics.repetitionRate < 0.403, "La repetición debe seguir por debajo de la línea base previa a QP2");
+assert.ok(firstDraft.metrics.repetitionRate <= 0.363, "QP3 no debe aumentar la repetición respecto a QP2");
+assert.ok(firstDraft.metrics.recommendationStability >= 0.821, "QP3 conserva la estabilidad de recomendaciones de QP2 cuando la identidad no cambia");
+assert.ok(firstDraft.metrics.crossIdentityDifferentiation >= 0.972, "Composiciones con identidad distinta mantienen recomendaciones diferenciadas");
 for (const stage of firstDraft.stages) {
   const selected = new Set(stage.selected.map((name) => name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es")));
   for (const items of Object.values(stage.roles)) {
@@ -76,6 +88,7 @@ assert.equal(renderMarkdown(first, firstDraft), renderMarkdown(second, secondDra
 assert.match(renderMarkdown(first, firstDraft), /Metodología[\s\S]*Métricas[\s\S]*Limitaciones[\s\S]*Cómo interpretar/);
 assert.match(renderMarkdown(first, firstDraft), /Comparación con la línea base anterior al Quality Pass 1/);
 assert.match(renderMarkdown(first, firstDraft), /Auditoría del draft[\s\S]*Comparación con la línea base anterior al Quality Pass 2/);
+assert.match(renderMarkdown(first, firstDraft), /Comparación antes\/después del Quality Pass 3[\s\S]*Estabilidad de identidad principal[\s\S]*Uso de categorías después/);
 assert.match(renderMarkdown(first, firstDraft), /38\.6% \| 55\.4% \| \+16\.8 p\.p\./,
   "El informe conserva la comparación de diversidad antes/después");
 

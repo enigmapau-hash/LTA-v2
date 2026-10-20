@@ -146,11 +146,15 @@ La alineación contextual mide qué proporción de candidatos apunta a la identi
 | Métrica | Resultado actual | Interpretación |
 | --- | ---: | --- |
 | Estados de draft | 40 | 10 arquetipos de referencia por 4 tamaños de draft. |
+| Identidades secundarias | 16/40 (40.0%) | En el draft requiere apoyo de varias piezas; en un equipo completo conserva una señal rival fuerte para detectar contradicciones. |
+| Estabilidad de identidad principal | 81.5% | Transiciones consecutivas con la misma identidad entre casos reconocibles: 22/27. |
+| Diferenciación entre identidades distintas | 97.2% | Uno menos el Jaccard medio de los top 3 por rol, entre estados del mismo tamaño con identidad distinta; 369 pares. |
+| Categorías estratégicas utilizadas | 8 | Categorías de identidad usadas en las recomendaciones del corpus. |
 | Cobertura de rol | 100.0% | Roles aún vacíos con tres recomendaciones disponibles. |
 | Diversidad | 24.0% | Campeones únicos dividido por todas las menciones en los estados auditados. |
-| Adaptación al contexto | 97.2% | Candidatos cuya dirección coincide con la identidad reconocible; 285 menciones evaluables. |
+| Adaptación al contexto | 97.9% | Candidatos cuya dirección coincide con la identidad reconocible; 285 menciones evaluables. |
 | Cambio de listas entre picks | 65.0% | Listas por rol común que cambian al añadir el siguiente campeón. |
-| Estabilidad con identidad constante | 82.1% | Solapamiento medio del top 3 entre transiciones que mantienen identidad; 41 comparaciones. |
+| Estabilidad con identidad constante | 82.9% | Solapamiento medio del top 3 entre transiciones que mantienen identidad; 41 comparaciones. |
 | Repetición de sugerencias | 36.3% | Menciones pertenecientes a campeones que aparecen en 8 o más contextos draft/rol. |
 | Campeones distintos / máxima repetición | 72 / 27 contextos | Variedad del catálogo y máxima frecuencia entre estados. |
 | Cobertura de etapas | 40/40 | Estados con recomendaciones desde 1 hasta 4 picks. |
@@ -160,12 +164,33 @@ La alineación contextual mide qué proporción de candidatos apunta a la identi
 | Métrica | Antes | Después | Cambio |
 | --- | ---: | ---: | ---: |
 | Diversidad | 22.0% | 24.0% | +2.0 p.p. |
-| Adaptación al contexto | 76.5% | 97.2% | +20.7 p.p. |
+| Adaptación al contexto | 76.5% | 97.9% | +21.4 p.p. |
 | Cambio de listas entre picks | 85.0% | 65.0% | -20.0 p.p. |
-| Estabilidad con identidad constante | 61.8% | 82.1% | +20.3 p.p. |
+| Estabilidad con identidad constante | 61.8% | 82.9% | +21.1 p.p. |
 | Repetición de sugerencias | 40.3% | 36.3% | -4.0 p.p. |
 | Cobertura de rol | 100.0% | 100.0% | 0.0 p.p. |
 | Menciones / campeones distintos | 300 / 66 | 300 / 72 | — |
+
+### Comparación antes/después del Quality Pass 3
+
+La comparación usa el resultado consolidado del Quality Pass 2 como línea base; el corpus, los roles y el tamaño de las listas se mantienen iguales. Durante el draft, Quality Pass 3 exige apoyo de varias piezas para asignar una identidad secundaria; en composiciones completas conserva el criterio anterior para no alterar el análisis ya establecido. También aumenta de 8 a 12 la penalización draft por recomendar una dirección que contradice la identidad emergente.
+
+| Métrica | Antes (QP2) | Después (QP3) | Cambio |
+| --- | ---: | ---: | ---: |
+| Identidad secundaria asignada | 90.0% | 40.0% | -50.0 p.p. |
+| Estabilidad de identidad principal | 81.5% | 81.5% | +0.0 p.p. |
+| Diferenciación entre identidades distintas | 97.3% | 97.2% | -0.1 p.p. |
+| Categorías estratégicas utilizadas | 8 | 8 | +0 |
+| Concentración en la categoría más frecuente | 27.7% | 27.0% | -0.7 p.p. |
+| Diversidad de candidatos | 24.0% | 24.0% | 0.0 p.p. |
+| Repetición de sugerencias | 36.3% | 36.3% | 0.0 p.p. |
+| Diferenciación contextual (alineación) | 97.2% | 97.9% | +0.7 p.p. |
+| Estabilidad de recomendaciones con identidad constante | 82.1% | 82.9% | +0.8 p.p. |
+
+Uso de categorías antes (QP2): Front to Back 83; Pick 34; Dive 23; Teamfight 42; Poke 27; Early Game 42; Split Push 36; Escalado 13.
+Uso de categorías después (QP3): Front to Back 81; Early Game 42; Teamfight 42; Split Push 36; Pick 34; Poke 27; Dive 23; Escalado 15.
+
+La reducción de identidades secundarias refleja un umbral más exigente de evidencia: no se etiqueta como híbrida una composición por una señal aislada. La estabilidad de identidad mide continuidad de la identidad principal entre etapas adyacentes con identidad reconocible. La alineación y la estabilidad de recomendaciones permiten comprobar que el ajuste mantiene precisión y continuidad del draft.
 
 ### Limitaciones de la auditoría de draft
 
