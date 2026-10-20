@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.4.0
+
+### Added
+- Enriquecimiento del vocabulario estratégico y cobertura de recomendaciones
+
+
 ## v3.3.0
 
 ### Added

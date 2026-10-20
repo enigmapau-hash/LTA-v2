@@ -6,7 +6,12 @@
 - [Architecture](v3/Architecture.md)
 - [Roadmap](v3/Roadmap.md)
 - [Architecture Decision Records](v3/ADR.md)
+
+## Calidad y conocimiento estratégico
+
 - [Recommendation Audit](quality/Recommendation-Audit.md)
+- [Strategic Knowledge Audit](quality/Strategic-Knowledge-Audit.md)
+- [Strategic Knowledge Framework](quality/Strategic-Knowledge-Framework.md)
 
 ## Índice
 
