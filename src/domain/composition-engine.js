@@ -234,6 +234,42 @@
     }, 0);
   }
 
+  function candidateSignalCoverageRatio(candidate, archetype) {
+    if (!archetype) return 0;
+    const totalWeight = archetype.signals.reduce((sum, signal) => sum + signal.weight, 0);
+    if (!totalWeight) return 0;
+    const supportedWeight = archetype.signals.reduce((weight, signal) =>
+      matchesSignal(candidate, signal) ? weight + signal.weight : weight, 0);
+    return supportedWeight / totalWeight;
+  }
+
+  function identitySignalEnrichment(candidate, identity) {
+    const archetype = ARCHETYPES.find((item) => item.id === identity?.id);
+    if (!archetype) return { coverage: 0, specificity: 0 };
+    const coverage = candidateSignalCoverageRatio(candidate, archetype);
+    const strongestAlternative = Math.max(0, ...ARCHETYPES
+      .filter((item) => item.id !== archetype.id)
+      .map((item) => candidateSignalCoverageRatio(candidate, item)));
+    return { coverage, specificity: coverage - strongestAlternative };
+  }
+
+  function selectContextualAlternatives(candidates, limit) {
+    const byAffinity = [...candidates].sort((a, b) => b.affinity - a.affinity
+      || a.champion.localeCompare(b.champion, "es"));
+    if (byAffinity.length <= limit || !byAffinity.length) return byAffinity.slice(0, limit);
+
+    const bestAffinity = byAffinity[0].affinity;
+    const comparable = byAffinity.filter((item) => bestAffinity - item.affinity <= 1)
+      .sort((a, b) => b.identitySignalSpecificity - a.identitySignalSpecificity
+        || b.identitySignalCoverage - a.identitySignalCoverage
+        || b.affinity - a.affinity
+        || a.champion.localeCompare(b.champion, "es"));
+    const selected = comparable.slice(0, limit);
+    const selectedChampions = new Set(selected.map((item) => item.champion));
+    return selected.concat(byAffinity.filter((item) => !selectedChampions.has(item.champion))
+      .slice(0, Math.max(0, limit - selected.length)));
+  }
+
   function draftAffinity(picks, candidate, proposedScores, primary, topScore, emerging, emergingScoreBefore, emergingIdentity) {
     const proposedDirection = primary?.id || topScore?.id;
     const baseAffinity = primary?.score || topScore?.score || 0;
@@ -411,10 +447,13 @@
           const { primary, primaryScore } = selectIdentities(scores, proposedPicks, true);
           const topScore = scores[0];
           const archetype = primary || ARCHETYPES.find((item) => item.id === topScore?.id);
+          const identityEnrichment = identitySignalEnrichment(candidatePick, emergingIdentity);
           ranked.set(key, {
             role,
             champion,
             affinity: draftAffinity(picks, candidatePick, scores, primaryScore, topScore, emerging, emergingScoreBefore, emergingIdentity),
+            identitySignalCoverage: identityEnrichment.coverage,
+            identitySignalSpecificity: identityEnrichment.specificity,
             identity: primary?.label || null,
             direction: archetype?.label || null,
             coherent: Boolean(primary),
@@ -423,10 +462,8 @@
           });
         }
 
-        const recommendations = [...ranked.values()]
-          .sort((a, b) => b.affinity - a.affinity || a.champion.localeCompare(b.champion, "es"))
-          .slice(0, safeLimit);
-        const bestAffinity = recommendations[0]?.affinity;
+        const recommendations = selectContextualAlternatives([...ranked.values()], safeLimit);
+        const bestAffinity = Math.max(0, ...recommendations.map((item) => item.affinity));
         return [role, recommendations.map((item) => ({
           ...item,
           quality: item.affinity === bestAffinity
