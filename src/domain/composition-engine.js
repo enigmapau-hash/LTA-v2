@@ -463,7 +463,7 @@
         }
 
         const recommendations = selectContextualAlternatives([...ranked.values()], safeLimit);
-        const bestAffinity = recommendations[0]?.affinity;
+        const bestAffinity = Math.max(0, ...recommendations.map((item) => item.affinity));
         return [role, recommendations.map((item) => ({
           ...item,
           quality: item.affinity === bestAffinity
