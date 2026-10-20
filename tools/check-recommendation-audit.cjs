@@ -15,6 +15,7 @@ const secondDraft = auditDraftRecommendations(catalog);
 assert.deepEqual(catalog, snapshot, "La auditoría no modifica el catálogo ni los atributos de origen");
 assert.deepEqual(first, second, "Los resultados agregados deben ser deterministas");
 assert.deepEqual(firstDraft, secondDraft, "La auditoría de draft debe ser determinista");
+assert.deepEqual(firstDraft.scenarioMatrix, secondDraft.scenarioMatrix, "La matriz ampliada de escenarios debe ser determinista");
 assert.equal(first.cases.length, REPRESENTATIVE_COMPOSITIONS.length);
 assert.deepEqual(first.cases.map((item) => item.id), REPRESENTATIVE_COMPOSITIONS.map((item) => item.id));
 assert.ok(first.cases.every((item) => item.diagnosis === "assessed"), "Todos los fixtures completos deben poder diagnosticarse");
@@ -80,6 +81,32 @@ assert.equal(firstDraft.metrics.signalPairComparisons, 300, "La auditoría compa
 assert.ok(firstDraft.metrics.signalGuidedPairCount > 0, "Las señales estratégicas deben resolver algunos órdenes de candidatos similares");
 assert.ok(firstDraft.metrics.signalGuidedOrderRate > 0, "La auditoría refleja el uso efectivo de señales estratégicas");
 assert.ok(firstDraft.metrics.maxSignalGuidedAffinityGap <= 1, "El desempate estratégico no desplaza candidatos más de un punto de afinidad");
+const expanded = firstDraft.scenarioMatrix;
+assert.equal(expanded.scenarios.orderStages.length, 48, "La matriz cubre cuatro composiciones con tres órdenes y cuatro tamaños");
+assert.equal(expanded.scenarios.substitutionCases.length, 4, "Incluye cuatro sustituciones equivalentes controladas");
+assert.ok(expanded.scenarios.substitutionCases.every((item) => item.comparison.length === 4), "Cada sustitución se evalúa de uno a cuatro picks");
+assert.equal(expanded.scenarios.closePlanCases.length, 2, "Incluye dos composiciones casi iguales con planes distintos");
+assert.ok(expanded.scenarios.closePlanCases.every((item) => item.identityBefore && item.identityAfter && item.identityBefore !== item.identityAfter),
+  "Las sustituciones de una pieza cambian la identidad detectada");
+assert.equal(expanded.scenarios.opposingPlans.left, "Poke");
+assert.equal(expanded.scenarios.opposingPlans.right, "Dive");
+assert.ok(expanded.scenarios.opposingPlans.comparisonCount >= 3, "Compara roles abiertos para los planes opuestos en tres tamaños");
+assert.equal(expanded.scenarios.ambiguousOpening.champion, "Ahri", "Las dos ramas estratégicas comparten su primer pick ambiguo");
+assert.deepEqual(expanded.scenarios.ambiguousOpening.branches, ["Dive", "Pick"]);
+assert.ok(expanded.scenarios.ambiguousOpening.identityChanges.some((item) => !item.identityChanged), "La apertura común conserva lectura inicial compartida");
+assert.ok(expanded.scenarios.ambiguousOpening.identityChanges.some((item) => item.identityChanged), "Las ramas divergen al añadir picks");
+for (const metric of [
+  "orderSensitivity", "orderStability", "sameIdentityOrderStability", "equivalentIdentityStability", "equivalentRecommendationStability",
+  "closePlanRecommendationDifferentiation", "closePlanMeanDifferentiation", "opposingPlanRecommendationDifferentiation",
+  "adaptationAfterIdentityChange", "materiallyDifferentAfterIdentityChange", "effectiveScenarioCoverage", "stageSizeCoverage",
+]) {
+  assert.ok(expanded.metrics[metric] >= 0 && expanded.metrics[metric] <= 1, metric + " debe expresarse como una proporción válida");
+}
+assert.equal(expanded.metrics.effectiveScenarioCoverage, 1, "Los seis tipos de escenario declarados están presentes");
+assert.equal(expanded.metrics.stageSizeCoverage, 1, "La matriz cubre todos los tamaños de draft");
+assert.ok(expanded.metrics.orderComparisonCount > 0, "Se comparan listas para la misma composición en órdenes distintos");
+assert.ok(expanded.metrics.sameIdentityOrderComparisonCount > 0, "Se mide estabilidad de recomendaciones cuando la identidad coincide entre órdenes");
+assert.ok(expanded.metrics.materiallyDifferentAfterIdentityChange > 0, "Las ramas que cambian de identidad producen comparaciones de recomendaciones");
 for (const stage of firstDraft.stages) {
   const selected = new Set(stage.selected.map((name) => name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es")));
   for (const items of Object.values(stage.roles)) {
@@ -115,6 +142,8 @@ assert.match(renderMarkdown(first, firstDraft), /Comparación con la línea base
 assert.match(renderMarkdown(first, firstDraft), /Impacto de la expansión del conocimiento estratégico[\s\S]*Cobertura de perfiles\/rol del catálogo[\s\S]*Cobertura de arquetipos\/rol del catálogo/);
 assert.match(renderMarkdown(first, firstDraft), /Impacto del conocimiento en el draft[\s\S]*Diferenciación entre identidades/);
 assert.match(renderMarkdown(first, firstDraft), /Auditoría del draft[\s\S]*Comparación con la línea base anterior al Quality Pass 2/);
+assert.match(renderMarkdown(first, firstDraft), /Sensibilidad al orden[\s\S]*Estabilidad al cambiar el orden[\s\S]*identidad constante entre órdenes[\s\S]*Diferenciación entre planes cercanos[\s\S]*Cobertura efectiva de escenarios/i);
+assert.match(renderMarkdown(first, firstDraft), /Escenarios ampliados[\s\S]*sustituciones equivalentes[\s\S]*Apertura ambigua/i);
 assert.match(renderMarkdown(first, firstDraft), /Comparación antes\/después del Quality Pass 3[\s\S]*Estabilidad de identidad principal[\s\S]*Uso de categorías después/);
 assert.match(renderMarkdown(first, firstDraft), /Comparación antes\/después del Quality Pass 4[\s\S]*Diferenciación entre composiciones cercanas[\s\S]*Estabilidad con identidad constante[\s\S]*Decisiones de orden guiadas por señales/);
 assert.match(renderMarkdown(first, firstDraft), /Diversidad \| 22\.0% \| 24\.0% \| \+2\.0 p\.p\./,
