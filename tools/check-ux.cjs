@@ -29,7 +29,7 @@ async function main(){
   await workbookRequestStarted;
   assert.equal(await loadingPage.locator("#statusPill").innerText(),"Cargando campeones");
   await loadingPage.locator("#top").click();
-  await loadingPage.waitForFunction(()=>document.querySelector("#topMenu .picker-empty")?.textContent.trim()==="Cargando…");
+  await loadingPage.waitForFunction(()=>document.querySelector("#topMenu .picker-empty")?.textContent.trim()==="Cargando…"&&document.querySelector("#topMenu")?.style.visibility==="visible");
   assert.equal((await loadingPage.locator("#topMenu .picker-empty").innerText()).trim(),"Cargando…","el menú de rol evita repetir el mensaje del estado superior");
   releaseWorkbookRequest();
   await loadingPage.waitForFunction(()=>document.querySelector("#statusPill")?.textContent==="Completa tu equipo");
