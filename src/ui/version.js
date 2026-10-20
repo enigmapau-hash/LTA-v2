@@ -8,7 +8,10 @@
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-20",
-    summary: ["Enriquecimiento del vocabulario estratégico y cobertura de recomendaciones"],
+    summary: [
+      "Recomendaciones de draft enriquecidas con señales de identidad estratégica",
+      "Enriquecimiento del vocabulario estratégico y cobertura de recomendaciones",
+    ],
     pending: [],
   };
 

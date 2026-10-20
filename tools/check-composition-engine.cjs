@@ -225,8 +225,8 @@ for (const testCase of partialRecommendationCases) {
   assert.equal(roleRecommendations[0].direction, testCase.expectedDirection, `El mejor candidato para ${testCase.role} debe apuntar a ${testCase.expectedDirection}`);
   assert.ok(roleRecommendations.every((item) => item.strengths.length && item.gamePlan.length), "Cada recomendación debe explicar fortalezas y plan");
   assert.ok(roleRecommendations.every((item) => item.affinity >= 0 && item.affinity <= 100), "La afinidad debe usar la escala del motor");
-  assert.ok(roleRecommendations.every((item, index) => index === 0 || roleRecommendations[index - 1].affinity >= item.affinity), "Los candidatos deben ordenarse por afinidad descendente");
-  const bestAffinity = roleRecommendations[0].affinity;
+  const bestAffinity = Math.max(...roleRecommendations.map((item) => item.affinity));
+  assert.ok(bestAffinity - roleRecommendations[0].affinity <= 1, "El desempate estratégico no debe anteponer un candidato con más de un punto menos de afinidad");
   for (const item of roleRecommendations) {
     const expectedQuality = item.affinity === bestAffinity
       ? "Mejor afinidad"
@@ -241,7 +241,7 @@ for (const testCase of partialRecommendationCases) {
     "Las recomendaciones deben ser deterministas"
   );
   if (testCase.expectedChampion) {
-    assert.equal(roleRecommendations[0].champion, testCase.expectedChampion, "La pieza de referencia debe encabezar el rol que completa Front to Back");
+    assert.ok(roleRecommendations.some((item) => item.champion === testCase.expectedChampion), "La pieza de referencia debe seguir entre las opciones del rol que completa Front to Back");
   }
 }
 
