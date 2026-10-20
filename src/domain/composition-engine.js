@@ -177,7 +177,7 @@
       for (const index of synergy.signalIndexes) {
         picks.forEach((pick, pickIndex) => {
           if (matchesSignal(pick, archetype.signals[index])) contributors.add(pickIndex);
-        });
+        })
       }
       if (contributors.size >= synergy.minContributors) score += synergy.bonus;
     }
@@ -194,18 +194,33 @@
       .sort((a, b) => b.score - a.score || a.label.localeCompare(b.label, "es"));
   }
 
-  function selectIdentities(scores) {
+  function archetypeSupportCount(picks, archetype) {
+    if (!archetype) return 0;
+    return picks.filter((pick) => archetype.signals.some((signal) => matchesSignal(pick, signal))).length;
+  }
+
+  function selectIdentities(scores, picks = [], useDraftThresholds = picks.length < 5) {
     const best = scores[0];
     const timingProfile = best?.id === "front-to-back" && scores.find((item) =>
       ["scaling", "early-game"].includes(item.id) && item.score >= 80 && best.score - item.score <= 12
     );
     const primaryScore = timingProfile || best;
-    const runnerUp = scores.find((item) => item.id !== primaryScore?.id);
     const primary = primaryScore && primaryScore.score >= 60
       ? ARCHETYPES.find((item) => item.id === primaryScore.id)
       : null;
-    const secondary = primary && runnerUp.score >= 45 && runnerUp.score >= primaryScore.score * 0.62
-      ? ARCHETYPES.find((item) => item.id === runnerUp.id)
+    const runnerUp = scores.find((item) => item.id !== primaryScore?.id);
+    const secondaryScore = useDraftThresholds
+      ? primary && scores
+        .filter((item) => item.id !== primaryScore.id)
+        .find((item) => {
+          const archetype = ARCHETYPES.find((candidate) => candidate.id === item.id);
+          return item.score >= 65
+            && primaryScore.score - item.score <= 14
+            && archetypeSupportCount(picks, archetype) >= 2;
+        })
+      : primary && runnerUp.score >= 45 && runnerUp.score >= primaryScore.score * 0.62 ? runnerUp : null;
+    const secondary = secondaryScore
+      ? ARCHETYPES.find((item) => item.id === secondaryScore.id)
       : null;
     return { primaryScore, primary, secondary };
   }
@@ -238,7 +253,7 @@
       + synergyFit * 0.12
       + continuityFit * 0.05
       + (candidateIdentityFit ? 3 : 0);
-    const contradictionPenalty = emergingIdentity && proposedDirection !== emergingIdentity.id ? 8 : 0;
+    const contradictionPenalty = emergingIdentity && proposedDirection !== emergingIdentity.id ? 12 : 0;
     return Math.max(0, Math.min(100, Math.round(contextAffinity - contradictionPenalty)));
   }
 
@@ -250,7 +265,7 @@
     const counterfactuals = picks.map((pick, index) => {
       const remaining = picks.filter((_, pickIndex) => pickIndex !== index);
       const remainingScores = rankArchetypes(remaining, picks.length);
-      const identityWithout = selectIdentities(remainingScores).primary;
+      const identityWithout = selectIdentities(remainingScores, remaining, false).primary;
       const scoreWithout = scoreArchetype(remaining, archetype, picks.length);
       const replacementArchetype = identityWithout
         ? ARCHETYPES.find((item) => item.id === identityWithout.id)
@@ -335,7 +350,7 @@
   function analyzeComposition(input) {
     const picks = Array.isArray(input) ? input.filter(Boolean) : [];
     const scores = rankArchetypes(picks);
-    const { primaryScore, primary, secondary } = selectIdentities(scores);
+    const { primaryScore, primary, secondary } = selectIdentities(scores, picks);
     const gaps = strategicGaps(picks);
 
     const strengths = primary ? [...primary.strengths] : [];
@@ -378,7 +393,7 @@
     const emergingScoreBefore = emerging
       ? rankArchetypes(picks, 5).find((item) => item.id === emerging.id)?.score || 0
       : 0;
-    const emergingIdentity = picks.length ? selectIdentities(emergingScores).primary : null;
+    const emergingIdentity = picks.length ? selectIdentities(emergingScores, picks, true).primary : null;
     const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 3;
 
     return Object.entries(candidatesByRole || {})
@@ -392,7 +407,8 @@
 
           const candidatePick = { ...candidate, role, champion };
           const scores = rankArchetypes([...picks, candidatePick], 5);
-          const { primary, primaryScore } = selectIdentities(scores);
+          const proposedPicks = [...picks, candidatePick];
+          const { primary, primaryScore } = selectIdentities(scores, proposedPicks, true);
           const topScore = scores[0];
           const archetype = primary || ARCHETYPES.find((item) => item.id === topScore?.id);
           ranked.set(key, {

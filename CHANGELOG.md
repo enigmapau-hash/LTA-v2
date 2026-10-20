@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.3.0
+
+### Added
+- Refinamiento de identidad y coherencia de recomendaciones durante el draft
+
+
 ## v3.2.0
 
 ### Added
