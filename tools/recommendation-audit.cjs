@@ -12,7 +12,8 @@ const { mapCandidates } = require("../src/domain/championship-candidate-mapper.j
 const { evaluateCandidates } = require("../src/domain/candidate-evaluator.js");
 const { generateRepresentativeCompositions } = require("./recommendation-audit-fixtures.cjs");
 const compositionEngine = require("../src/domain/composition-engine.js");
-const { recommendPicks, analyzeComposition } = compositionEngine;
+const { recommendPicks, analyzeComposition, auditArchetypeKnowledge } = compositionEngine;
+const { auditProfileKnowledge } = require("../src/domain/championship-candidate-mapper.js");
 
 const ROLE_SHEETS = Object.freeze({
   top: "Tabla Top",
@@ -64,6 +65,32 @@ const PRE_QUALITY_PASS_3_DRAFT_BASELINE = Object.freeze({
   categoryCount: 8,
   topCategoryShare: 83 / 300,
   categories: Object.freeze({ "Front to Back": 83, Pick: 34, Dive: 23, Teamfight: 42, Poke: 27, "Early Game": 42, "Split Push": 36, Escalado: 13 }),
+});
+// Snapshot from this branch's origin/main, before the strategic vocabulary expansion.
+const PRE_KNOWLEDGE_EXPANSION_BASELINE = Object.freeze({
+  final: Object.freeze({
+    totalCandidateMentions: 56,
+    uniqueRecommendedChampions: 31,
+    championDiversity: 0.554,
+    repeatedChampionCount: 10,
+    similarPairCount: 2,
+    referenceIdentityFidelity: 1,
+    archetypeCandidateCoverage: 1,
+    archetypeRoleCoverage: 0.95,
+    distinctArchetypesCovered: 8,
+    archetypeRolePairs: 38,
+    archetypeRolePairsTotal: 40,
+    profileCandidateCoverage: 0.996,
+    profileRoleKnowledgeCoverage: 0.969,
+    distinctProfilesCovered: 13,
+    profileRoleKnowledgePairs: 63,
+    profileRoleKnowledgePairsTotal: 65,
+  }),
+  draft: Object.freeze({
+    championDiversity: 0.24,
+    repetitionRate: 0.363,
+    crossIdentityDifferentiation: 0.972,
+  }),
 });
 const PRE_QUALITY_PASS_4_DRAFT_BASELINE = Object.freeze({
   secondaryIdentityRate: 0.4,
@@ -143,6 +170,7 @@ function auditRecommendations(candidatesByRole) {
     return {
       id: fixture.id,
       label: fixture.label,
+      expectedIdentity: fixture.expectedIdentity,
       diagnosis: result.diagnosis.status,
       identity: result.diagnosis.plan?.primaryIdentity || null,
       coherence: result.diagnosis.coherence?.status || "unknown",
@@ -198,8 +226,11 @@ function auditRecommendations(candidatesByRole) {
   const totalProfileRolePairs = cases.reduce((sum, item) => sum + item.profiles.length * Object.keys(ROLE_SHEETS).length, 0);
   const coveredProfileRolePairs = cases.reduce((sum, item) => sum + item.rolePairs.length, 0);
   const recommendedCases = cases.filter((item) => item.recommendationStatus === "recommended" && item.mentions.length > 0).length;
+  const identityMatchCount = cases.filter((item) => item.identity === item.expectedIdentity).length;
   const profileCounts = new Map();
   for (const item of cases) for (const profile of item.profiles) profileCounts.set(profile, (profileCounts.get(profile) || 0) + 1);
+  const archetypeKnowledge = auditArchetypeKnowledge(candidatesByRole);
+  const profileKnowledge = auditProfileKnowledge(candidatesByRole);
 
   return {
     cases,
@@ -216,6 +247,22 @@ function auditRecommendations(candidatesByRole) {
       profileRoleCoverage: totalProfileRolePairs ? roundRatio(coveredProfileRolePairs / totalProfileRolePairs) : 0,
       distinctProfiles: profileCounts.size,
       similarPairCount: similarPairs.length,
+      referenceIdentityMatchCount: identityMatchCount,
+      referenceIdentityFidelity: cases.length ? roundRatio(identityMatchCount / cases.length) : 0,
+      archetypeCandidateCoverage: roundRatio(archetypeKnowledge.candidateCoverage),
+      archetypeRoleCoverage: archetypeKnowledge.roleArchetypePairsTotal
+        ? roundRatio(archetypeKnowledge.roleArchetypePairs / archetypeKnowledge.roleArchetypePairsTotal)
+        : 0,
+      distinctArchetypesCovered: archetypeKnowledge.archetypeCount,
+      archetypeRolePairs: archetypeKnowledge.roleArchetypePairs,
+      archetypeRolePairsTotal: archetypeKnowledge.roleArchetypePairsTotal,
+      profileCandidateCoverage: roundRatio(profileKnowledge.candidateCoverage),
+      profileRoleKnowledgeCoverage: profileKnowledge.profileRolePairsTotal
+        ? roundRatio(profileKnowledge.profileRolePairs / profileKnowledge.profileRolePairsTotal)
+        : 0,
+      distinctProfilesCovered: profileKnowledge.profileCount,
+      profileRoleKnowledgePairs: profileKnowledge.profileRolePairs,
+      profileRoleKnowledgePairsTotal: profileKnowledge.profileRolePairsTotal,
     },
     profileCounts: [...profileCounts.entries()].map(([profile, casesCount]) => ({ profile, cases: casesCount }))
       .sort((left, right) => right.cases - left.cases || left.profile.localeCompare(right.profile, "es")),
@@ -483,6 +530,7 @@ function renderMarkdown(audit, draftAudit = null) {
   };
   const afterRepeatedCount = repeatedChampions.length;
   const afterMaxChampionCases = champions[0]?.cases || 0;
+  const knowledgeBaseline = PRE_KNOWLEDGE_EXPANSION_BASELINE.final;
   const lines = [
     "# Auditoría de recomendaciones estratégicas",
     "",
@@ -523,7 +571,31 @@ function renderMarkdown(audit, draftAudit = null) {
     "| Pares con alta coincidencia | " + PRE_QUALITY_PASS_BASELINE.similarPairs + " | " + metrics.similarPairCount + " | " + relativeChange(PRE_QUALITY_PASS_BASELINE.similarPairs, metrics.similarPairCount) + " |",
     "| Máxima frecuencia de un campeón | " + PRE_QUALITY_PASS_BASELINE.maxChampionCases + "/10 | " + afterMaxChampionCases + "/10 | " + relativeChange(PRE_QUALITY_PASS_BASELINE.maxChampionCases, afterMaxChampionCases) + " |",
     "",
-    "La concentración repetida baja: los pares con alta coincidencia pasan de " + PRE_QUALITY_PASS_BASELINE.similarPairs + " a " + metrics.similarPairCount + " y los campeones frecuentes de " + PRE_QUALITY_PASS_BASELINE.repeatedChampions + " a " + afterRepeatedCount + ". La cobertura de rol por perfil retrocede " + Math.abs((metrics.profileRoleCoverage - PRE_QUALITY_PASS_BASELINE.profileRoleCoverage) * 100).toFixed(1) + " p.p. y el catálogo único recomendado disminuye en " + (PRE_QUALITY_PASS_BASELINE.uniqueChampions - metrics.uniqueRecommendedChampions) + "; conviene vigilar estos dos costes en auditorías futuras.",
+    "La concentración repetida baja: los pares con alta coincidencia pasan de " + PRE_QUALITY_PASS_BASELINE.similarPairs + " a " + metrics.similarPairCount + " y los campeones frecuentes de " + PRE_QUALITY_PASS_BASELINE.repeatedChampions + " a " + afterRepeatedCount + ". La cobertura de rol por perfil retrocede " + Math.abs((metrics.profileRoleCoverage - PRE_QUALITY_PASS_BASELINE.profileRoleCoverage) * 100).toFixed(1) + " p.p.; el número de campeones únicos " + (metrics.uniqueRecommendedChampions < PRE_QUALITY_PASS_BASELINE.uniqueChampions ? "disminuye en " + (PRE_QUALITY_PASS_BASELINE.uniqueChampions - metrics.uniqueRecommendedChampions) : metrics.uniqueRecommendedChampions === PRE_QUALITY_PASS_BASELINE.uniqueChampions ? "se mantiene" : "aumenta en " + (metrics.uniqueRecommendedChampions - PRE_QUALITY_PASS_BASELINE.uniqueChampions)) + ". Conviene vigilar la cobertura perfil/rol en auditorías futuras.",
+    "",
+    "### Impacto de la expansión del conocimiento estratégico",
+    "",
+    "La comparación usa la misma versión del algoritmo y el mismo catálogo de campeones. El cambio amplía vocabularios existentes para reconocer atributos del catálogo que antes no estaban vinculados con ciertos estilos o perfiles; no cambia pesos, umbrales, fórmulas ni el formato de recomendación.",
+    "",
+    "| Métrica | Antes | Después | Cambio |",
+    "| --- | ---: | ---: | ---: |",
+    "| Diversidad de campeones recomendados | " + pct(knowledgeBaseline.championDiversity) + " | " + pct(metrics.championDiversity) + " | " + percentagePointChange(knowledgeBaseline.championDiversity, metrics.championDiversity) + " |",
+    "| Menciones / campeones únicos | " + knowledgeBaseline.totalCandidateMentions + " / " + knowledgeBaseline.uniqueRecommendedChampions + " | " + metrics.totalCandidateMentions + " / " + metrics.uniqueRecommendedChampions + " | +" + (metrics.uniqueRecommendedChampions - knowledgeBaseline.uniqueRecommendedChampions) + " únicos |",
+    "| Campeones repetidos en ≥3 composiciones | " + knowledgeBaseline.repeatedChampionCount + " | " + afterRepeatedCount + " | " + (afterRepeatedCount - knowledgeBaseline.repeatedChampionCount) + " |",
+    "| Pares con alta coincidencia | " + knowledgeBaseline.similarPairCount + " | " + metrics.similarPairCount + " | " + (metrics.similarPairCount - knowledgeBaseline.similarPairCount) + " |",
+    "| Fidelidad de identidad en referencias | " + pct(knowledgeBaseline.referenceIdentityFidelity) + " | " + pct(metrics.referenceIdentityFidelity) + " | " + percentagePointChange(knowledgeBaseline.referenceIdentityFidelity, metrics.referenceIdentityFidelity) + " |",
+    "| Cobertura de perfiles/rol del catálogo | " + knowledgeBaseline.profileRoleKnowledgePairs + "/" + knowledgeBaseline.profileRoleKnowledgePairsTotal + " (" + pct(knowledgeBaseline.profileRoleKnowledgeCoverage) + ") | " + metrics.profileRoleKnowledgePairs + "/" + metrics.profileRoleKnowledgePairsTotal + " (" + pct(metrics.profileRoleKnowledgeCoverage) + ") | +" + (metrics.profileRoleKnowledgePairs - knowledgeBaseline.profileRoleKnowledgePairs) + " par |",
+    "| Cobertura de arquetipos/rol del catálogo | " + knowledgeBaseline.archetypeRolePairs + "/" + knowledgeBaseline.archetypeRolePairsTotal + " (" + pct(knowledgeBaseline.archetypeRoleCoverage) + ") | " + metrics.archetypeRolePairs + "/" + metrics.archetypeRolePairsTotal + " (" + pct(metrics.archetypeRoleCoverage) + ") | +" + (metrics.archetypeRolePairs - knowledgeBaseline.archetypeRolePairs) + " par |",
+    "| Cobertura del catálogo con algún perfil | " + pct(knowledgeBaseline.profileCandidateCoverage) + " | " + pct(metrics.profileCandidateCoverage) + " | " + percentagePointChange(knowledgeBaseline.profileCandidateCoverage, metrics.profileCandidateCoverage) + " |",
+    "",
+    "La expansión mejora la variedad recomendada y hace explícita una relación Poke–desgaste ya presente en los atributos, cubriendo un arquetipo/rol adicional. No altera la identidad esperada de los diez casos. La coincidencia entre pares de equipos permanece igual, por lo que esta iteración mejora la cobertura del vocabulario y la diversidad del conjunto, pero no demuestra una reducción adicional de la similitud entre composiciones.",
+    "",
+    "| Cobertura del conocimiento | Antes | Después |",
+    "| --- | ---: | ---: |",
+    "| Arquetipos con candidatos | " + knowledgeBaseline.distinctArchetypesCovered + "/8 | " + metrics.distinctArchetypesCovered + "/8 |",
+    "| Perfiles con candidatos | " + knowledgeBaseline.distinctProfilesCovered + "/13 | " + metrics.distinctProfilesCovered + "/13 |",
+    "| Campeones relacionados con algún arquetipo | " + pct(knowledgeBaseline.archetypeCandidateCoverage) + " | " + pct(metrics.archetypeCandidateCoverage) + " |",
+    "| Campeones relacionados con algún perfil | " + pct(knowledgeBaseline.profileCandidateCoverage) + " | " + pct(metrics.profileCandidateCoverage) + " |",
     "",
     "### Perfiles recomendados",
     "",
@@ -612,6 +684,16 @@ function renderMarkdown(audit, draftAudit = null) {
       "| Diferenciación entre composiciones cercanas | " + draftPct(draft.nearCompositionDifferentiation.differentiation) + " | 1 menos el solapamiento medio de recomendaciones tras sustituir una pieza y obtener otra identidad; " + draft.nearCompositionDifferentiation.pairCount + " pares. |",
       "| Órdenes guiados por señales estratégicas | " + draftPct(draft.signalGuidedOrderRate) + " | Pares de candidatos invertidos respecto a su afinidad bruta mediante la huella de señales, dentro de un punto de afinidad; " + draft.signalGuidedPairCount + "/" + draft.signalPairComparisons + " pares. |",
       "| Cobertura de etapas | " + draft.stageCount + "/" + (draft.compositionCount * 4) + " | Estados con recomendaciones desde 1 hasta 4 picks. |",
+      "",
+      "### Impacto del conocimiento en el draft",
+      "",
+      "La ampliación de vocabulario de composición reconoce Desgaste como una señal de Poke en los datos existentes. Las recomendaciones draft mantienen el mismo motor y candidatos por rol; la comparación refleja únicamente el efecto de esa relación sobre las señales de identidad.",
+      "",
+      "| Métrica | Antes | Después | Cambio |",
+      "| --- | ---: | ---: | ---: |",
+      "| Diversidad | " + draftPct(PRE_KNOWLEDGE_EXPANSION_BASELINE.draft.championDiversity) + " | " + draftPct(draft.championDiversity) + " | " + draftDelta(PRE_KNOWLEDGE_EXPANSION_BASELINE.draft.championDiversity, draft.championDiversity) + " |",
+      "| Repetición | " + draftPct(PRE_KNOWLEDGE_EXPANSION_BASELINE.draft.repetitionRate) + " | " + draftPct(draft.repetitionRate) + " | " + draftDelta(PRE_KNOWLEDGE_EXPANSION_BASELINE.draft.repetitionRate, draft.repetitionRate) + " |",
+      "| Diferenciación entre identidades | " + draftPct(PRE_KNOWLEDGE_EXPANSION_BASELINE.draft.crossIdentityDifferentiation) + " | " + draftPct(draft.crossIdentityDifferentiation) + " | " + draftDelta(PRE_KNOWLEDGE_EXPANSION_BASELINE.draft.crossIdentityDifferentiation, draft.crossIdentityDifferentiation) + " |",
       "",
       "### Comparación con la línea base anterior al Quality Pass 2",
       "",

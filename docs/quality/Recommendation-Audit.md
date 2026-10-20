@@ -16,9 +16,9 @@ La generación y ordenación son deterministas. Para regenerar este informe ejec
 | --- | ---: | --- |
 | Composiciones auditadas | 10 | Casos representativos declarados en el generador. |
 | Cobertura de recomendaciones | 10/10 (100.0%) | Casos que produjeron al menos un perfil con candidatos evaluados. |
-| Menciones de candidatos | 56 | Apariciones en listas por perfil; un campeón puede aparecer en varios perfiles. |
-| Campeones distintos recomendados | 31 | Diversidad total del catálogo recomendado. |
-| Diversidad de campeones | 55.4% | Campeones únicos dividido por todas las menciones por perfil. |
+| Menciones de candidatos | 57 | Apariciones en listas por perfil; un campeón puede aparecer en varios perfiles. |
+| Campeones distintos recomendados | 32 | Diversidad total del catálogo recomendado. |
+| Diversidad de campeones | 56.1% | Campeones únicos dividido por todas las menciones por perfil. |
 | Cobertura de rol por perfil | 95.0% | Pares perfil/rol con al menos una alternativa, entre los pares de perfiles recomendados. |
 | Perfiles estratégicos distintos | 12 | Variedad de perfiles ofrecidos por la cadena en el conjunto auditado. |
 | Pares de composiciones con alta repetición | 2 | Pares que comparten al menos 2 campeones recomendados y Jaccard ≥ 50.0%. |
@@ -29,15 +29,39 @@ La línea base conserva las métricas generadas por la herramienta en la PR #23,
 
 | Métrica | Antes | Después | Cambio |
 | --- | ---: | ---: | ---: |
-| Menciones de candidatos | 83 | 56 | -32.5% |
-| Campeones distintos | 32 | 31 | -3.1% |
-| Diversidad de campeones | 38.6% | 55.4% | +16.8 p.p. |
+| Menciones de candidatos | 83 | 57 | -31.3% |
+| Campeones distintos | 32 | 32 | 0.0% |
+| Diversidad de campeones | 38.6% | 56.1% | +17.5 p.p. |
 | Cobertura de rol por perfil | 95.3% | 95.0% | -0.3 p.p. |
-| Campeones repetidos en ≥3 composiciones | 17 | 10 | -41.2% |
+| Campeones repetidos en ≥3 composiciones | 17 | 9 | -47.1% |
 | Pares con alta coincidencia | 7 | 2 | -71.4% |
 | Máxima frecuencia de un campeón | 5/10 | 4/10 | -20.0% |
 
-La concentración repetida baja: los pares con alta coincidencia pasan de 7 a 2 y los campeones frecuentes de 17 a 10. La cobertura de rol por perfil retrocede 0.3 p.p. y el catálogo único recomendado disminuye en 1; conviene vigilar estos dos costes en auditorías futuras.
+La concentración repetida baja: los pares con alta coincidencia pasan de 7 a 2 y los campeones frecuentes de 17 a 9. La cobertura de rol por perfil retrocede 0.3 p.p.; el número de campeones únicos se mantiene. Conviene vigilar la cobertura perfil/rol en auditorías futuras.
+
+### Impacto de la expansión del conocimiento estratégico
+
+La comparación usa la misma versión del algoritmo y el mismo catálogo de campeones. El cambio amplía vocabularios existentes para reconocer atributos del catálogo que antes no estaban vinculados con ciertos estilos o perfiles; no cambia pesos, umbrales, fórmulas ni el formato de recomendación.
+
+| Métrica | Antes | Después | Cambio |
+| --- | ---: | ---: | ---: |
+| Diversidad de campeones recomendados | 55.4% | 56.1% | +0.7 p.p. |
+| Menciones / campeones únicos | 56 / 31 | 57 / 32 | +1 únicos |
+| Campeones repetidos en ≥3 composiciones | 10 | 9 | -1 |
+| Pares con alta coincidencia | 2 | 2 | 0 |
+| Fidelidad de identidad en referencias | 100.0% | 100.0% | 0.0 p.p. |
+| Cobertura de perfiles/rol del catálogo | 63/65 (96.9%) | 64/65 (98.5%) | +1 par |
+| Cobertura de arquetipos/rol del catálogo | 38/40 (95.0%) | 39/40 (97.5%) | +1 par |
+| Cobertura del catálogo con algún perfil | 99.6% | 100.0% | +0.4 p.p. |
+
+La expansión mejora la variedad recomendada y hace explícita una relación Poke–desgaste ya presente en los atributos, cubriendo un arquetipo/rol adicional. No altera la identidad esperada de los diez casos. La coincidencia entre pares de equipos permanece igual, por lo que esta iteración mejora la cobertura del vocabulario y la diversidad del conjunto, pero no demuestra una reducción adicional de la similitud entre composiciones.
+
+| Cobertura del conocimiento | Antes | Después |
+| --- | ---: | ---: |
+| Arquetipos con candidatos | 8/8 | 8/8 |
+| Perfiles con candidatos | 13/13 | 13/13 |
+| Campeones relacionados con algún arquetipo | 100.0% | 100.0% |
+| Campeones relacionados con algún perfil | 99.6% | 100.0% |
 
 ### Perfiles recomendados
 
@@ -63,7 +87,6 @@ Conteo completo sobre composiciones distintas, además de apariciones en perfile
 | Campeón | Composiciones | Menciones por perfil | Perfiles |
 | --- | ---: | ---: | ---: |
 | Dr. Mundo | 4/10 | 4 | 2 |
-| Aatrox | 3/10 | 3 | 3 |
 | Aurora | 3/10 | 3 | 2 |
 | Diana | 3/10 | 3 | 1 |
 | Elise | 3/10 | 3 | 1 |
@@ -72,23 +95,25 @@ Conteo completo sobre composiciones distintas, además de apariciones en perfile
 | Morgana | 3/10 | 3 | 1 |
 | Pantheon | 3/10 | 3 | 1 |
 | Smolder | 3/10 | 3 | 1 |
+| Aatrox | 2/10 | 2 | 2 |
 | Camille | 2/10 | 2 | 1 |
 | Garen | 2/10 | 2 | 1 |
 | Mordekaiser | 2/10 | 2 | 1 |
+| Viego | 2/10 | 2 | 1 |
 | Gragas | 1/10 | 2 | 2 |
 | Braum | 1/10 | 1 | 1 |
 | Cassiopeia | 1/10 | 1 | 1 |
 | Cho'Gath | 1/10 | 1 | 1 |
-| Darius | 1/10 | 1 | 1 |
 | Gwen | 1/10 | 1 | 1 |
 | Ivern | 1/10 | 1 | 1 |
 | K'Sante | 1/10 | 1 | 1 |
-| Kai'Sa | 1/10 | 1 | 1 |
 | Kled | 1/10 | 1 | 1 |
 | Maokai | 1/10 | 1 | 1 |
+| Master Yi | 1/10 | 1 | 1 |
 | Nunu & Willump | 1/10 | 1 | 1 |
 | Poppy | 1/10 | 1 | 1 |
 | Tahm Kench | 1/10 | 1 | 1 |
+| Talon | 1/10 | 1 | 1 |
 | Teemo | 1/10 | 1 | 1 |
 | Varus (On-Hit) | 1/10 | 1 | 1 |
 | Volibear | 1/10 | 1 | 1 |
@@ -98,14 +123,14 @@ Conteo completo sobre composiciones distintas, además de apariciones en perfile
 
 Señal de repetición por campeón: aparece en al menos 3 composiciones distintas. Es una alerta exploratoria, no significa por sí sola que una recomendación sea incorrecta.
 
-Campeones con aparición frecuente: Dr. Mundo (4/10), Aatrox (3/10), Aurora (3/10), Diana (3/10), Elise (3/10), Illaoi (3/10), Jax (3/10), Morgana (3/10), Pantheon (3/10), Smolder (3/10).
+Campeones con aparición frecuente: Dr. Mundo (4/10), Aurora (3/10), Diana (3/10), Elise (3/10), Illaoi (3/10), Jax (3/10), Morgana (3/10), Pantheon (3/10), Smolder (3/10).
 
 Pares con recomendaciones de alta coincidencia:
 
 | Composición A | Composición B | Campeones compartidos | Jaccard |
 | --- | --- | ---: | ---: |
 | Front to Back | Híbrida | 6 | 100.0% |
-| Teamfight | Incoherente | 3 | 50.0% |
+| Teamfight | Incoherente | 4 | 66.7% |
 
 ## Casos incluidos
 
@@ -148,18 +173,28 @@ La alineación contextual mide qué proporción de candidatos apunta a la identi
 | Estados de draft | 40 | 10 arquetipos de referencia por 4 tamaños de draft. |
 | Identidades secundarias | 16/40 (40.0%) | En el draft requiere apoyo de varias piezas; en un equipo completo conserva una señal rival fuerte para detectar contradicciones. |
 | Estabilidad de identidad principal | 81.5% | Transiciones consecutivas con la misma identidad entre casos reconocibles: 22/27. |
-| Diferenciación entre identidades distintas | 97.6% | Uno menos el Jaccard medio de los top 3 por rol, entre estados del mismo tamaño con identidad distinta; 369 pares. |
+| Diferenciación entre identidades distintas | 97.5% | Uno menos el Jaccard medio de los top 3 por rol, entre estados del mismo tamaño con identidad distinta; 369 pares. |
 | Categorías estratégicas utilizadas | 8 | Categorías de identidad usadas en las recomendaciones del corpus. |
 | Cobertura de rol | 100.0% | Roles aún vacíos con tres recomendaciones disponibles. |
-| Diversidad | 26.0% | Campeones únicos dividido por todas las menciones en los estados auditados. |
+| Diversidad | 25.3% | Campeones únicos dividido por todas las menciones en los estados auditados. |
 | Adaptación al contexto | 97.9% | Candidatos cuya dirección coincide con la identidad reconocible; 285 menciones evaluables. |
 | Cambio de listas entre picks | 61.7% | Listas por rol común que cambian al añadir el siguiente campeón. |
 | Estabilidad con identidad constante | 82.9% | Solapamiento medio del top 3 entre transiciones que mantienen identidad; 41 comparaciones. |
 | Repetición de sugerencias | 27.7% | Menciones pertenecientes a campeones que aparecen en 8 o más contextos draft/rol. |
-| Campeones distintos / máxima repetición | 78 / 24 contextos | Variedad del catálogo y máxima frecuencia entre estados. |
+| Campeones distintos / máxima repetición | 76 / 24 contextos | Variedad del catálogo y máxima frecuencia entre estados. |
 | Diferenciación entre composiciones cercanas | 95.4% | 1 menos el solapamiento medio de recomendaciones tras sustituir una pieza y obtener otra identidad; 189 pares. |
 | Órdenes guiados por señales estratégicas | 2.3% | Pares de candidatos invertidos respecto a su afinidad bruta mediante la huella de señales, dentro de un punto de afinidad; 7/300 pares. |
 | Cobertura de etapas | 40/40 | Estados con recomendaciones desde 1 hasta 4 picks. |
+
+### Impacto del conocimiento en el draft
+
+La ampliación de vocabulario de composición reconoce Desgaste como una señal de Poke en los datos existentes. Las recomendaciones draft mantienen el mismo motor y candidatos por rol; la comparación refleja únicamente el efecto de esa relación sobre las señales de identidad.
+
+| Métrica | Antes | Después | Cambio |
+| --- | ---: | ---: | ---: |
+| Diversidad | 24.0% | 25.3% | +1.3 p.p. |
+| Repetición | 36.3% | 27.7% | -8.6 p.p. |
+| Diferenciación entre identidades | 97.2% | 97.5% | +0.3 p.p. |
 
 ### Comparación con la línea base anterior al Quality Pass 2
 
@@ -200,9 +235,9 @@ La línea base se ejecuta con el código de `origin/main` previo a QP4 sobre el 
 
 | Métrica | Antes (QP3) | Después (QP4) | Cambio |
 | --- | ---: | ---: | ---: |
-| Diversidad de candidatos | 24.0% | 26.0% | +2.0 p.p. |
+| Diversidad de candidatos | 24.0% | 25.3% | +1.3 p.p. |
 | Repetición de sugerencias | 36.3% | 27.7% | -8.6 p.p. |
-| Diferenciación entre identidades distintas | 97.2% | 97.6% | +0.4 p.p. |
+| Diferenciación entre identidades distintas | 97.2% | 97.5% | +0.3 p.p. |
 | Diferenciación entre composiciones cercanas | 93.9% | 95.4% | +1.5 p.p. |
 | Pares cercanos auditados | 189 | 189 | — |
 | Alineación contextual | 97.9% | 97.9% | 0.0 p.p. |

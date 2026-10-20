@@ -29,6 +29,18 @@ assert.ok(first.metrics.recommendationCoverage >= 0 && first.metrics.recommendat
 assert.ok(first.metrics.championDiversity >= 0 && first.metrics.championDiversity <= 1);
 assert.ok(first.metrics.profileRoleCoverage >= 0 && first.metrics.profileRoleCoverage <= 1);
 assert.equal(first.metrics.compositionCount, 10);
+assert.equal(first.metrics.referenceIdentityMatchCount, 10, "La expansión conserva las identidades esperadas de los fixtures");
+assert.equal(first.metrics.referenceIdentityFidelity, 1);
+assert.equal(first.metrics.archetypeCandidateCoverage, 1);
+assert.equal(first.metrics.distinctArchetypesCovered, 8);
+assert.equal(first.metrics.archetypeRolePairs, 39, "Desgaste amplía la cobertura Poke a jungle usando una etiqueta ya existente");
+assert.equal(first.metrics.profileCandidateCoverage, 1, "Cada campeón del catálogo debe estar relacionado con algún perfil");
+assert.equal(first.metrics.distinctProfilesCovered, 13);
+assert.equal(first.metrics.profileRoleKnowledgePairs, 64, "La auditoría registra la cobertura perfil/rol del catálogo");
+assert.equal(first.metrics.totalCandidateMentions, 57);
+assert.equal(first.metrics.uniqueRecommendedChampions, 32);
+assert.equal(first.metrics.championDiversity, 0.561);
+assert.equal(first.metrics.similarPairCount, 2, "La expansión no debe afirmar una caída de coincidencias no observada");
 assert.ok(first.metrics.totalCandidateMentions < 83, "Quality Pass 1 debe reducir menciones redundantes frente a la línea base");
 assert.ok(first.metrics.championDiversity > 0.386, "Quality Pass 1 debe aumentar la diversidad frente a la línea base");
 assert.ok(first.metrics.similarPairCount < 7, "Quality Pass 1 debe reducir pares de composiciones con alta coincidencia");
@@ -100,6 +112,8 @@ assert.ok(first.similarPairs.every((pair) => pair.shared >= first.thresholds.pai
 assert.equal(renderMarkdown(first, firstDraft), renderMarkdown(second, secondDraft), "El informe Markdown debe ser idéntico entre ejecuciones");
 assert.match(renderMarkdown(first, firstDraft), /Metodología[\s\S]*Métricas[\s\S]*Limitaciones[\s\S]*Cómo interpretar/);
 assert.match(renderMarkdown(first, firstDraft), /Comparación con la línea base anterior al Quality Pass 1/);
+assert.match(renderMarkdown(first, firstDraft), /Impacto de la expansión del conocimiento estratégico[\s\S]*Cobertura de perfiles\/rol del catálogo[\s\S]*Cobertura de arquetipos\/rol del catálogo/);
+assert.match(renderMarkdown(first, firstDraft), /Impacto del conocimiento en el draft[\s\S]*Diferenciación entre identidades/);
 assert.match(renderMarkdown(first, firstDraft), /Auditoría del draft[\s\S]*Comparación con la línea base anterior al Quality Pass 2/);
 assert.match(renderMarkdown(first, firstDraft), /Comparación antes\/después del Quality Pass 3[\s\S]*Estabilidad de identidad principal[\s\S]*Uso de categorías después/);
 assert.match(renderMarkdown(first, firstDraft), /Comparación antes\/después del Quality Pass 4[\s\S]*Diferenciación entre composiciones cercanas[\s\S]*Estabilidad con identidad constante[\s\S]*Decisiones de orden guiadas por señales/);
@@ -107,7 +121,7 @@ assert.match(renderMarkdown(first, firstDraft), /Diversidad \| 22\.0% \| 24\.0% 
   "La comparación QP2 conserva sus métricas históricas tras nuevas auditorías");
 assert.match(renderMarkdown(first, firstDraft), /Diversidad de candidatos \| 24\.0% \| 24\.0% \| 0\.0 p\.p\./,
   "La comparación QP3 queda fijada en su resultado histórico");
-assert.match(renderMarkdown(first, firstDraft), /38\.6% \| 55\.4% \| \+16\.8 p\.p\./,
+assert.match(renderMarkdown(first, firstDraft), /38\.6% \| 56\.1% \| \+17\.5 p\.p\./,
   "El informe conserva la comparación de diversidad antes/después");
 
 const noRecommendations = auditRecommendations(Object.fromEntries(Object.keys(catalog).map((role) => [

@@ -15,6 +15,27 @@ La revisión toma como base `main` en la versión 3.1.0 y las herramientas y pru
 
 La auditoría existente se puede regenerar con `node tools/recommendation-audit.cjs --write` y validar con `node tools/check-recommendation-audit.cjs`. La herramienta y las pruebas comprueban orden determinista, cobertura y repetición para diez composiciones de referencia.
 
+La definición vigente de las relaciones entre atributos, identidades y perfiles se documenta en [Strategic Knowledge Framework](Strategic-Knowledge-Framework.md). Esta Phase 1 añade vocabulario general a las señales existentes; no introduce nuevas categorías ni altera pesos o umbrales.
+
+## Strategic Knowledge Expansion — Phase 1
+
+La comparación reproducible de esta fase parte de `origin/main` v3.3.0, usando el mismo catálogo, los mismos fixtures y los mismos algoritmos antes y después. La expansión reconoce términos estratégicos ya presentes en los atributos —por ejemplo, desgaste, cazadas, invasión, resets, anti-frontline y asedio— y los relaciona con identidades o perfiles existentes.
+
+| Área | Antes | Después | Lectura |
+| --- | ---: | ---: | --- |
+| Diversidad de campeones en recomendación completa | 55,4% | 56,1% | Aumenta 0,7 puntos porcentuales; aparecen 32 candidatos únicos frente a 31. |
+| Candidatos repetidos en ≥3 composiciones | 10 | 9 | Un candidato menos supera el umbral de repetición. |
+| Pares de composiciones con alta coincidencia | 2 | 2 | Sin cambio; no se afirma una mejora de diferenciación entre equipos. |
+| Fidelidad de identidad de las referencias | 10/10 | 10/10 | No cambia la identidad esperada de los ocho estilos y los dos casos especiales. |
+| Cobertura de identidades por rol | 38/40 (95,0%) | 39/40 (97,5%) | Se reconoce un candidato Poke jungla por la señal Desgaste. Split Push Support queda sin forzar. |
+| Cobertura de perfiles por rol | 63/65 (96,9%) | 64/65 (98,5%) | Mejora un par perfil/rol sustentado por los atributos; Side Lane Support queda como hueco real. |
+| Catálogo relacionado con algún perfil | 265/266 (99,6%) | 266/266 (100%) | Cada ficha queda asociada a un perfil existente sin crear perfiles nuevos. |
+| Diversidad en estados parciales del draft | 24,0% | 24,3% | Mejora 0,3 puntos porcentuales. |
+| Repetición durante el draft | 36,3% | 36,3% | Sin cambio. |
+| Diferenciación entre identidades en draft | 97,2% | 97,3% | Mejora 0,1 puntos porcentuales; las demás medidas principales permanecen estables. |
+
+Los cambios medidos proceden de vocabularios de señales existentes. No se recalibraron pesos, fórmulas o umbrales. El resultado aporta mejor cobertura y variedad de recomendación completa; la diferenciación final por pares se mantiene, así que la auditoría no atribuye a esta expansión una reducción adicional de convergencia entre composiciones.
+
 ## Análisis por módulos
 
 ### 1. Diagnóstico de composición
@@ -72,17 +93,17 @@ La auditoría existente se puede regenerar con `node tools/recommendation-audit.
 | Área | Evidencia disponible en `main` | Lo que todavía no mide |
 | --- | --- | --- |
 | Diagnóstico | Casos de arquetipo; coherencia, identidad y estado de salida | Calibración poblacional y sensibilidad ante variantes de una pieza |
-| Draft | Pruebas de estados con 1–4 picks y determinismo | Cobertura agregada, adaptación contextual, solapamiento y estabilidad por paso |
-| Recomendación final | 10 casos, cobertura 100%, diversidad 55,4%, frecuencia y coincidencias | Calidad semántica, adecuación competitiva y equivalencia táctica |
+| Draft | 40 estados, cobertura 100%, adaptación contextual 97,9%, estabilidad 82,9% y diversidad 24,3% | Cobertura más allá de diez referencias, sensibilidad a otras secuencias y adecuación competitiva |
+| Recomendación final | 10 casos, cobertura 100%, diversidad 56,1%, frecuencia y coincidencias | Calidad semántica, adecuación competitiva y equivalencia táctica |
 | Ranking | Orden y motivos fijados por pruebas unitarias | Margen/calibración de ranking y aporte aislado de cada criterio |
 | Bans | Pruebas representativas, orden, filtrado y determinismo | Cobertura poblacional, diversidad y validación contra drafts reales |
 | Informe | Contratos de salida, textos y estructura | Comprensión real, redundancia semántica y utilidad percibida |
 
-Las métricas de recomendaciones finales proceden del informe [`Recommendation-Audit.md`](Recommendation-Audit.md). No se han generado aquí métricas ficticias para las áreas que aún no tienen un auditor agregado. En particular, los resultados del draft, bans y lectura del informe requieren nuevas mediciones antes de afirmar una mejora cuantitativa.
+Las métricas agregadas de recomendación y draft proceden del informe [`Recommendation-Audit.md`](Recommendation-Audit.md); las cifras de draft y recomendación completa están limitadas al corpus fijo de diez referencias. No se han generado aquí métricas ficticias para bans ni lectura del informe, que aún requieren una auditoría específica antes de afirmar una mejora cuantitativa.
 
 ## Oportunidades priorizadas
 
-Las complejidades son estimaciones relativas a la base actual; “baja” supone reutilizar los fixtures y motores existentes sin alterar el producto.
+Las prioridades siguientes documentan la revisión original. Desde entonces, la auditoría de draft de los Quality Pass y el análisis de cobertura aquí añadido cubren las oportunidades 1 y 3; las cifras siguen siendo de referencia, no una validación poblacional. Las complejidades son estimaciones relativas a la base actual; “baja” supone reutilizar los fixtures y motores existentes sin alterar el producto.
 
 | Prioridad | Oportunidad | Impacto esperado | Complejidad | Motivo |
 | --- | --- | --- | --- | --- |

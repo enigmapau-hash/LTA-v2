@@ -10,7 +10,7 @@
 
   const PROFILE_SIGNALS = Object.freeze({
     engage: { fields: ["strengths", "function"], terms: ["engage", "iniciación"] },
-    followUp: { fields: ["strengths"], terms: ["follow-up", "teamfight"] },
+    followUp: { fields: ["strengths"], terms: ["follow-up", "teamfight", "resets"] },
     pick: { fields: ["strengths", "function"], terms: ["pick", "ganks", "roams"] },
     frontline: { fields: ["strengths", "function"], terms: ["frontline", "tanque"] },
     peel: { fields: ["strengths"], terms: ["peel", "escudos", "protección"] },
@@ -19,9 +19,9 @@
     frontToBack: { fields: ["identity", "strengths"], terms: ["front to back", "frontline", "dps"] },
     sideLane: { fields: ["strengths"], terms: ["side lane", "presión lateral", "duelos"] },
     mapControl: { fields: ["strengths"], terms: ["control del mapa", "control de visión", "visión", "objetivos"] },
-    earlyPressure: { fields: ["tempo", "strengths"], terms: ["early", "tempo", "presión de línea", "snowball"] },
+    earlyPressure: { fields: ["tempo", "strengths"], terms: ["early", "tempo", "presión de línea", "dominio de línea", "invasión", "snowball"] },
     scaling: { fields: ["tempo", "strengths", "function"], terms: ["late", "escalado", "hypercarry"] },
-    zoneControl: { fields: ["strengths"], terms: ["control de zonas", "control de visión"] },
+    zoneControl: { fields: ["strengths"], terms: ["control de zonas", "control de visión", "asedio"] },
   });
 
   const ROLE_ORDER = Object.freeze(["top", "jungle", "mid", "botline", "support"]);
@@ -224,5 +224,35 @@
       : notMapped("no-matching-candidates");
   }
 
-  return { mapCandidates };
+  function auditProfileKnowledge(candidatesByRole = {}) {
+    const candidates = Object.entries(candidatesByRole).flatMap(([role, items]) =>
+      (Array.isArray(items) ? items : []).map((candidate) => ({ ...candidate, role }))
+    );
+    const profiles = Object.entries(PROFILE_SIGNALS).map(([id, signalDefinition]) => {
+      const matches = candidates.filter((candidate) => findSignals(candidate, signalDefinition).signals.length > 0);
+      return {
+        id,
+        candidateCount: matches.length,
+        roleCount: new Set(matches.map((candidate) => candidate.role)).size,
+        roles: [...new Set(matches.map((candidate) => candidate.role))].sort(),
+      };
+    });
+    const coveredCandidates = candidates.filter((candidate) => Object.values(PROFILE_SIGNALS).some((signalDefinition) =>
+      findSignals(candidate, signalDefinition).signals.length > 0
+    )).length;
+    const profileRolePairs = profiles.reduce((sum, profile) => sum + profile.roleCount, 0);
+
+    return {
+      candidateCount: candidates.length,
+      coveredCandidateCount: coveredCandidates,
+      candidateCoverage: candidates.length ? coveredCandidates / candidates.length : 0,
+      profileCount: profiles.filter((item) => item.candidateCount > 0).length,
+      profileCountTotal: profiles.length,
+      profileRolePairs,
+      profileRolePairsTotal: profiles.length * Object.keys(candidatesByRole).length,
+      profiles,
+    };
+  }
+
+  return { mapCandidates, auditProfileKnowledge };
 });

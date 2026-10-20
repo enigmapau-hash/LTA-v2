@@ -4,6 +4,7 @@
 
 ### Added
 - Recomendaciones de draft enriquecidas con señales de identidad estratégica
+- Enriquecimiento del vocabulario estratégico y cobertura de recomendaciones
 
 
 ## v3.3.0

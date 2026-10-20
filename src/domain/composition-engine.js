@@ -56,7 +56,7 @@
       strengths: ["Poke", "Asedio"],
       weaknesses: ["Evitar engages directos"],
       signals: [
-        { fields: ["strengths"], terms: ["poke"], weight: 3 },
+        { fields: ["strengths"], terms: ["poke", "desgaste"], weight: 3 },
         { fields: ["strengths"], terms: ["asedio"], weight: 2 },
         { fields: ["function"], terms: ["artillery mage", "poke"], weight: 1 },
       ],
@@ -420,6 +420,38 @@
     };
   }
 
+  function auditArchetypeKnowledge(candidatesByRole = {}) {
+    const candidates = Object.entries(candidatesByRole).flatMap(([role, items]) =>
+      (Array.isArray(items) ? items : []).map((candidate) => ({ ...candidate, role }))
+    );
+    const archetypes = ARCHETYPES.map((archetype) => {
+      const matches = candidates.filter((candidate) =>
+        archetype.signals.some((signal) => matchesSignal(candidate, signal))
+      );
+      return {
+        id: archetype.id,
+        candidateCount: matches.length,
+        roleCount: new Set(matches.map((candidate) => candidate.role)).size,
+        roles: [...new Set(matches.map((candidate) => candidate.role))].sort(),
+      };
+    });
+    const coveredCandidates = candidates.filter((candidate) => ARCHETYPES.some((archetype) =>
+      archetype.signals.some((signal) => matchesSignal(candidate, signal))
+    )).length;
+    const roleArchetypePairs = archetypes.reduce((sum, archetype) => sum + archetype.roleCount, 0);
+
+    return {
+      candidateCount: candidates.length,
+      coveredCandidateCount: coveredCandidates,
+      candidateCoverage: candidates.length ? coveredCandidates / candidates.length : 0,
+      archetypeCount: archetypes.filter((item) => item.candidateCount > 0).length,
+      archetypeCountTotal: archetypes.length,
+      roleArchetypePairs,
+      roleArchetypePairsTotal: archetypes.length * Object.keys(candidatesByRole).length,
+      archetypes,
+    };
+  }
+
   function recommendPicks(input, candidatesByRole, limit = 3) {
     const picks = Array.isArray(input) ? input.filter(Boolean) : [];
     const selectedRoles = new Set(picks.map((pick) => String(pick.role || "").toLowerCase()));
@@ -480,5 +512,5 @@
       }, {});
   }
 
-  return { analyzeComposition, recommendPicks };
+  return { analyzeComposition, recommendPicks, auditArchetypeKnowledge };
 });
