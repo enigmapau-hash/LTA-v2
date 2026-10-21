@@ -117,6 +117,17 @@ async function main(){
   const planItems=await supportSuggestions.locator(".pick-recommendations__plans li").allInnerTexts();assert.ok(planItems.length>=1&&planItems.length<=2,"el plan se muestra una vez por orientación contextual distinta, no una vez por campeón");assert.equal(new Set(planItems).size,planItems.length,"no se repiten explicaciones de plan");
   await page.locator("#support").fill("Lulu");await page.waitForFunction(()=>document.querySelector('[data-report-section="diagnosis"] .result-summary__answer')?.textContent.includes("Front to Back"));
   assert.equal(await page.locator(".pick-recommendations").count(),0,"las recomendaciones se ocultan al completar la composición");
+  for(const width of widths){
+   await page.setViewportSize({width,height:900});
+   for(const [id,value] of [["support",""],["top","Jayce"],["jungle","Nidalee"],["mid","Xerath"],["adc","Ezreal"]])await page.locator("#"+id).fill(value);
+   await page.waitForFunction(()=>[...document.querySelectorAll(".pick-recommendations__role ol > li")].some(li=>li.querySelector("strong")?.textContent==="Karma"&&li.textContent.includes("Cubre la falta de protección para los carries y mantiene Poke.")));
+   assert.equal(await page.locator(".pick-recommendations__role").count(),1);
+   assert.equal(await page.locator(".pick-recommendations__role ol > li").count(),3);
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),true,"la explicación contextual cabe sin desbordamiento en "+width+" px");
+   await page.locator("#jungle").fill("Gragas");
+   await page.waitForFunction(()=>document.querySelector(".pick-recommendations")?.textContent.includes("Heimerdinger")&&!document.querySelector(".pick-recommendations")?.textContent.includes("Cubre la falta"));
+   assert.match(await page.locator(".pick-recommendations").innerText(),/Refuerza el plan de Poke que ya comparten los picks actuales\./);
+  }
   assert.deepEqual(pageErrors,[],"sin errores JavaScript");assert.deepEqual(consoleErrors,[],"sin errores en consola");console.log("UX validada: 320, 375, 390, 768, 1280 px; informe estratégico adaptativo; teclado, accesibilidad, tabla y consola.");
  }finally{if(browser)await browser.close();await new Promise((r,j)=>server.close(e=>e?j(e):r()));}
 }

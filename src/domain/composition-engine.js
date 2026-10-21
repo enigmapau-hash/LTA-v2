@@ -272,10 +272,49 @@
       .slice(0, Math.max(0, limit - selected.length)));
   }
 
-  function draftAffinity(picks, candidate, proposedScores, primary, topScore, emerging, emergingScoreBefore, emergingIdentity) {
+  function supportsDraftNeed(pick, signal) {
+    return signal.fields.some((field) => signal.terms.some((term) =>
+      // Anti-frontline describe daño al frente rival, no frontline propia.
+      new RegExp(`(^|[^a-z0-9-])${normalize(term)}($|[^a-z0-9-])`).test(fieldText(pick, field))));
+  }
+
+  function explainDraftFit(picks, candidate, archetype, proposedDirection, coveredNeeds = []) {
+    if (coveredNeeds.length) {
+      return `Cubre la falta de ${coveredNeeds.map((gap) => gap.label).join(" y ")} y mantiene ${archetype.label}.`;
+    }
+
+    // Solo verbalizar capacidades positivas y explícitas. El matcher histórico
+    // del ranking puede aceptar subcadenas; eso no acredita una capacidad propia.
+    const sharedTerms = [];
+    for (const signal of [...(archetype?.signals || [])].sort((a, b) => b.weight - a.weight)) {
+      for (const term of signal.terms) {
+        // Una función como «protege hypercarry» no convierte al candidato en
+        // hypercarry: solo las fortalezas acreditan lo que aporta por sí mismo.
+        const explicit = { fields: signal.fields.filter((field) => field === "strengths"), terms: [term] };
+        if (sharedTerms.includes(term)) continue;
+        if (supportsDraftNeed(candidate, explicit) && picks.some((pick) => supportsDraftNeed(pick, explicit))) sharedTerms.push(term);
+      }
+    }
+    if (sharedTerms.length && proposedDirection === archetype.id) {
+      const specificTerms = sharedTerms.filter((term) => normalize(term) !== normalize(archetype.label));
+      return specificTerms.length
+        ? `Refuerza ${archetype.label} con ${specificTerms.slice(0, 2).join(" y ")} que ya aporta el equipo.`
+        : `Refuerza el plan de ${archetype.label} que ya comparten los picks actuales.`;
+    }
+    const sharedTempo = archetype?.signals.some((signal) => signal.fields.includes("tempo")
+      && matchesSignal(candidate, signal) && picks.some((pick) => matchesSignal(pick, signal)));
+    if (sharedTempo && proposedDirection === archetype.id) {
+      return `Refuerza ${archetype.label}: su ritmo ${candidate.tempo} coincide con el plan actual.`;
+    }
+
+    // Conservar la descripción factual anterior si no hay una relación segura.
+    return `Aporta: ${listField(candidate.strengths).slice(0, 3).join(", ") || "sin señales suficientes"}`;
+  }
+
+  function draftFit(picks, candidate, proposedScores, primary, topScore, emerging, emergingScoreBefore, emergingIdentity) {
     const proposedDirection = primary?.id || topScore?.id;
     const baseAffinity = primary?.score || topScore?.score || 0;
-    if (!emerging) return baseAffinity;
+    if (!emerging) return { affinity: baseAffinity, explain: () => explainDraftFit(picks, candidate, null, proposedDirection) };
 
     const emergingArchetype = ARCHETYPES.find((item) => item.id === emerging.id);
     const emergingScoreAfter = proposedScores.find((item) => item.id === emerging.id)?.score || 0;
@@ -289,14 +328,11 @@
     // herramienta ausente que ese plan necesita; no se bonifica variedad genérica.
     const plan = emergingIdentity || emergingArchetype;
     const needs = STRATEGIC_GAPS.filter((gap) => plan?.draftNeeds?.includes(gap.id));
-    const supportsNeed = (pick, gap) => gap.fields.some((field) => gap.terms.some((term) =>
-      // Anti-frontline describe daño al frente rival, no frontline propia.
-      new RegExp(`(^|[^a-z0-9-])${normalize(term)}($|[^a-z0-9-])`).test(fieldText(pick, field))));
-    const coveredNeeds = needs.filter((gap) => supportsNeed(candidate, gap)
-      && !picks.some((pick) => supportsNeed(pick, gap))).length;
+    const coveredNeeds = needs.filter((gap) => supportsDraftNeed(candidate, gap)
+      && !picks.some((pick) => supportsDraftNeed(pick, gap)));
     const preservesPlan = emergingIdentity && proposedDirection === emergingIdentity.id;
     const coverageFit = needs.length && preservesPlan
-      ? coveredNeeds / needs.length * 4 : 0;
+      ? coveredNeeds.length / needs.length * 4 : 0;
     const contextAffinity = baseAffinity * 0.4
       + emergingScoreAfter * 0.25
       + marginalSupport * 0.15
@@ -305,7 +341,12 @@
       + coverageFit
       + (candidateIdentityFit ? 3 : 0);
     const contradictionPenalty = emergingIdentity && proposedDirection !== emergingIdentity.id ? 12 : 0;
-    return Math.max(0, Math.min(100, Math.round(contextAffinity - contradictionPenalty)));
+    return {
+      affinity: Math.max(0, Math.min(100, Math.round(contextAffinity - contradictionPenalty))),
+      // Preparar texto solo para los candidatos que sobrevivan a la selección.
+      explain: () => explainDraftFit(picks, candidate, coverageFit > 0 ? emergingIdentity : emergingIdentity ? emergingArchetype : null,
+        proposedDirection, coverageFit > 0 ? coveredNeeds : []),
+    };
   }
 
   function assessPlanSupport(picks, primary, primaryScore) {
@@ -498,7 +539,7 @@
           ranked.set(key, {
             role,
             champion,
-            affinity: draftAffinity(picks, candidatePick, scores, primaryScore, topScore, emerging, emergingScoreBefore, emergingIdentity),
+            ...draftFit(picks, candidatePick, scores, primaryScore, topScore, emerging, emergingScoreBefore, emergingIdentity),
             identitySignalCoverage: identityEnrichment.coverage,
             identitySignalSpecificity: identityEnrichment.specificity,
             identity: primary?.label || null,
@@ -511,8 +552,9 @@
 
         const recommendations = selectContextualAlternatives([...ranked.values()], safeLimit);
         const bestAffinity = Math.max(0, ...recommendations.map((item) => item.affinity));
-        return [role, recommendations.map((item) => ({
+        return [role, recommendations.map(({ explain, ...item }) => ({
           ...item,
+          explanation: explain(),
           quality: item.affinity === bestAffinity
             ? "Mejor afinidad"
             : item.coherent

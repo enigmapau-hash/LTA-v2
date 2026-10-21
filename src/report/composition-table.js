@@ -18,7 +18,7 @@
                     <strong>${escapeHtml(item.champion)}</strong>
                     <span class="pick-recommendations__quality${item.quality === "Mejor afinidad" ? " is-best" : ""}">${escapeHtml(item.quality)}</span>
                     <small>${escapeHtml(item.direction || "Sin identidad clara")} · Afinidad ${item.affinity}/100</small>
-                    <small>Aporta: ${escapeHtml(item.strengths.join(", ") || "sin señales suficientes")}</small>
+                    <small>${escapeHtml(item.explanation || `Aporta: ${item.strengths.join(", ") || "sin señales suficientes"}`)}</small>
                   </li>
                 `).join("")}
               </ol>

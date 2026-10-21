@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.6.0
+
+### Added
+- Explicaciones contextuales de los candidatos durante el draft, sin cambiar rankings ni afinidades
+
+
 ## v3.5.0
 
 ### Added
