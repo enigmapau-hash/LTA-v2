@@ -214,6 +214,28 @@ La alineación contextual mide qué proporción de candidatos apunta a la identi
 | Apertura ambigua | Ahri abre las ramas Dive y Pick. |
 | Tamaños cubiertos | 1, 2, 3 y 4 picks. |
 
+### Revisión de consistencia contextual (PR33)
+
+La sensibilidad al orden de la matriz compara prefijos del mismo tamaño, pero esos prefijos contienen campeones distintos; por tanto mide cambio de contexto durante el draft, no dependencia del orden del mismo conjunto. Una prueba directa invierte el orden de almacenamiento de los mismos picks y confirma que el resultado permanece idéntico. La estabilidad entre órdenes con la misma identidad (89.7%) y la adaptación tras cambio de identidad (100.0%) muestran que la mayor parte de la variación coincide con cambios reales de contexto.
+
+Las sustituciones de la matriz comparten rol, identidad y función, pero no todas las señales estratégicas. Por ejemplo, las parejas Sejuani/Amumu y Lulu/Milio difieren en fortalezas y debilidades declaradas. Esa evidencia también alimenta el ranking, así que un cambio de candidatos no demuestra por sí solo una inconsistencia. La métrica actual de equivalencia es orientativa y no representa identidad completa de atributos.
+
+Se ensayó localmente dejar de usar la identidad provisional mejor puntuada hasta que alcance el umbral de identidad confirmada. El cambio elevó ligeramente diversidad y diferenciación de composiciones cercanas, pero redujo estabilidad de recomendaciones; por ello no se incorpora.
+
+| Métrica | Base v3.4.0 | Ensayo descartado | Cambio |
+| --- | ---: | ---: | ---: |
+| Alineación contextual | 97.9% | 97.9% | 0.0 p.p. |
+| Diversidad | 25.3% | 25.7% | +0.4 p.p. |
+| Repetición | 27.7% | 27.7% | 0.0 p.p. |
+| Diferenciación de composiciones cercanas | 95.4% | 97.4% | +2.0 p.p. |
+| Estabilidad general entre picks de identidad constante | 82.9% | 81.3% | -1.6 p.p. |
+| Estabilidad ante órdenes de identidad constante | 89.7% | 87.0% | -2.7 p.p. |
+| Estabilidad ante sustituciones equivalentes | 77.7% | 72.2% | -5.5 p.p. |
+
+La diferenciación de planes cercanos/opuestos y la adaptación tras un cambio de identidad se mantuvieron en 100% durante el ensayo, pero no compensan la pérdida medida de estabilidad. El producto conserva el comportamiento v3.4.0; la comparación final antes/después es, por tanto, idéntica. No se cambian pesos ni se fuerza estabilidad artificial.
+
+La oportunidad pendiente es refinar la definición de equivalencia para comparar picks con huellas estratégicas realmente equivalentes. La auditoría actual aporta cuatro pares pequeños, insuficientes para justificar una regla general de normalización del motor.
+
 
 ### Impacto del conocimiento en el draft
 
