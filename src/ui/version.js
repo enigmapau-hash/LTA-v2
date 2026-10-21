@@ -4,14 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.4.0",
+    version: "v3.5.0",
     track: "Actualización funcional",
     label: "Versión",
-    updated: "2026-10-20",
-    summary: [
-      "Recomendaciones de draft enriquecidas con señales de identidad estratégica",
-      "Enriquecimiento del vocabulario estratégico y cobertura de recomendaciones",
-    ],
+    updated: "2026-10-21",
+    summary: ["Cobertura contextual de protección en el draft sin perder cohesión estratégica"],
     pending: [],
   };
 

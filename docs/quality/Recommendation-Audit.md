@@ -178,23 +178,23 @@ La alineación contextual mide qué proporción de candidatos apunta a la identi
 | Estados de draft | 40 | 10 arquetipos de referencia por 4 tamaños de draft. |
 | Identidades secundarias | 16/40 (40.0%) | En el draft requiere apoyo de varias piezas; en un equipo completo conserva una señal rival fuerte para detectar contradicciones. |
 | Estabilidad de identidad principal | 81.5% | Transiciones consecutivas con la misma identidad entre casos reconocibles: 22/27. |
-| Diferenciación entre identidades distintas | 97.5% | Uno menos el Jaccard medio de los top 3 por rol, entre estados del mismo tamaño con identidad distinta; 369 pares. |
+| Diferenciación entre identidades distintas | 97.6% | Uno menos el Jaccard medio de los top 3 por rol, entre estados del mismo tamaño con identidad distinta; 369 pares. |
 | Categorías estratégicas utilizadas | 8 | Categorías de identidad usadas en las recomendaciones del corpus. |
 | Cobertura de rol | 100.0% | Roles aún vacíos con tres recomendaciones disponibles. |
-| Diversidad | 25.3% | Campeones únicos dividido por todas las menciones en los estados auditados. |
+| Diversidad | 25.7% | Campeones únicos dividido por todas las menciones en los estados auditados. |
 | Adaptación al contexto | 97.9% | Candidatos cuya dirección coincide con la identidad reconocible; 285 menciones evaluables. |
 | Cambio de listas entre picks | 61.7% | Listas por rol común que cambian al añadir el siguiente campeón. |
 | Estabilidad con identidad constante | 82.9% | Solapamiento medio del top 3 entre transiciones que mantienen identidad; 41 comparaciones. |
 | Repetición de sugerencias | 27.7% | Menciones pertenecientes a campeones que aparecen en 8 o más contextos draft/rol. |
-| Campeones distintos / máxima repetición | 76 / 24 contextos | Variedad del catálogo y máxima frecuencia entre estados. |
+| Campeones distintos / máxima repetición | 77 / 24 contextos | Variedad del catálogo y máxima frecuencia entre estados. |
 | Diferenciación entre composiciones cercanas | 95.4% | 1 menos el solapamiento medio de recomendaciones tras sustituir una pieza y obtener otra identidad; 189 pares. |
 | Órdenes guiados por señales estratégicas | 2.3% | Pares de candidatos invertidos respecto a su afinidad bruta mediante la huella de señales, dentro de un punto de afinidad; 7/300 pares. |
 | Cobertura de etapas | 40/40 | Estados con recomendaciones desde 1 hasta 4 picks. |
-| Sensibilidad al orden | 58.3% | Comparaciones de top 3 por rol que cambian al variar el orden de una misma composición; 60 comparaciones. |
-| Estabilidad al cambiar el orden | 46.8% | Jaccard medio del top 3 por rol para la misma composición y tamaño de draft bajo órdenes distintos. |
-| Estabilidad con identidad constante entre órdenes | 89.7% | Jaccard medio solo cuando ambos órdenes reconocen la misma identidad; 30 comparaciones. |
+| Sensibilidad al orden | 60.0% | Comparaciones de top 3 por rol que cambian al variar el orden de una misma composición; 60 comparaciones. |
+| Estabilidad al cambiar el orden | 46.0% | Jaccard medio del top 3 por rol para la misma composición y tamaño de draft bajo órdenes distintos. |
+| Estabilidad con identidad constante entre órdenes | 88.0% | Jaccard medio solo cuando ambos órdenes reconocen la misma identidad; 30 comparaciones. |
 | Estabilidad de identidad ante equivalentes | 81.3% | Prefijos donde la identidad se conserva tras sustituir una pieza por otra del mismo rol, identidad y función; 16 comparaciones en 4 sustituciones. |
-| Estabilidad de recomendaciones ante equivalentes | 77.7% | Jaccard medio de candidatos por rol tras las sustituciones equivalentes; 40 comparaciones. |
+| Estabilidad de recomendaciones ante equivalentes | 76.5% | Jaccard medio de candidatos por rol tras las sustituciones equivalentes; 40 comparaciones. |
 | Diferenciación entre planes cercanos | 100.0% | Comparaciones de una sola sustitución que cambian identidad y dejan como máximo un candidato compartido entre los top 3; 2 pares. |
 | Diferenciación media de planes cercanos | 100.0% | Uno menos el Jaccard medio de recomendaciones para esos pares. |
 | Diferenciación de planes opuestos | 100.0% | Uno menos el Jaccard medio de candidatos entre Poke y Dive en drafts de 2, 3 y 4 picks. |
@@ -216,7 +216,7 @@ La alineación contextual mide qué proporción de candidatos apunta a la identi
 
 ### Revisión de consistencia contextual (PR33)
 
-La sensibilidad al orden de la matriz compara prefijos del mismo tamaño, pero esos prefijos contienen campeones distintos; por tanto mide cambio de contexto durante el draft, no dependencia del orden del mismo conjunto. Una prueba directa invierte el orden de almacenamiento de los mismos picks y confirma que el resultado permanece idéntico. La estabilidad entre órdenes con la misma identidad (89.7%) y la adaptación tras cambio de identidad (100.0%) muestran que la mayor parte de la variación coincide con cambios reales de contexto.
+La sensibilidad al orden de la matriz compara prefijos del mismo tamaño, pero esos prefijos contienen campeones distintos; por tanto mide cambio de contexto durante el draft, no dependencia del orden del mismo conjunto. Una prueba directa invierte el orden de almacenamiento de los mismos picks y confirma que el resultado permanece idéntico. La estabilidad entre órdenes con la misma identidad (88.0%) y la adaptación tras cambio de identidad (100.0%) muestran que la mayor parte de la variación coincide con cambios reales de contexto.
 
 Las sustituciones de la matriz comparten rol, identidad y función, pero no todas las señales estratégicas. Por ejemplo, las parejas Sejuani/Amumu y Lulu/Milio difieren en fortalezas y debilidades declaradas. Esa evidencia también alimenta el ranking, así que un cambio de candidatos no demuestra por sí solo una inconsistencia. La métrica actual de equivalencia es orientativa y no representa identidad completa de atributos.
 
@@ -232,20 +232,20 @@ Se ensayó localmente dejar de usar la identidad provisional mejor puntuada hast
 | Estabilidad ante órdenes de identidad constante | 89.7% | 87.0% | -2.7 p.p. |
 | Estabilidad ante sustituciones equivalentes | 77.7% | 72.2% | -5.5 p.p. |
 
-La diferenciación de planes cercanos/opuestos y la adaptación tras un cambio de identidad se mantuvieron en 100% durante el ensayo, pero no compensan la pérdida medida de estabilidad. El producto conserva el comportamiento v3.4.0; la comparación final antes/después es, por tanto, idéntica. No se cambian pesos ni se fuerza estabilidad artificial.
+La diferenciación de planes cercanos/opuestos y la adaptación tras un cambio de identidad se mantuvieron en 100% durante el ensayo, pero no compensaron la pérdida medida de estabilidad. Aquella revisión PR33 conservó el comportamiento v3.4.0 sin cambios funcionales. La comparación aislada de v3.5.0 se documenta en Draft-Strategic-Fit-Comparison.md.
 
 La oportunidad pendiente es refinar la definición de equivalencia para comparar picks con huellas estratégicas realmente equivalentes. La auditoría actual aporta cuatro pares pequeños, insuficientes para justificar una regla general de normalización del motor.
 
 
 ### Impacto del conocimiento en el draft
 
-La ampliación de vocabulario de composición reconoce Desgaste como una señal de Poke en los datos existentes. Las recomendaciones draft mantienen el mismo motor y candidatos por rol; la comparación refleja únicamente el efecto de esa relación sobre las señales de identidad.
+La ampliación histórica de vocabulario reconoce Desgaste como una señal de Poke. Estas columnas comparan esa línea base con el resultado actual y acumulan mejoras posteriores; no aíslan el efecto de una sola relación. Véase Draft-Strategic-Fit-Comparison.md para aislar v3.5.0.
 
 | Métrica | Antes | Después | Cambio |
 | --- | ---: | ---: | ---: |
-| Diversidad | 24.0% | 25.3% | +1.3 p.p. |
+| Diversidad | 24.0% | 25.7% | +1.7 p.p. |
 | Repetición | 36.3% | 27.7% | -8.6 p.p. |
-| Diferenciación entre identidades | 97.2% | 97.5% | +0.3 p.p. |
+| Diferenciación entre identidades | 97.2% | 97.6% | +0.4 p.p. |
 
 ### Comparación con la línea base anterior al Quality Pass 2
 
@@ -284,11 +284,11 @@ La reducción de identidades secundarias refleja un umbral más exigente de evid
 
 La línea base se ejecuta con el código de `origin/main` previo a QP4 sobre el mismo catálogo y los mismos casos. La nueva selección usa la huella de señales del arquetipo emergente para desempatar recomendaciones cuya afinidad queda a un punto de la mejor, conservando la afinidad como límite de calidad. Para medir composiciones cercanas, el corpus sustituye una pieza en prefijos de 2, 3 y 4 picks; solo compara pares cuya identidad principal cambia y calcula el solapamiento medio del top 3 en los roles todavía vacíos.
 
-| Métrica | Antes (QP3) | Después (QP4) | Cambio |
+| Métrica | Antes (QP3) | Actual (QP4 y posteriores) | Cambio acumulado |
 | --- | ---: | ---: | ---: |
-| Diversidad de candidatos | 24.0% | 25.3% | +1.3 p.p. |
+| Diversidad de candidatos | 24.0% | 25.7% | +1.7 p.p. |
 | Repetición de sugerencias | 36.3% | 27.7% | -8.6 p.p. |
-| Diferenciación entre identidades distintas | 97.2% | 97.5% | +0.3 p.p. |
+| Diferenciación entre identidades distintas | 97.2% | 97.6% | +0.4 p.p. |
 | Diferenciación entre composiciones cercanas | 93.9% | 95.4% | +1.5 p.p. |
 | Pares cercanos auditados | 189 | 189 | — |
 | Alineación contextual | 97.9% | 97.9% | 0.0 p.p. |

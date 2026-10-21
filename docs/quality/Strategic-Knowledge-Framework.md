@@ -61,6 +61,19 @@ Las relaciones se agregan a vocabularios existentes, sin reglas para campeones n
 
 ## Criterios de mantenimiento
 
+### Uso contextual durante el draft (v3.5.0)
+
+El Composition Engine reutiliza las capacidades existentes para reconocer
+protección ausente: Peel en Poke; Frontline y Peel en Escalado. Son relaciones
+de apoyo al plan, distintas de compartir sus señales de identidad. Solo reciben
+un ajuste de afinidad si el candidato conserva la dirección reconocida y añade
+una capacidad que ningún compañero aporta. Una capacidad repetida no recibe
+ese ajuste; Anti-frontline no equivale a frontline propia. No se crean perfiles
+ni se modifica el diagnóstico de cinco picks. Véanse la
+[comparación y sus límites](Draft-Strategic-Fit-Review.md).
+
+### Reglas generales
+
 1. Añadir una relación solo cuando describa un patrón estratégico general respaldado por atributos del catálogo.
 2. Preferir equivalencias semánticas concretas frente a términos genéricos como “fuerte”, “útil” o “bueno”.
 3. No usar una relación para rellenar artificialmente combinaciones perfil/rol o identidad/rol que el catálogo no respalde.
