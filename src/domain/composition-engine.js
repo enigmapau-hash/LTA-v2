@@ -55,6 +55,7 @@
       winCondition: "Desgastar antes de pelear y evitar engages directos.",
       strengths: ["Poke", "Asedio"],
       weaknesses: ["Evitar engages directos"],
+      draftNeeds: ["peel"],
       signals: [
         { fields: ["strengths"], terms: ["poke", "desgaste"], weight: 3 },
         { fields: ["strengths"], terms: ["asedio"], weight: 2 },
@@ -94,6 +95,7 @@
       winCondition: "Priorizar llegar a los picos de poder y evitar riesgos innecesarios en early.",
       strengths: ["Late muy fuerte", "Escalado", "DPS"],
       weaknesses: ["Early vulnerable"],
+      draftNeeds: ["frontline", "peel"],
       signals: [
         { fields: ["tempo"], terms: ["late"], weight: 3 },
         { fields: ["tempo"], terms: ["mid/late"], weight: 2 },
@@ -283,11 +285,24 @@
     const synergyFit = totalWeight ? Math.min(100, sharedWeight / totalWeight * 100) : 0;
     const candidateIdentityFit = normalize(candidate.identity) === normalize(emergingArchetype?.label);
     const continuityFit = proposedDirection === emerging.id ? 100 : emergingScoreAfter >= baseAffinity - 8 ? 50 : 0;
+    // Complementar solo aporta valor si conserva el apoyo al plan y cubre una
+    // herramienta ausente que ese plan necesita; no se bonifica variedad genérica.
+    const plan = emergingIdentity || emergingArchetype;
+    const needs = STRATEGIC_GAPS.filter((gap) => plan?.draftNeeds?.includes(gap.id));
+    const supportsNeed = (pick, gap) => gap.fields.some((field) => gap.terms.some((term) =>
+      // Anti-frontline describe daño al frente rival, no frontline propia.
+      new RegExp(`(^|[^a-z0-9-])${normalize(term)}($|[^a-z0-9-])`).test(fieldText(pick, field))));
+    const coveredNeeds = needs.filter((gap) => supportsNeed(candidate, gap)
+      && !picks.some((pick) => supportsNeed(pick, gap))).length;
+    const preservesPlan = emergingIdentity && proposedDirection === emergingIdentity.id;
+    const coverageFit = needs.length && preservesPlan
+      ? coveredNeeds / needs.length * 4 : 0;
     const contextAffinity = baseAffinity * 0.4
       + emergingScoreAfter * 0.25
       + marginalSupport * 0.15
       + synergyFit * 0.12
       + continuityFit * 0.05
+      + coverageFit
       + (candidateIdentityFit ? 3 : 0);
     const contradictionPenalty = emergingIdentity && proposedDirection !== emergingIdentity.id ? 12 : 0;
     return Math.max(0, Math.min(100, Math.round(contextAffinity - contradictionPenalty)));

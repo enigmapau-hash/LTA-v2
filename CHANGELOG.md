@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.5.0
+
+### Added
+- Cobertura contextual de protección en el draft sin perder cohesión estratégica
+
+
 ## v3.4.0
 
 ### Added

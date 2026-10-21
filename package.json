@@ -1,12 +1,13 @@
 {
   "name": "lol-team-analyzer",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "private": true,
   "description": "Analizador estratégico de composiciones de League of Legends.",
   "scripts": {
     "version:bump": "node tools/bump-version.cjs",
     "version:check": "node tools/check-version-sync.cjs",
     "test:composition-engine": "node tools/check-composition-engine.cjs",
+    "test:draft-strategic-fit": "node tools/check-draft-strategic-fit.cjs",
     "test:composition-optimizer": "node tools/check-composition-optimizer.cjs",
     "test:strategic-recommendation": "node tools/check-strategic-recommendation-engine.cjs",
     "test:championship-candidate-mapper": "node tools/check-championship-candidate-mapper.cjs",

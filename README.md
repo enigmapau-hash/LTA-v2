@@ -12,10 +12,11 @@ La v2 amplía la lectura estratégica de composiciones completas con diagnóstic
 
 ## Características
 
-- Versión visible: `v3.4.0`
+- Versión visible: `v3.5.0`
 - No permite campeones repetidos.
 - Muestra iconos oficiales de campeones cuando están disponibles.
 - El selector, la vista rápida y el resultado se actualizan sin recargar.
+- El draft reconoce protección ausente en planes de poke y escalado, conservando su dirección estratégica. [Comparación y límites](docs/quality/Draft-Strategic-Fit-Review.md).
 - SheetJS se incluye localmente; Data Dragon aporta iconos opcionales cuando hay conexión.
 
 ## Estructura del proyecto
