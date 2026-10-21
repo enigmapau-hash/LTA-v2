@@ -33,6 +33,9 @@ jobs:
       - name: Validate contextual strategic fit and gap coverage
         run: node tools/check-draft-strategic-fit.cjs
 
+      - name: Validate contextual draft explanations without changing rankings
+        run: node tools/check-draft-explanations.cjs
+
       - name: Validate the internal Diagnostic Engine
         run: node tools/check-diagnostic-engine.cjs
 

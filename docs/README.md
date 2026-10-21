@@ -13,6 +13,7 @@
 - [Strategic Knowledge Audit](quality/Strategic-Knowledge-Audit.md)
 - [Strategic Knowledge Framework](quality/Strategic-Knowledge-Framework.md)
 - [Draft Reasoning Review](quality/Draft-Reasoning-Review.md)
+- [Contextual Recommendation Explanations](quality/Contextual-Recommendation-Explanations.md)
 
 ## Índice
 
