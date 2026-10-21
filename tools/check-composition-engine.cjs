@@ -262,4 +262,32 @@ assert.notDeepEqual(earlyFrontToBack.map((item) => item.champion), earlyPressure
 assert.deepEqual(recommendPicks([frontToBackPicks[0]], candidatesByRole), recommendPicks([frontToBackPicks[0]], candidatesByRole),
   "El ranking contextual de draft debe seguir siendo determinista");
 
+const sameDraftInDifferentArrayOrder = [frontToBackPicks[2], frontToBackPicks[0], frontToBackPicks[1]];
+assert.deepEqual(
+  recommendPicks(sameDraftInDifferentArrayOrder, candidatesByRole),
+  recommendPicks([...sameDraftInDifferentArrayOrder].reverse(), candidatesByRole),
+  "El orden de almacenamiento de los mismos picks no debe cambiar las recomendaciones"
+);
+
+const ambiguousOpening = [pickFromWorkbook("mid", "Ahri")];
+const diveBranch = [
+  pickFromWorkbook("mid", "Ahri"),
+  pickFromWorkbook("jungle", "Vi"),
+  pickFromWorkbook("top", "Camille"),
+];
+const pickBranch = [
+  pickFromWorkbook("mid", "Ahri"),
+  pickFromWorkbook("jungle", "Elise"),
+  pickFromWorkbook("top", "Gragas"),
+];
+assert.equal(diveBranch[0].champion, pickBranch[0].champion,
+  "Las ramas ambiguas deben compartir la misma apertura");
+assert.equal(analyzeComposition(diveBranch).identity.primary, "Dive");
+assert.equal(analyzeComposition(pickBranch).identity.primary, "Pick");
+assert.notDeepEqual(
+  Object.values(recommendPicks(diveBranch, candidatesByRole)).flat().map((item) => item.champion),
+  Object.values(recommendPicks(pickBranch, candidatesByRole)).flat().map((item) => item.champion),
+  "La recomendación debe adaptarse cuando la apertura ambigua converge en planes distintos"
+);
+
 console.log("Composition Engine validado: 8 arquetipos, composición híbrida/descompensada y recomendaciones deterministas para 1-4 picks.");
