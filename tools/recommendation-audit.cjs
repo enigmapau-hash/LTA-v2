@@ -25,6 +25,26 @@ const ROLE_SHEETS = Object.freeze({
 const REPEAT_CASE_THRESHOLD = 3;
 const PAIR_OVERLAP_THRESHOLD = 0.5;
 const PAIR_MIN_SHARED_CHAMPIONS = 2;
+const DRAFT_ORDER_CASES = Object.freeze(["front-to-back", "dive", "poke", "scaling"]);
+const DRAFT_ORDER_VARIANTS = Object.freeze([
+  Object.freeze(["top", "jungle", "mid", "botline", "support"]),
+  Object.freeze(["support", "botline", "mid", "jungle", "top"]),
+  Object.freeze(["mid", "jungle", "support", "top", "botline"]),
+]);
+const CONTROLLED_SUBSTITUTIONS = Object.freeze([
+  Object.freeze({ fixtureId: "front-to-back", role: "top", from: "Ornn", to: "Cho'Gath" }),
+  Object.freeze({ fixtureId: "front-to-back", role: "jungle", from: "Sejuani", to: "Amumu" }),
+  Object.freeze({ fixtureId: "front-to-back", role: "botline", from: "Jinx", to: "Smolder" }),
+  Object.freeze({ fixtureId: "front-to-back", role: "support", from: "Lulu", to: "Milio" }),
+]);
+const CLOSE_PLAN_SUBSTITUTIONS = Object.freeze([
+  Object.freeze({ fixtureId: "front-to-back", role: "jungle", from: "Sejuani", to: "Viego", order: ["jungle", "top", "mid", "botline", "support"] }),
+  Object.freeze({ fixtureId: "teamfight", role: "top", from: "Malphite", to: "Camille", order: ["top", "jungle", "mid", "botline", "support"] }),
+]);
+const DRAFT_SCENARIO_TYPES = Object.freeze([
+  "order-variation", "equivalent-substitution", "similar-different-plan",
+  "opposing-plans", "ambiguous-opening", "all-draft-sizes",
+]);
 // Historical snapshot captured from the PR #23 report before the first recalibration.
 const PRE_QUALITY_PASS_BASELINE = Object.freeze({
   candidateMentions: 83,
@@ -470,10 +490,13 @@ function auditDraftRecommendations(candidatesByRole, engine = compositionEngine)
     }
   }
 
+  const scenarioMatrix = auditDraftScenarioMatrix(candidatesByRole, engine);
+
   return {
     stages,
     champions,
     repeatedChampions,
+    scenarioMatrix,
     metrics: {
       compositionCount: fixtures.length,
       stageCount: stages.length,
@@ -517,6 +540,212 @@ function auditDraftRecommendations(candidatesByRole, engine = compositionEngine)
       nearCompositionDifferentiation: auditNearCompositionDifferentiation(fixtures, candidatesByRole, engine),
     },
     thresholds: { repeatedContexts: repeatThreshold },
+  };
+}
+
+function auditDraftScenarioMatrix(candidatesByRole, engine = compositionEngine) {
+  const fixtures = generateRepresentativeCompositions(candidatesByRole);
+  const fixtureById = new Map(fixtures.map((fixture) => [fixture.id, fixture]));
+  const stageFor = (id, fixture, roles) => {
+    const picks = roles.map((role) => fixture.picks.find((pick) => pick.role === role));
+    if (picks.some((pick) => !pick)) throw new Error("Orden de auditoría inválido para " + fixture.id);
+    const recommendations = engine.recommendPicks(picks, candidatesByRole, 3);
+    const identity = engine.analyzeComposition(picks).identity.primary;
+    return {
+      id,
+      fixtureId: fixture.id,
+      count: picks.length,
+      identity,
+      selected: picks.map((pick) => pick.champion),
+      roles: Object.fromEntries(Object.entries(recommendations).map(([role, items]) => [
+        role,
+        items.map((item) => normalize(item.champion)),
+      ])),
+    };
+  };
+  const compareStages = (left, right) => {
+    const comparisons = [];
+    for (const role of Object.keys(left.roles).filter((key) => Object.hasOwn(right.roles, key))) {
+      const leftNames = left.roles[role];
+      const rightNames = right.roles[role];
+      if (!leftNames.length || !rightNames.length) continue;
+      const intersection = leftNames.filter((name) => rightNames.includes(name)).length;
+      const union = new Set([...leftNames, ...rightNames]).size;
+      const jaccard = union ? intersection / union : 0;
+      comparisons.push({
+        role,
+        jaccard,
+        changed: leftNames.join("|") !== rightNames.join("|"),
+        materiallyDifferent: jaccard <= 1 / 3,
+      });
+    }
+    return comparisons;
+  };
+  const orderStages = [];
+  const orderGroups = new Map();
+  for (const fixtureId of DRAFT_ORDER_CASES) {
+    const fixture = fixtureById.get(fixtureId);
+    for (let orderIndex = 0; orderIndex < DRAFT_ORDER_VARIANTS.length; orderIndex += 1) {
+      const roles = DRAFT_ORDER_VARIANTS[orderIndex];
+      for (let count = 1; count <= 4; count += 1) {
+        const stage = stageFor(fixtureId + "-order-" + (orderIndex + 1) + "-" + count, fixture, roles.slice(0, count));
+        orderStages.push(stage);
+        const key = fixtureId + ":" + count;
+        orderGroups.set(key, [...(orderGroups.get(key) || []), stage]);
+      }
+    }
+  }
+  const orderComparisons = [];
+  for (const group of orderGroups.values()) {
+    for (let left = 0; left < group.length; left += 1) {
+      for (let right = left + 1; right < group.length; right += 1) {
+        const sameIdentity = Boolean(group[left].identity && group[left].identity === group[right].identity);
+        orderComparisons.push(...compareStages(group[left], group[right]).map((item) => ({ ...item, sameIdentity })));
+      }
+    }
+  }
+
+  const candidateByRoleAndName = (role, champion) => {
+    const result = (candidatesByRole[role] || []).find((candidate) => normalize(candidate.champion) === normalize(champion));
+    if (!result) throw new Error("No se encontró " + champion + " en el catálogo para " + role + ".");
+    return { ...result, role };
+  };
+  const replacePick = (fixture, role, champion) => ({
+    ...fixture,
+    id: fixture.id + "-" + normalize(champion).replace(/[^a-z0-9]+/g, "-"),
+    picks: fixture.picks.map((pick) => pick.role === role ? candidateByRoleAndName(role, champion) : pick),
+  });
+  const substitutionComparisons = [];
+  const substitutionCases = [];
+  for (const substitution of CONTROLLED_SUBSTITUTIONS) {
+    const base = fixtureById.get(substitution.fixtureId);
+    const original = base.picks.find((pick) => pick.role === substitution.role);
+    const replacement = candidateByRoleAndName(substitution.role, substitution.to);
+    if (normalize(original.champion) !== normalize(substitution.from)
+      || normalize(original.identity) !== normalize(replacement.identity)
+      || normalize(original.function) !== normalize(replacement.function)) {
+      throw new Error("La sustitución equivalente dejó de compartir rol, identidad y función: " + substitution.from + " → " + substitution.to);
+    }
+    const variant = replacePick(base, substitution.role, substitution.to);
+    const comparison = [];
+    for (let count = 1; count <= 4; count += 1) {
+      const roles = [substitution.role, ...DRAFT_ORDER_VARIANTS[0].filter((role) => role !== substitution.role)].slice(0, count);
+      const before = stageFor(base.id + "-equivalent-before-" + count, base, roles);
+      const after = stageFor(variant.id + "-equivalent-after-" + count, variant, roles);
+      const values = compareStages(before, after);
+      substitutionComparisons.push(...values);
+      comparison.push({ count, identityStable: before.identity === after.identity });
+    }
+    substitutionCases.push({ id: variant.id, role: substitution.role, from: substitution.from, to: substitution.to, comparison });
+  }
+
+  const closePlanComparisons = [];
+  const closePlanCases = [];
+  for (const substitution of CLOSE_PLAN_SUBSTITUTIONS) {
+    const base = fixtureById.get(substitution.fixtureId);
+    const variant = replacePick(base, substitution.role, substitution.to);
+    const before = stageFor(base.id + "-close-before", base, substitution.order.slice(0, 4));
+    const after = stageFor(variant.id + "-close-after", variant, substitution.order.slice(0, 4));
+    const values = compareStages(before, after);
+    if (before.identity !== after.identity) closePlanComparisons.push(...values);
+    closePlanCases.push({
+      base: base.id,
+      variant: variant.id,
+      replaced: substitution.from + " → " + substitution.to,
+      identityBefore: before.identity,
+      identityAfter: after.identity,
+      comparisons: values.length,
+    });
+  }
+
+  const opposingLeft = fixtureById.get("poke");
+  const opposingRight = fixtureById.get("dive");
+  const opposingComparisons = [];
+  const opposingIdentities = [];
+  for (const count of [2, 3, 4]) {
+    const left = stageFor("opposing-poke-" + count, opposingLeft, DRAFT_ORDER_VARIANTS[0].slice(0, count));
+    const right = stageFor("opposing-dive-" + count, opposingRight, DRAFT_ORDER_VARIANTS[0].slice(0, count));
+    opposingIdentities.push(left.identity !== right.identity);
+    opposingComparisons.push(...compareStages(left, right));
+  }
+
+  const ambiguousBranches = [
+    { fixture: fixtureById.get("dive"), label: "Dive", roles: ["mid", "jungle", "top", "botline", "support"] },
+    { fixture: fixtureById.get("pick"), label: "Pick", roles: ["mid", "jungle", "top", "botline", "support"] },
+  ];
+  const ambiguousStages = ambiguousBranches.map((branch) => [1, 2, 3, 4].map((count) =>
+    stageFor("ambiguous-ahri-" + branch.label.toLowerCase() + "-" + count, branch.fixture, branch.roles.slice(0, count))
+  ));
+  const ambiguousComparisons = [];
+  const ambiguousIdentityChanges = [];
+  for (let index = 0; index < ambiguousStages[0].length; index += 1) {
+    const left = ambiguousStages[0][index];
+    const right = ambiguousStages[1][index];
+    const identityChanged = left.identity !== right.identity;
+    ambiguousIdentityChanges.push({ count: left.count, identityChanged, identityA: left.identity, identityB: right.identity });
+    if (identityChanged) ambiguousComparisons.push(...compareStages(left, right).map((value) => ({ ...value, count: left.count })));
+  }
+
+  const stableSubstitutionTransitions = substitutionCases.flatMap((item) => item.comparison.filter((comparison) => comparison.count > 0));
+  const sameIdentityOrderComparisons = orderComparisons.filter((item) => item.sameIdentity);
+  const identityChangedComparisons = [...closePlanComparisons, ...ambiguousComparisons];
+  const coveredScenarioTypes = {
+    "order-variation": orderStages.length > 0 && orderComparisons.length > 0,
+    "equivalent-substitution": substitutionCases.length === CONTROLLED_SUBSTITUTIONS.length && substitutionComparisons.length > 0,
+    "similar-different-plan": closePlanCases.some((item) => item.identityBefore !== item.identityAfter),
+    "opposing-plans": opposingIdentities.some(Boolean) && opposingComparisons.length > 0,
+    "ambiguous-opening": ambiguousStages[0][0].selected[0] === ambiguousStages[1][0].selected[0]
+      && ambiguousIdentityChanges.some((item) => item.identityChanged),
+    "all-draft-sizes": new Set([...orderStages, ...ambiguousStages.flat()].map((stage) => stage.count)).size === 4,
+  };
+  const coveredScenarioCount = Object.values(coveredScenarioTypes).filter(Boolean).length;
+  const sizesCovered = new Set([...orderStages, ...ambiguousStages.flat()].map((stage) => stage.count)).size;
+  const average = (items, key) => items.length ? items.reduce((sum, item) => sum + item[key], 0) / items.length : 0;
+  const materiallyDifferentRate = (items) => items.length
+    ? roundRatio(items.filter((item) => item.materiallyDifferent).length / items.length)
+    : 0;
+  const changedRate = (items) => items.length
+    ? roundRatio(items.filter((item) => item.changed).length / items.length)
+    : 0;
+
+  return {
+    scenarios: {
+      orderStages,
+      substitutionCases,
+      closePlanCases,
+      opposingPlans: { left: "Poke", right: "Dive", comparisonCount: opposingComparisons.length },
+      ambiguousOpening: { champion: ambiguousStages[0][0].selected[0], branches: ambiguousBranches.map((branch) => branch.label), identityChanges: ambiguousIdentityChanges },
+      coveredScenarioTypes,
+    },
+    metrics: {
+      orderScenarioCount: orderStages.length,
+      orderComparisonCount: orderComparisons.length,
+      orderSensitivity: changedRate(orderComparisons),
+      orderStability: orderComparisons.length ? roundRatio(average(orderComparisons, "jaccard")) : 0,
+      sameIdentityOrderStability: sameIdentityOrderComparisons.length ? roundRatio(average(sameIdentityOrderComparisons, "jaccard")) : 0,
+      sameIdentityOrderComparisonCount: sameIdentityOrderComparisons.length,
+      equivalentSubstitutionCount: substitutionCases.length,
+      equivalentIdentityStability: stableSubstitutionTransitions.length
+        ? roundRatio(stableSubstitutionTransitions.filter((item) => item.identityStable).length / stableSubstitutionTransitions.length)
+        : 0,
+      equivalentIdentityComparisons: stableSubstitutionTransitions.length,
+      equivalentRecommendationStability: substitutionComparisons.length ? roundRatio(average(substitutionComparisons, "jaccard")) : 0,
+      equivalentRecommendationComparisons: substitutionComparisons.length,
+      closePlanPairCount: closePlanCases.length,
+      closePlanRecommendationDifferentiation: materiallyDifferentRate(closePlanComparisons),
+      closePlanMeanDifferentiation: closePlanComparisons.length ? roundRatio(1 - average(closePlanComparisons, "jaccard")) : 0,
+      opposingPlanRecommendationDifferentiation: opposingComparisons.length ? roundRatio(1 - average(opposingComparisons, "jaccard")) : 0,
+      ambiguousIdentityChangeCount: ambiguousIdentityChanges.filter((item) => item.identityChanged).length,
+      adaptationAfterIdentityChange: changedRate(identityChangedComparisons),
+      materiallyDifferentAfterIdentityChange: materiallyDifferentRate(identityChangedComparisons),
+      identityChangedRecommendationComparisons: identityChangedComparisons.length,
+      effectiveScenarioCoverage: DRAFT_SCENARIO_TYPES.length ? roundRatio(coveredScenarioCount / DRAFT_SCENARIO_TYPES.length) : 0,
+      coveredScenarioCount,
+      expectedScenarioCount: DRAFT_SCENARIO_TYPES.length,
+      stageSizeCoverage: roundRatio(sizesCovered / 4),
+      coveredStageSizes: sizesCovered,
+      expectedStageSizes: 4,
+    },
   };
 }
 
@@ -641,16 +870,20 @@ function renderMarkdown(audit, draftAudit = null) {
     "- La similitud compara nombres de campeones recomendados; no evalúa equivalencia táctica.",
     "- Los umbrales de repetición son señales para revisión manual, no criterios de aprobación ni fallos automáticos del motor.",
     "- La cobertura perfil/rol no califica la calidad ni el orden de cada candidato.",
+    "- La matriz ampliada cubre tres órdenes seleccionados y pocos escenarios controlados; no representa todas las permutaciones ni todos los cambios de plan posibles.",
+    "- Se considera recomendación materialmente distinta si los top 3 comparten como máximo un campeón; este umbral es una convención de auditoría, no una regla del motor.",
     "",
     "## Cómo interpretar los resultados",
     "",
-    "Usa cobertura para localizar casos en los que la cadena no logra ofrecer candidatos y diversidad para observar cuánto rota el catálogo recomendado. Las frecuencias altas y los pares similares sirven para priorizar una revisión humana de redundancias. Una concentración puede ser razonable si el catálogo o los atributos respaldan repetidamente a una misma pieza; las métricas no justifican cambiar pesos o comportamiento sin una investigación adicional.",
+    "Usa la sensibilidad al orden junto con la estabilidad ante órdenes alternativos: un valor alto de sensibilidad no es automáticamente un defecto, pero puede revelar que el mismo equipo recibe lecturas muy distintas por el orden de selección. La diferenciación material indica que los top 3 comparten como máximo un campeón; la adaptación tras cambio de identidad solo es útil si las nuevas listas siguen siendo estratégicamente coherentes. La cobertura de escenarios indica cuántos tipos previstos están representados, no la cobertura de todas las composiciones posibles.",
+    "La cobertura de candidatos localiza casos donde no se ofrecen alternativas y diversidad muestra cuánto rota el catálogo. Las frecuencias altas y los pares similares priorizan revisión manual. Una concentración puede ser razonable si el catálogo o los atributos respaldan repetidamente una pieza; las métricas no justifican cambiar pesos o comportamiento sin investigación adicional.",
     "",
     "La auditoría es una herramienta interna de observación. Sus cifras no se muestran en la aplicación y no alteran las recomendaciones.",
     "",
   ];
   if (draftAudit) {
     const draft = draftAudit.metrics;
+    const matrix = draftAudit.scenarioMatrix.metrics;
     const baseline = PRE_QUALITY_PASS_2_DRAFT_BASELINE;
     const afterQp2 = PRE_QUALITY_PASS_3_DRAFT_BASELINE;
     const afterQp3 = PRE_QUALITY_PASS_4_DRAFT_BASELINE;
@@ -664,6 +897,8 @@ function renderMarkdown(audit, draftAudit = null) {
       "## Auditoría del draft",
       "",
       "La auditoría recorre los primeros cuatro picks de cada una de las diez composiciones representativas: 40 estados y hasta 100 combinaciones de estado/rol. En las transiciones compara los tres candidatos por rol que sigue libre.",
+      "",
+      "Además, una matriz pequeña y curada recorre cuatro composiciones en tres órdenes cada una (48 prefijos), cuatro sustituciones de campeones que comparten rol, identidad y función, dos cambios de una sola pieza que alteran el plan, un contraste Poke–Dive y dos ramas que comienzan con Ahri. Esta matriz amplía la cobertura sin enumerar permutaciones ni generar cientos de escenarios.",
       "",
       "La alineación contextual mide qué proporción de candidatos apunta a la identidad que ya se puede reconocer en el draft parcial. La adaptación mide cuántas listas por rol cambian tras añadir un pick; la estabilidad mide el solapamiento medio de los tres candidatos cuando la identidad se mantiene. La adaptación no se interpreta aislada: debe leerse junto con alineación y estabilidad.",
       "",
@@ -684,6 +919,30 @@ function renderMarkdown(audit, draftAudit = null) {
       "| Diferenciación entre composiciones cercanas | " + draftPct(draft.nearCompositionDifferentiation.differentiation) + " | 1 menos el solapamiento medio de recomendaciones tras sustituir una pieza y obtener otra identidad; " + draft.nearCompositionDifferentiation.pairCount + " pares. |",
       "| Órdenes guiados por señales estratégicas | " + draftPct(draft.signalGuidedOrderRate) + " | Pares de candidatos invertidos respecto a su afinidad bruta mediante la huella de señales, dentro de un punto de afinidad; " + draft.signalGuidedPairCount + "/" + draft.signalPairComparisons + " pares. |",
       "| Cobertura de etapas | " + draft.stageCount + "/" + (draft.compositionCount * 4) + " | Estados con recomendaciones desde 1 hasta 4 picks. |",
+      "| Sensibilidad al orden | " + draftPct(matrix.orderSensitivity) + " | Comparaciones de top 3 por rol que cambian al variar el orden de una misma composición; " + matrix.orderComparisonCount + " comparaciones. |",
+      "| Estabilidad al cambiar el orden | " + draftPct(matrix.orderStability) + " | Jaccard medio del top 3 por rol para la misma composición y tamaño de draft bajo órdenes distintos. |",
+      "| Estabilidad con identidad constante entre órdenes | " + draftPct(matrix.sameIdentityOrderStability) + " | Jaccard medio solo cuando ambos órdenes reconocen la misma identidad; " + matrix.sameIdentityOrderComparisonCount + " comparaciones. |",
+      "| Estabilidad de identidad ante equivalentes | " + draftPct(matrix.equivalentIdentityStability) + " | Prefijos donde la identidad se conserva tras sustituir una pieza por otra del mismo rol, identidad y función; " + matrix.equivalentIdentityComparisons + " comparaciones en " + matrix.equivalentSubstitutionCount + " sustituciones. |",
+      "| Estabilidad de recomendaciones ante equivalentes | " + draftPct(matrix.equivalentRecommendationStability) + " | Jaccard medio de candidatos por rol tras las sustituciones equivalentes; " + matrix.equivalentRecommendationComparisons + " comparaciones. |",
+      "| Diferenciación entre planes cercanos | " + draftPct(matrix.closePlanRecommendationDifferentiation) + " | Comparaciones de una sola sustitución que cambian identidad y dejan como máximo un candidato compartido entre los top 3; " + matrix.closePlanPairCount + " pares. |",
+      "| Diferenciación media de planes cercanos | " + draftPct(matrix.closePlanMeanDifferentiation) + " | Uno menos el Jaccard medio de recomendaciones para esos pares. |",
+      "| Diferenciación de planes opuestos | " + draftPct(matrix.opposingPlanRecommendationDifferentiation) + " | Uno menos el Jaccard medio de candidatos entre Poke y Dive en drafts de 2, 3 y 4 picks. |",
+      "| Adaptación tras cambio de identidad | " + draftPct(matrix.adaptationAfterIdentityChange) + " | Listas por rol que cambian entre ramas con el mismo primer pick cuando sus identidades divergen; " + matrix.identityChangedRecommendationComparisons + " comparaciones. |",
+      "| Recomendaciones distintas tras cambio de identidad | " + draftPct(matrix.materiallyDifferentAfterIdentityChange) + " | Comparaciones anteriores cuyo top 3 comparte como máximo un candidato. |",
+      "| Cobertura efectiva de escenarios | " + matrix.coveredScenarioCount + "/" + matrix.expectedScenarioCount + " (" + draftPct(matrix.effectiveScenarioCoverage) + ") | Tipos cubiertos: orden, equivalentes, plan cercano, planes opuestos, apertura ambigua y tamaños de draft. |",
+      "| Cobertura de tamaños | " + matrix.coveredStageSizes + "/" + matrix.expectedStageSizes + " (" + draftPct(matrix.stageSizeCoverage) + ") | Tamaños con al menos un escenario evaluado: 1, 2, 3 y 4 picks. |",
+      "",
+      "#### Escenarios ampliados",
+      "",
+      "| Escenario | Casos incluidos |",
+      "| --- | --- |",
+      "| Órdenes de la misma composición | " + matrix.orderScenarioCount + " prefijos: cuatro composiciones × tres órdenes × cuatro tamaños. |",
+      "| Sustituciones equivalentes | " + matrix.equivalentSubstitutionCount + " reemplazos verificados por rol, identidad y función. |",
+      "| Plan cercano distinto | " + matrix.closePlanPairCount + " pares de una sustitución; identidades: " + draftAudit.scenarioMatrix.scenarios.closePlanCases.map((item) => item.identityBefore + " → " + item.identityAfter).join("; ") + ". |",
+      "| Planes opuestos | Poke frente a Dive en 2, 3 y 4 picks; " + draftAudit.scenarioMatrix.scenarios.opposingPlans.comparisonCount + " comparaciones por rol disponible. |",
+      "| Apertura ambigua | " + draftAudit.scenarioMatrix.scenarios.ambiguousOpening.champion + " abre las ramas " + draftAudit.scenarioMatrix.scenarios.ambiguousOpening.branches.join(" y ") + ". |",
+      "| Tamaños cubiertos | 1, 2, 3 y 4 picks. |",
+      "",
       "",
       "### Impacto del conocimiento en el draft",
       "",
@@ -773,4 +1032,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { ROLE_SHEETS, loadCandidateCatalog, auditRecommendations, auditDraftRecommendations, auditNearCompositionDifferentiation, renderMarkdown };
+module.exports = { ROLE_SHEETS, loadCandidateCatalog, auditRecommendations, auditDraftRecommendations, auditDraftScenarioMatrix, auditNearCompositionDifferentiation, renderMarkdown };

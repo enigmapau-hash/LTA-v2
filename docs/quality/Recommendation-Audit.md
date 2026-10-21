@@ -155,16 +155,21 @@ Pares con recomendaciones de alta coincidencia:
 - La similitud compara nombres de campeones recomendados; no evalúa equivalencia táctica.
 - Los umbrales de repetición son señales para revisión manual, no criterios de aprobación ni fallos automáticos del motor.
 - La cobertura perfil/rol no califica la calidad ni el orden de cada candidato.
+- La matriz ampliada cubre tres órdenes seleccionados y pocos escenarios controlados; no representa todas las permutaciones ni todos los cambios de plan posibles.
+- Se considera recomendación materialmente distinta si los top 3 comparten como máximo un campeón; este umbral es una convención de auditoría, no una regla del motor.
 
 ## Cómo interpretar los resultados
 
-Usa cobertura para localizar casos en los que la cadena no logra ofrecer candidatos y diversidad para observar cuánto rota el catálogo recomendado. Las frecuencias altas y los pares similares sirven para priorizar una revisión humana de redundancias. Una concentración puede ser razonable si el catálogo o los atributos respaldan repetidamente a una misma pieza; las métricas no justifican cambiar pesos o comportamiento sin una investigación adicional.
+Usa la sensibilidad al orden junto con la estabilidad ante órdenes alternativos: un valor alto de sensibilidad no es automáticamente un defecto, pero puede revelar que el mismo equipo recibe lecturas muy distintas por el orden de selección. La diferenciación material indica que los top 3 comparten como máximo un campeón; la adaptación tras cambio de identidad solo es útil si las nuevas listas siguen siendo estratégicamente coherentes. La cobertura de escenarios indica cuántos tipos previstos están representados, no la cobertura de todas las composiciones posibles.
+La cobertura de candidatos localiza casos donde no se ofrecen alternativas y diversidad muestra cuánto rota el catálogo. Las frecuencias altas y los pares similares priorizan revisión manual. Una concentración puede ser razonable si el catálogo o los atributos respaldan repetidamente una pieza; las métricas no justifican cambiar pesos o comportamiento sin investigación adicional.
 
 La auditoría es una herramienta interna de observación. Sus cifras no se muestran en la aplicación y no alteran las recomendaciones.
 
 ## Auditoría del draft
 
 La auditoría recorre los primeros cuatro picks de cada una de las diez composiciones representativas: 40 estados y hasta 100 combinaciones de estado/rol. En las transiciones compara los tres candidatos por rol que sigue libre.
+
+Además, una matriz pequeña y curada recorre cuatro composiciones en tres órdenes cada una (48 prefijos), cuatro sustituciones de campeones que comparten rol, identidad y función, dos cambios de una sola pieza que alteran el plan, un contraste Poke–Dive y dos ramas que comienzan con Ahri. Esta matriz amplía la cobertura sin enumerar permutaciones ni generar cientos de escenarios.
 
 La alineación contextual mide qué proporción de candidatos apunta a la identidad que ya se puede reconocer en el draft parcial. La adaptación mide cuántas listas por rol cambian tras añadir un pick; la estabilidad mide el solapamiento medio de los tres candidatos cuando la identidad se mantiene. La adaptación no se interpreta aislada: debe leerse junto con alineación y estabilidad.
 
@@ -185,6 +190,30 @@ La alineación contextual mide qué proporción de candidatos apunta a la identi
 | Diferenciación entre composiciones cercanas | 95.4% | 1 menos el solapamiento medio de recomendaciones tras sustituir una pieza y obtener otra identidad; 189 pares. |
 | Órdenes guiados por señales estratégicas | 2.3% | Pares de candidatos invertidos respecto a su afinidad bruta mediante la huella de señales, dentro de un punto de afinidad; 7/300 pares. |
 | Cobertura de etapas | 40/40 | Estados con recomendaciones desde 1 hasta 4 picks. |
+| Sensibilidad al orden | 58.3% | Comparaciones de top 3 por rol que cambian al variar el orden de una misma composición; 60 comparaciones. |
+| Estabilidad al cambiar el orden | 46.8% | Jaccard medio del top 3 por rol para la misma composición y tamaño de draft bajo órdenes distintos. |
+| Estabilidad con identidad constante entre órdenes | 89.7% | Jaccard medio solo cuando ambos órdenes reconocen la misma identidad; 30 comparaciones. |
+| Estabilidad de identidad ante equivalentes | 81.3% | Prefijos donde la identidad se conserva tras sustituir una pieza por otra del mismo rol, identidad y función; 16 comparaciones en 4 sustituciones. |
+| Estabilidad de recomendaciones ante equivalentes | 77.7% | Jaccard medio de candidatos por rol tras las sustituciones equivalentes; 40 comparaciones. |
+| Diferenciación entre planes cercanos | 100.0% | Comparaciones de una sola sustitución que cambian identidad y dejan como máximo un candidato compartido entre los top 3; 2 pares. |
+| Diferenciación media de planes cercanos | 100.0% | Uno menos el Jaccard medio de recomendaciones para esos pares. |
+| Diferenciación de planes opuestos | 100.0% | Uno menos el Jaccard medio de candidatos entre Poke y Dive en drafts de 2, 3 y 4 picks. |
+| Adaptación tras cambio de identidad | 100.0% | Listas por rol que cambian entre ramas con el mismo primer pick cuando sus identidades divergen; 8 comparaciones. |
+| Recomendaciones distintas tras cambio de identidad | 100.0% | Comparaciones anteriores cuyo top 3 comparte como máximo un candidato. |
+| Cobertura efectiva de escenarios | 6/6 (100.0%) | Tipos cubiertos: orden, equivalentes, plan cercano, planes opuestos, apertura ambigua y tamaños de draft. |
+| Cobertura de tamaños | 4/4 (100.0%) | Tamaños con al menos un escenario evaluado: 1, 2, 3 y 4 picks. |
+
+#### Escenarios ampliados
+
+| Escenario | Casos incluidos |
+| --- | --- |
+| Órdenes de la misma composición | 48 prefijos: cuatro composiciones × tres órdenes × cuatro tamaños. |
+| Sustituciones equivalentes | 4 reemplazos verificados por rol, identidad y función. |
+| Plan cercano distinto | 2 pares de una sustitución; identidades: Front to Back → Escalado; Teamfight → Dive. |
+| Planes opuestos | Poke frente a Dive en 2, 3 y 4 picks; 6 comparaciones por rol disponible. |
+| Apertura ambigua | Ahri abre las ramas Dive y Pick. |
+| Tamaños cubiertos | 1, 2, 3 y 4 picks. |
+
 
 ### Impacto del conocimiento en el draft
 
