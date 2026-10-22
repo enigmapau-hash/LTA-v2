@@ -267,7 +267,7 @@ async function main() {
     assert.match(await recommendation.innerText(), /Señales del catálogo:/, "La evidencia real llega al informe offline");
     assert.doesNotMatch(await recommendation.innerText(), /acorde con el perfil/, "Sin repetir el nombre del perfil");
     assert.match(await recommendation.innerText(), /Contribuye a corregir/, "Solo una brecha explícita justifica la corrección");
-    assert.match(await recommendation.innerText(), /Conexiones con el equipo:/, "Relaciona compañeros actuales con sus atributos offline");
+    assert.equal(await recommendation.locator(".result-summary__beneficiaries").count(),0, "No inventa conexiones con aliados cuando faltan señales comunes");
     assert.match(await page.locator(".result-summary__detected-need").innerText(), /Carencia detectada:/);
     assert.deepEqual(pageErrors, [], "La app no debe lanzar errores JavaScript durante la carga o el uso offline.");
 
