@@ -90,38 +90,38 @@ function visibleSections(report) {
 const clearPlan = composition({ top: "Olaf", jungle: "Zyra", mid: "Heimerdinger", botline: "Lucian", support: "Tahm Kench" });
 const clearReport = reportFor(clearPlan);
 assert.equal(diagnoseComposition(clearPlan).coherence.status, "coherent");
-assert.deepEqual(Object.values(clearReport.confidence.conclusions).map((item) => item.level), ["alta", "alta", "alta"]);
+assert.deepEqual(Object.values(clearReport.confidence.conclusions).map((item) => item.level), ["alta", "baja", "alta"]);
 assertReport(clearReport, [
   "Plan principal: Front to Back · Cómo ganar: Proteger al ADC y forzar teamfights.",
-  "Reforzar presión lateral",
+  "Sin cambio prioritario justificado",
   "Proteger el plan frente a Split Push",
 ]);
 assert.match(clearReport.sections[0].explanation, /conserva su identidad pese a perder respaldo/i);
-assert.match(clearReport.sections[1].explanation, /prioridad responde a poca presión lateral/i);
+assert.match(clearReport.sections[1].explanation, /No hay una sustitución prioritaria demostrada/i);
 assert.match(clearReport.sections[2].action, /línea lateral/i);
 assert.match(clearReport.sections[2].explanation, /amenaza prioritaria porque/i);
 assert.deepEqual(visibleSections(clearReport), [
   ["Diagnóstico", "Plan principal: Front to Back · Cómo ganar: Proteger al ADC y forzar teamfights.", "Sin Tahm Kench, el plan conserva su identidad pese a perder respaldo.", null],
-  ["Mejora prioritaria", "Reforzar presión lateral", "La prioridad responde a poca presión lateral y preserva la identidad del equipo.", null],
+  ["Corrección", "Sin cambio prioritario justificado", "No hay una sustitución prioritaria demostrada: las limitaciones propias del estilo no obligan a cambiar campeones.", null],
   ["Protección estratégica", "Proteger el plan frente a Split Push", "Es la amenaza prioritaria porque la presión lateral obliga a separarse.", "Asigna una respuesta segura a la línea lateral y conserva al resto del equipo en posición para disputar objetivos."],
 ], "La cadena de capas conserva exactamente el texto visible para un plan claro");
 
 const hybridPlan = composition({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" });
 const hybridReport = reportFor(hybridPlan);
-assert.deepEqual(Object.values(hybridReport.confidence.conclusions).map((item) => item.level), ["media", "media", "media"]);
+assert.deepEqual(Object.values(hybridReport.confidence.conclusions).map((item) => item.level), ["media", "baja", "media"]);
 assertReport(hybridReport, [
   "Plan probable: Front to Back · Cómo ganar: Proteger al ADC y forzar teamfights.",
-  "Orientación: reforzar presión lateral",
+  "Sin cambio prioritario justificado",
   "Conviene proteger el plan frente a Split Push",
 ]);
 assert.match(hybridReport.sections[0].explanation, /no está del todo alineado/i);
 assert.match(hybridReport.sections[0].explanation, /Matiz: Teamfight amplía las opciones sin desplazar el plan/i);
-assert.match(hybridReport.sections[1].explanation, /poca presión lateral/i);
+assert.match(hybridReport.sections[1].explanation, /las limitaciones propias del estilo no obligan a cambiar campeones/i);
 assert.match(hybridReport.sections[2].explanation, /presión lateral/i);
 assert.match(hybridReport.sections[2].action, /^Como orientación,/i);
 assert.deepEqual(visibleSections(hybridReport), [
   ["Diagnóstico", "Plan probable: Front to Back · Cómo ganar: Proteger al ADC y forzar teamfights.", "El plan es claro, aunque no está del todo alineado. Matiz: Teamfight amplía las opciones sin desplazar el plan.", null],
-  ["Mejora prioritaria", "Orientación: reforzar presión lateral", "La prioridad responde a poca presión lateral y preserva la identidad del equipo.", null],
+  ["Corrección", "Sin cambio prioritario justificado", "No hay una sustitución prioritaria demostrada: las limitaciones propias del estilo no obligan a cambiar campeones.", null],
   ["Protección estratégica", "Conviene proteger el plan frente a Split Push", "Es la amenaza prioritaria porque la presión lateral obliga a separarse.", "Como orientación, asigna una respuesta segura a la línea lateral y conserva al resto del equipo en posición para disputar objetivos."],
 ], "La cadena de capas conserva exactamente el texto visible para un plan híbrido");
 
@@ -130,7 +130,7 @@ const splitPushReport = reportFor(splitPushPlan);
 assert.deepEqual(Object.values(splitPushReport.confidence.conclusions).map((item) => item.level), ["baja", "baja", "baja"]);
 assertReport(splitPushReport, [
   "Lectura provisional: Plan principal: Split Push · Cómo ganar: Crear presión lateral y obligar al rival a responder separado.",
-  "Posible mejora: reforzar pick y control del mapa",
+  "Sin cambio prioritario justificado",
   "Protección provisional frente a Teamfight",
 ]);
 assert.match(splitPushReport.sections[0].explanation, /Si falta Fiora o Viego, la composición pierde un plan claro/);
