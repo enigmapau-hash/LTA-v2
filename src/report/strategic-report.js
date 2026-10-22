@@ -91,6 +91,7 @@
       explanation: recommendation.reason,
       improves: recommendation.improves,
       candidates: recommendation.candidates,
+      ...(recommendation.detectedNeed ? { detectedNeed: recommendation.detectedNeed } : {}),
       ...(compositionOptimization?.status === "optimized" && compositionOptimization.proposal
         ? { compositionOptimization: compositionOptimization.proposal }
         : {}),

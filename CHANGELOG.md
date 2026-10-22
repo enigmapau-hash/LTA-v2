@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.11.0
+
+### Added
+- Justificaciones estratégicas de recomendaciones finales con evidencia y compañeros beneficiados, sin cambiar decisiones.
+
+
 ## v3.10.0
 
 ### Added

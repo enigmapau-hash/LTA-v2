@@ -12,7 +12,8 @@ La v2 amplía la lectura estratégica de composiciones completas con diagnóstic
 
 ## Características
 
-- Versión visible: `v3.10.0`
+- Versión visible: `v3.11.0`
+- Las recomendaciones finales explican la carencia, la contribución de cada candidato y los compañeros beneficiados cuando existe evidencia. Distinguen corrección y refuerzo sin cambiar decisiones, rankings o posiciones. [Alcance y límites](docs/v3/Final-Recommendation-Explanations.md).
 - No permite campeones repetidos.
 - Muestra iconos oficiales de campeones cuando están disponibles.
 - El selector, la vista rápida y el resultado se actualizan sin recargar.

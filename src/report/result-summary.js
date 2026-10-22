@@ -21,6 +21,7 @@
   const prioritizeBans = window.LTABanPrioritizer?.prioritizeBans;
   const presentBanRecommendations = window.LTABanRecommendationPresenter?.presentBanRecommendations;
   const buildStrategicReport = window.LTAStrategicReportBuilder?.buildStrategicReport;
+  const explainFinalRecommendation = window.LTAFinalRecommendationExplanations?.explainFinalRecommendation;
 
   let refreshQueued = false;
 
@@ -32,7 +33,7 @@
   }
 
   function renderStrategicReport(items) {
-    if (![diagnoseComposition, proposeCorrections, protectComposition, optimizeComposition, recommendProfiles, mapCandidates, evaluateCandidates, presentRecommendations, presentForReport, polishRecommendation, optimizeStrategicComposition, recomposeStrategicTeam, assessStrategicRisks, adviseCounterplay, prioritizeBans, presentBanRecommendations, buildStrategicReport].every((fn) => typeof fn === "function")) return "";
+    if (![diagnoseComposition, proposeCorrections, protectComposition, optimizeComposition, recommendProfiles, mapCandidates, evaluateCandidates, presentRecommendations, presentForReport, polishRecommendation, optimizeStrategicComposition, recomposeStrategicTeam, assessStrategicRisks, adviseCounterplay, prioritizeBans, presentBanRecommendations, buildStrategicReport, explainFinalRecommendation].every((fn) => typeof fn === "function")) return "";
     const picks = items.map((item) => ({
       role: item.role,
       champion: item.champion,
@@ -104,11 +105,16 @@
       championCatalog: candidatesByRole,
     });
     const strategicBanPresentation = presentBanRecommendations({ banPrioritizer: strategicBans });
+    // Enrich only the report, after every decision engine has finished.
+    const explainedRecommendation = explainFinalRecommendation({
+      section: recommendation.section, picks, diagnosis, correction, optimizer,
+      mappedCandidates, evaluatedCandidates, presentation,
+    });
     const report = buildStrategicReport({
       diagnosis,
       correction,
       protection,
-      recommendation: recommendation.section,
+      recommendation: explainedRecommendation,
       compositionOptimization,
       teamRecomposition,
       strategicRisks,
@@ -129,6 +135,7 @@
               <h4>${escapeHtml(section.title)}</h4>
               <p class="result-summary__answer">${escapeHtml(section.answer)}</p>
               <p>${escapeHtml(section.explanation)}</p>
+              ${section.detectedNeed ? `<p class="result-summary__detected-need"><strong>Carencia detectada:</strong> ${escapeHtml(section.detectedNeed)}</p>` : ""}
               ${section.teamRecomposition ? `<p class="result-summary__action"><strong>Equipo propuesto:</strong> ${section.teamRecomposition.pieces.map((piece) => `${escapeHtml(piece.role)}: ${escapeHtml(piece.champion)}${piece.action === "replace" ? ` (antes ${escapeHtml(piece.from)})` : ""}`).join(" · ")}.</p>
                 <p class="result-summary__action"><strong>Mejora global:</strong> ${escapeHtml(section.teamRecomposition.improvement)}${section.teamRecomposition.weaknessesCorrected.length ? ` · Corrige: ${escapeHtml(section.teamRecomposition.weaknessesCorrected.join("; "))}` : ""}</p>
                 <p>${escapeHtml(section.teamRecomposition.explanation)} ${escapeHtml(section.teamRecomposition.identity.status === "preserved" ? `Identidad conservada: ${section.teamRecomposition.identity.primary}.` : `Identidad propuesta sin confirmar: ${section.teamRecomposition.identity.proposed || "pendiente"}.`)}</p>` : section.compositionOptimization ? `<p class="result-summary__action"><strong>Composición propuesta:</strong> ${escapeHtml(section.compositionOptimization.change.role)}: ${escapeHtml(section.compositionOptimization.change.from)} → ${escapeHtml(section.compositionOptimization.change.to)}. Refuerza ${escapeHtml(section.compositionOptimization.improvement)}; corrige ${escapeHtml(section.compositionOptimization.limitationCorrected)}.</p>
@@ -148,7 +155,12 @@
                     <strong>${escapeHtml(candidate.champion)}</strong>
                     ${ROLE_LABELS[candidate.role] ? `<small class="result-summary__candidate-role">Posición: ${escapeHtml(ROLE_LABELS[candidate.role])} · ${escapeHtml(({ habitual: "Habitual", situacional: "Situacional", experimental: "Experimental", "sin-verificar": "Rol sin verificar" })[window.LTARoleViability?.assess(candidate.champion, candidate.role)?.status] || "Rol sin verificar")} (26.21)</small>` : ""}
                     <small>${escapeHtml(candidate.reason)}</small>
-                    ${candidate.strengths.length ? `<small><b>Aporta:</b> ${escapeHtml(candidate.strengths.join(" · "))}</small>` : ""}
+                    ${candidate.justification ? `<details class="result-summary__candidate-justification">
+                      <summary>Justificación estratégica de ${escapeHtml(candidate.champion)}</summary>
+                      <small>${escapeHtml(candidate.justification.contribution)}</small>
+                      ${candidate.justification.effect ? `<small class="result-summary__candidate-effect">${escapeHtml(candidate.justification.effect.text)}</small>` : ""}
+                      ${candidate.justification.beneficiaries.length ? `<div class="result-summary__beneficiaries"><small><b>Compañeros beneficiados (equipo actual):</b></small><ul>${candidate.justification.beneficiaries.map((ally) => `<li>${escapeHtml(ally.text)}</li>`).join("")}</ul></div>` : ""}
+                    </details>` : candidate.strengths.length ? `<small><b>Aporta:</b> ${escapeHtml(candidate.strengths.join(" · "))}</small>` : ""}
                     ${candidate.limitations.length ? `<small class="result-summary__limitation"><b>Límite:</b> ${escapeHtml(candidate.limitations.join(" · "))}</small>` : ""}
                   </li>
                 `).join("")}
@@ -192,7 +204,7 @@
       .map((item) => [item.role, item.champion, item.identity, item.functionLabel, item.tempo, item.strengths, item.weaknesses, item.missing, item.unknown].join("|"))
       .join(";");
 
-    if (result.dataset.summarySignature === signature) return;
+    if (result.dataset.summarySignature === signature && result.querySelector(".result-summary")) return;
     result.dataset.summarySignature = signature;
 
     result.querySelector(".result-summary")?.remove();

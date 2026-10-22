@@ -75,7 +75,23 @@ async function main(){
   assert.match(await riskGuidance.innerText(), /Cómo cubrirlo:/, "La contramedida calculada llega al DOM");
   assert.match(await strategy.innerText(),/Plan probable: Front to Back · Cómo ganar: Proteger al ADC y forzar teamfights\./i);assert.match(await strategy.innerText(),/Necesidad: presión lateral · Perfil: Presión lateral/i);assert.match(await strategy.innerText(),/Refuerza:/i);assert.match(await strategy.innerText(),/Split Push/i);
   assert.equal(await strategy.locator(".result-summary__recommendation-list").count(),1,"la mejora conserva una única lista acotada de candidatos; los bans pueden aparecer en protección");
-  assert.ok(await strategy.locator(".result-summary__recommendation-list li").count()<=4,"la recomendación muestra como máximo cuatro candidatos");
+  assert.ok(await strategy.locator(".result-summary__recommendation-list > li").count()<=4,"la recomendación muestra como máximo cuatro candidatos");
+  const justifications = strategy.locator(".result-summary__candidate-justification");
+  await page.locator("h1").click();
+  await justifications.first().waitFor({state:"visible"});
+  assert.equal(await justifications.count(), await strategy.locator(".result-summary__recommendation-list > li").count(), "Cada candidato respaldado ofrece una justificación");
+  assert.match(await strategy.locator(".result-summary__detected-need").innerText(), /Poca presión lateral/);
+  const justificationToggle = justifications.first().locator("summary");
+  await justificationToggle.focus();
+  await page.keyboard.press("Enter");
+  assert.equal(await justifications.first().evaluate(node=>node.open), true, "La explicación se abre por teclado");
+  assert.notEqual(await justificationToggle.evaluate(node=>getComputedStyle(node).outlineStyle), "none", "Foco visible en la explicación");
+  assert.match(await justifications.first().innerText(), /Aporta .+Contribuye a corregir/s);
+  for (const details of await justifications.all()) await details.evaluate(node=>{node.open=true;});
+  for (const width of widths) {
+    await page.setViewportSize({width,height:900});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth), true, "Explicaciones abiertas sin desbordamiento @"+width);
+  }
   assert.equal(await page.locator(".result-summary__header").evaluate(n=>getComputedStyle(n).display),"none","el estado de validación se omite en composiciones completas");
   assert.equal(await page.locator(".result-summary.is-ready").evaluate(n=>getComputedStyle(n).paddingTop),"0px","el informe completo evita un marco exterior redundante");
   assert.equal(await strategy.evaluate(n=>getComputedStyle(n).borderTopWidth),"1px","la tarjeta estratégica mantiene su contorno visible");
