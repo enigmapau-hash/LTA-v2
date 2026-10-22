@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.11.1",
+    version: "v3.11.2",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-22",
-    summary: ["La sustitución individual verifica mediante diagnóstico que conserva el plan; en caso contrario evita afirmar continuidad sin pruebas."],
+    summary: ["Las limitaciones propias de un estilo se muestran como oportunidades, sin afirmar carencias o correcciones no comprobadas."],
     pending: [],
   };
 

@@ -87,11 +87,12 @@
     return {
       id: "correction",
       title: "Recomendación estratégica",
-      answer: `Necesidad: ${recommendation.need} · Perfil: ${recommendation.profile}`,
+      answer: `${recommendation.optionalLimitation ? "Oportunidad" : "Necesidad"}: ${recommendation.need} · Perfil: ${recommendation.profile}`,
       explanation: recommendation.reason,
       improves: recommendation.improves,
       candidates: recommendation.candidates,
       ...(recommendation.detectedNeed ? { detectedNeed: recommendation.detectedNeed } : {}),
+      ...(recommendation.optionalLimitation ? { optionalLimitation: recommendation.optionalLimitation } : {}),
       ...(compositionOptimization?.status === "optimized" && compositionOptimization.proposal
         ? { compositionOptimization: compositionOptimization.proposal }
         : {}),
