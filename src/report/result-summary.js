@@ -95,6 +95,7 @@
     });
     const strategicCounterplay = adviseCounterplay({ strategicRisks });
     const strategicBans = prioritizeBans({
+      diagnosis,
       strategicRisks,
       strategicCounterplay,
       protection,

@@ -111,6 +111,7 @@
   function presentAssessment(item, index) {
     return {
       champion: item.candidate.champion,
+      ...(item.candidate.role ? { role: item.candidate.role } : {}),
       priority: index + 1,
       contradictsPlan: item.contradictsPlan,
       strategicFit: item.supportsPrimary

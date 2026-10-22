@@ -25,6 +25,7 @@
         improves: profile.improves,
         candidates: profile.candidates.map((candidate) => ({
           champion: candidate.champion,
+          ...(candidate.role ? { role: candidate.role } : {}),
           reason: candidate.reason,
           strengths: candidate.strengths.slice(0, 2),
           limitations: candidate.limitations.slice(0, 1),

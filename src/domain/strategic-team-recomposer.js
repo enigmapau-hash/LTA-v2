@@ -1,14 +1,18 @@
 (function (root, factory) {
-  const engine = factory();
+  const diagnosis = typeof module === "object" && module.exports
+    ? require("./diagnostic-engine.js")
+    : root.LTADiagnosticEngine;
+  const engine = factory(diagnosis);
   if (typeof module === "object" && module.exports) {
     module.exports = engine;
   } else {
     root.LTAStrategicTeamRecomposer = Object.freeze(engine);
   }
-})(typeof window !== "undefined" ? window : globalThis, function () {
+})(typeof window !== "undefined" ? window : globalThis, function (diagnosticEngine) {
   "use strict";
 
   const ROLE_ORDER = Object.freeze(["top", "jungle", "mid", "botline", "support"]);
+  const MAX_CHANGES = 2;
 
   function normalize(value) {
     return String(value || "")
@@ -64,6 +68,8 @@
       byRole[role].push({
         champion: String(pick.champion).trim(),
         identity: String(pick.identity || "").trim(),
+        function: String(pick.function || "").trim(),
+        tempo: String(pick.tempo || "").trim(),
         strengths: String(pick.strengths || "").split("·").map((item) => item.trim()).filter(Boolean),
         weaknesses: String(pick.weaknesses || "").split("·").map((item) => item.trim()).filter(Boolean),
         current: true,
@@ -90,6 +96,8 @@
             option = {
               champion: String(candidate.champion).trim(),
               identity: String(candidate.identity || "").trim(),
+              function: String(candidate.function || "").trim(),
+              tempo: String(candidate.tempo || "").trim(),
               strengths: Array.isArray(candidate.strengths) ? [...candidate.strengths] : [],
               weaknesses: Array.isArray(candidate.weaknesses) ? [...candidate.weaknesses] : [],
               current: false,
@@ -133,14 +141,39 @@
     return 0;
   }
 
-  function chooseTeam(optionsByRole, profiles) {
+  function proposedDiagnosis(picks) {
+    return diagnosticEngine.diagnoseComposition(picks.map(({ role, option }) => ({
+      role,
+      champion: option.champion,
+      identity: option.identity,
+      function: option.function,
+      tempo: option.tempo,
+      strengths: option.strengths.join(" · "),
+      weaknesses: option.weaknesses.join(" · "),
+    })));
+  }
+
+  function chooseTeam(optionsByRole, profiles, primaryIdentity) {
     let best = null;
     const chosen = [];
     const used = new Set();
+    const baseline = ROLE_ORDER.reduce((sum, role) => sum + optionValue(
+      optionsByRole[role].find((option) => option.current), profiles)[0], 0);
 
-    function visit(index, totals) {
+    function visit(index, totals, changes) {
+      if (changes > MAX_CHANGES) return;
       if (index === ROLE_ORDER.length) {
-        if (!best || compareValues(totals, best.totals) > 0) best = { picks: [...chosen], totals: [...totals] };
+        // A real benefit on the primary need is required. Changing picks only
+        // to improve secondary rankings is not a meaningful recomposition.
+        if (!changes || totals[0] <= baseline) return;
+        const diagnosis = proposedDiagnosis(chosen);
+        if (diagnosis.status !== "assessed") return;
+        if (primaryIdentity && (!diagnosis.plan?.clear || normalize(diagnosis.plan.primaryIdentity) !== normalize(primaryIdentity))) return;
+        // At equal primary benefit, prefer changing fewer picks.
+        if (!best || compareValues(totals, best.totals) > 0
+          || (compareValues(totals, best.totals) === 0 && changes < best.changes)) {
+          best = { picks: [...chosen], totals: [...totals], diagnosis, changes };
+        }
         return;
       }
       const role = ROLE_ORDER[index];
@@ -153,27 +186,22 @@
         used.add(key);
         chosen.push({ role, option });
         const value = optionValue(option, profiles);
-        visit(index + 1, totals.map((total, slot) => total + value[slot]));
+        visit(index + 1, totals.map((total, slot) => total + value[slot]), changes + (option.current ? 0 : 1));
         chosen.pop();
         used.delete(key);
       }
     }
 
-    visit(0, [0, 0, 0, 0]);
+    visit(0, [0, 0, 0, 0], 0);
     return best;
   }
 
-  function identityForProposal(picks, primaryIdentity) {
-    if (primaryIdentity) return { status: "preserved", primary: primaryIdentity, proposed: primaryIdentity };
-    const counts = new Map();
-    for (const { option } of picks) {
-      const identity = String(option.identity || "").trim();
-      const key = normalize(identity);
-      if (key) counts.set(key, { identity, count: (counts.get(key)?.count || 0) + 1 });
+  function identityForProposal(diagnosis, primaryIdentity) {
+    const validatedIdentity = diagnosis?.plan?.clear ? String(diagnosis.plan.primaryIdentity || "").trim() : "";
+    if (primaryIdentity && normalize(validatedIdentity) === normalize(primaryIdentity)) {
+      return { status: "preserved", primary: validatedIdentity, proposed: validatedIdentity };
     }
-    const proposed = [...counts.values()].sort((left, right) => right.count - left.count
-      || left.identity.localeCompare(right.identity, "es"))[0]?.identity || null;
-    return { status: "unconfirmed", primary: null, proposed };
+    return { status: "unconfirmed", primary: null, proposed: validatedIdentity || null };
   }
 
   function recomposeStrategicTeam(input = {}) {
@@ -197,8 +225,8 @@
     const optionsByRole = candidateOptions(input, composition, profiles, primaryIdentity);
     if (ROLE_ORDER.some((role) => !optionsByRole[role].length)) return unavailable("incomplete-role-coverage");
 
-    const team = chooseTeam(optionsByRole, profiles);
-    if (!team) return unavailable("no-valid-team");
+    const team = chooseTeam(optionsByRole, profiles, primaryIdentity);
+    if (!team) return unavailable("no-validated-improvement", "No hay una mejora suficiente de hasta dos cambios que conserve el plan diagnosticado.");
     const changes = team.picks.filter(({ option }) => !option.current);
     if (!changes.length) return unavailable("no-material-improvement", "Las señales disponibles no respaldan una recomposición mejor que la actual.");
 
@@ -218,7 +246,7 @@
           : (option.evaluations[profile.id]?.reason || option.evaluations[Object.keys(option.evaluations)[0]]?.reason || "Refuerza el plan priorizado."),
       };
     });
-    const identity = identityForProposal(team.picks, primaryIdentity);
+    const identity = identityForProposal(team.diagnosis, primaryIdentity);
     const limitation = String(input.optimizer.priority.problemAvoided || "").trim();
     const improvement = String(profile.improves || input.optimizer.priority.reinforces || "").trim();
     const replacedNames = changes.map(({ option }) => option.champion);
@@ -232,9 +260,9 @@
         composition: pieces.map(({ role, champion }) => ({ role, champion })),
         improvement,
         weaknessesCorrected: limitation ? [limitation] : [],
-        explanation: primaryIdentity
-          ? `Recompone ${changes.length} ${changes.length === 1 ? "pieza" : "piezas"} alrededor de ${profile.label.toLocaleLowerCase("es")} y conserva el plan ${primaryIdentity}.`
-          : `Recompone ${changes.length} ${changes.length === 1 ? "pieza" : "piezas"} alrededor de ${profile.label.toLocaleLowerCase("es")}; la identidad resultante debe confirmarse con un análisis completo.`,
+        explanation: identity.status === "preserved"
+          ? `Propone ${changes.length} ${changes.length === 1 ? "cambio" : "cambios"} para reforzar ${profile.label.toLocaleLowerCase("es")}; el diagnóstico de la propuesta mantiene ${identity.primary}.`
+          : `Propone ${changes.length} ${changes.length === 1 ? "cambio" : "cambios"} para reforzar ${profile.label.toLocaleLowerCase("es")}; la identidad de la propuesta no se considera confirmada.`,
         changeSummary: replacedNames.join(", "),
       },
     };

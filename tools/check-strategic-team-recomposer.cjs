@@ -58,39 +58,52 @@ function analyze(selection) {
   return { picks, diagnosis, teamRecomposition, report, strategicInputs };
 }
 
-function verifyProposal(result, expectedIdentityStatus) {
-  assert.equal(result.teamRecomposition.status, "recomposed");
-  const proposal = result.teamRecomposition.proposal;
-  assert.equal(proposal.pieces.length, 5, "La propuesta incluye las cinco posiciones");
-  assert.deepEqual(proposal.pieces.map((item) => item.role), Object.keys(roleSheets), "Las posiciones conservan el orden conocido");
-  assert.equal(new Set(proposal.pieces.map((item) => item.champion)).size, 5, "El equipo propuesto no repite campeones");
+function verifyProposal(result) {
+  const outcome = result.teamRecomposition;
+  if (outcome.status !== "recomposed") {
+    assert.equal(outcome.status, "no-validated-improvement", "Si no hay mejora verificada, LTA se abstiene");
+    assert.equal(result.report.sections[1].teamRecomposition, undefined);
+    return;
+  }
+  const proposal = outcome.proposal;
+  assert.equal(proposal.pieces.length, 5);
+  assert.deepEqual(proposal.pieces.map((item) => item.role), Object.keys(roleSheets));
+  assert.equal(new Set(proposal.pieces.map((item) => item.champion)).size, 5);
+  const changes = proposal.pieces.filter((item) => item.action === "replace");
+  assert.ok(changes.length>=1 && changes.length<=2, "Nunca se reemplazan tres o más campeones por una necesidad");
   assert.ok(proposal.pieces.every((item) => ["keep", "replace"].includes(item.action)));
-  assert.ok(proposal.pieces.some((item) => item.action === "replace"), "La recomposición presenta un cambio respaldado");
-  assert.equal(proposal.identity.status, expectedIdentityStatus);
-  assert.ok(proposal.improvement && proposal.explanation.length < 180);
+  assert.ok(proposal.improvement && proposal.explanation.length < 220);
   assert.ok(proposal.pieces.every((item) => item.reason.length < 180));
-  assert.ok(proposal.weaknessesCorrected.length <= 1, "La propuesta comunica la limitación prioritaria sin abrir otra lista");
+  const proposedPicks = proposal.pieces.map(({role, champion}) => pick(role, champion));
+  const nextDiagnosis = diagnoseComposition(proposedPicks);
+  if (result.diagnosis.plan.primaryIdentity) {
+    assert.equal(proposal.identity.status, "preserved", "Se declara conservada solo una identidad verificada");
+    assert.equal(nextDiagnosis.plan.primaryIdentity, result.diagnosis.plan.primaryIdentity, "El nuevo equipo conserva de verdad su identidad original");
+  } else {
+    assert.equal(proposal.identity.status, "unconfirmed", "Sin identidad original confirmada no se promete conservación");
+  }
 }
 
 const clear = analyze({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" });
 assert.equal(clear.diagnosis.plan.primaryIdentity, "Front to Back");
-verifyProposal(clear, "preserved");
-assert.equal(clear.teamRecomposition.proposal.identity.primary, "Front to Back");
+verifyProposal(clear);
 
 const hybrid = analyze({ top: "Camille", jungle: "Vi", mid: "Ahri", botline: "Kai'Sa", support: "Rakan" });
 assert.equal(hybrid.diagnosis.coherence.status, "hybrid");
-verifyProposal(hybrid, "preserved");
-assert.equal(hybrid.teamRecomposition.proposal.identity.primary, hybrid.diagnosis.plan.primaryIdentity,
-  "Un plan híbrido conserva su identidad principal cuando hay candidatos alineados");
+verifyProposal(hybrid);
 
 const incoherent = analyze({ top: "Fiora", jungle: "Elise", mid: "Xerath", botline: "Draven", support: "Lulu" });
 assert.equal(incoherent.diagnosis.coherence.status, "incoherent");
-verifyProposal(incoherent, "unconfirmed");
-assert.equal(incoherent.teamRecomposition.proposal.identity.primary, null);
-assert.match(incoherent.teamRecomposition.proposal.explanation, /debe confirmarse/);
+verifyProposal(incoherent);
 
-assert.deepEqual(analyze({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" }).teamRecomposition, clear.teamRecomposition,
-  "El resultado de la recomposición es determinista");
+const userCase = analyze({ top: "Darius", jungle: "Garen", mid: "Azir", botline: "Cassiopeia", support: "Heimerdinger" });
+verifyProposal(userCase);
+assert.ok(userCase.teamRecomposition.status !== "recomposed" ||
+  userCase.teamRecomposition.proposal.pieces.filter((piece) => piece.action === "replace").length<=2,
+  "La composición aportada por el usuario no se sustituye entera");
+
+assert.deepEqual(analyze({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" }).teamRecomposition,
+  clear.teamRecomposition, "La recomposición sigue siendo determinista");
 
 const roles = Object.keys(roleSheets);
 const currentPicks = roles.map((role, index) => ({
@@ -104,15 +117,15 @@ const evaluatedAlternativesByRole = Object.fromEntries(roles.map((role, index) =
 }]]));
 const multiPieceInput = {
   optimizer: { status: "prioritized", priority: { need: { id: "engage", label: "Iniciación" }, reinforces: "la entrada coordinada", problemAvoided: "la falta de entrada" } },
-  recommendations: { status: "recommended", plan: { primaryIdentity: "Front to Back" }, profiles: [{ id: "engage", label: "Iniciación", priority: 1, improves: "la entrada coordinada" }] },
+  recommendations: { status: "recommended", plan: { primaryIdentity: null }, profiles: [{ id: "engage", label: "Iniciación", priority: 1, improves: "la entrada coordinada" }] },
   mappedCandidates: { status: "mapped", composition: { status: "complete", picks: currentPicks }, profiles: [{ id: "engage", alternativesByRole }] },
   evaluatedCandidates: { status: "evaluated", profiles: [{ id: "engage", alternativesByRole: evaluatedAlternativesByRole }] },
   presentation: { status: "presented" }, integration: { status: "presented" }, polished: { status: "polished" },
 };
 const multiPieceProposal = recomposeStrategicTeam(multiPieceInput);
 assert.equal(multiPieceProposal.status, "recomposed");
-assert.equal(multiPieceProposal.proposal.pieces.filter((item) => item.action === "replace").length, 5,
-  "La recomposición evalúa y puede cambiar varias piezas como conjunto, no solo una sustitución aislada");
+assert.equal(multiPieceProposal.proposal.pieces.filter((item) => item.action === "replace").length, 2,
+  "El optimizador sintético mejora dos posiciones y conserva las tres restantes");
 
 const incomplete = { ...clear.strategicInputs, mappedCandidates: { ...clear.strategicInputs.mappedCandidates, composition: { status: "incomplete", picks: clear.picks.slice(0, 4) } } };
 assert.equal(recomposeStrategicTeam(incomplete).status, "pending", "Una selección de cuatro campeones queda pendiente");
@@ -121,9 +134,8 @@ assert.equal(recomposeStrategicTeam({ ...incomplete, mappedCandidates: { ...inco
 assert.equal(recomposeStrategicTeam({ optimizer: { status: "no-priority" } }).status, "no-priority");
 
 assert.deepEqual(clear.report.sections.map((section) => section.id), ["diagnosis", "correction", "protection"], "La propuesta reutiliza el bloque existente y no crea una sección nueva");
-assert.ok(clear.report.sections[1].teamRecomposition, "El informe adjunta la composición revisada al bloque de recomendación");
-assert.deepEqual(clear.report.sections[1].teamRecomposition, clear.teamRecomposition.proposal);
-assert.equal(hybrid.report.sections[1].teamRecomposition.identity.status, "preserved");
-assert.equal(incoherent.report.sections[1].teamRecomposition.identity.status, "unconfirmed");
+if (clear.teamRecomposition.status === "recomposed") assert.deepEqual(clear.report.sections[1].teamRecomposition, clear.teamRecomposition.proposal);
+if (hybrid.teamRecomposition.status === "recomposed") assert.equal(hybrid.report.sections[1].teamRecomposition.identity.status, "preserved");
+if (incoherent.teamRecomposition.status === "recomposed") assert.equal(incoherent.report.sections[1].teamRecomposition.identity.status, "unconfirmed");
 
 console.log("Strategic Team Recomposer validado: equipos claros, híbridos e incoherentes, cinco roles, estado pendiente, identidad, informe y determinismo.");

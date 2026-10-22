@@ -267,6 +267,14 @@
   font-size: 0.9rem;
 }
 
+.result-summary__recommendation-list .result-summary__candidate-role {
+  display: block;
+  color: var(--accent-2);
+  font-weight: 700;
+  font-size: 0.76rem;
+  margin-top: 3px;
+}
+
 .result-summary__recommendation-list li small {
   margin-top: 2px;
 }

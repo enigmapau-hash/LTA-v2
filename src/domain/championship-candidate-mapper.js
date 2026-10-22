@@ -122,6 +122,9 @@
   function presentCandidate(candidate, profile, priority) {
     return {
       champion: candidate.champion,
+      role: candidate.role,
+      function: String(candidate.candidate.function || "").trim(),
+      tempo: String(candidate.candidate.tempo || "").trim(),
       priority,
       reason: `Sus atributos incluyen ${candidate.signals.join(" y ")}, acorde con el perfil «${profile.label}».`,
       improves: profile.improves,
