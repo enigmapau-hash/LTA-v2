@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.11.2",
+    version: "v3.12.0",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-22",
-    summary: ["Las limitaciones propias de un estilo se muestran como oportunidades, sin afirmar carencias o correcciones no comprobadas."],
+    summary: ["Rediseño del informe: plan y condición de victoria separados, alternativa principal destacada, motivos secundarios y bans desplegables."],
     pending: [],
   };
 

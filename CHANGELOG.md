@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.12.0
+
+### Added
+- Rediseño del informe: plan y condición de victoria separados, alternativa principal destacada, motivos secundarios y bans desplegables.
+
 ## v3.11.2
 
 ### Fixed

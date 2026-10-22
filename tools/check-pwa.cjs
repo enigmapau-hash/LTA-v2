@@ -242,16 +242,19 @@ async function main() {
         .map((node) => node.textContent.trim()).join("|") === expected.join("|"), Object.values(engagePicks));
     const recommendation = page.locator(".result-summary__recommendation-list");
     await recommendation.waitFor({ state: "visible" });
-    assert.match(await recommendation.innerText(), /Diana/,
+    assert.match(await recommendation.textContent(), /Diana/,
       "El informe completo conserva Diana como candidata en una posición respaldada.");
-    assert.doesNotMatch(await recommendation.innerText(), /Anivia/,
+    assert.doesNotMatch(await recommendation.textContent(), /Anivia/,
       "El informe offline no confunde anti-engage con iniciación.");
-    assert.doesNotMatch(await recommendation.innerText(), /Diana[^\n]*TOP/i,
+    assert.doesNotMatch(await recommendation.textContent(), /Diana[^\n]*TOP/i,
       "El informe offline no recomienda Diana TOP experimental.");
     // Leaving the edited picker can redraw the unchanged table. The report must
     // still be present before opening its explanations.
     await page.locator("h1").click();
     await recommendation.waitFor({ state: "visible" });
+    for (const alternative of await recommendation.locator(".result-summary__candidate-more").all()) {
+      await alternative.locator(":scope > summary").click();
+    }
     const explanations = recommendation.locator(".result-summary__candidate-justification");
     assert.equal(await explanations.count(), await recommendation.locator(":scope > li").count(),
       "Cada candidato final conserva su explicación respaldada offline.");
