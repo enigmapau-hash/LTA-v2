@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.6.0",
+    version: "v3.7.0",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-21",
-    summary: ["Explicaciones contextuales de los candidatos durante el draft, sin cambiar rankings ni afinidades"],
+    summary: ["Diagnósticos completos con evidencia explícita para las identidades secundarias, sin alterar el draft"],
     pending: [],
   };
 

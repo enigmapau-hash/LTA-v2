@@ -44,6 +44,12 @@ Los siguientes candidatos están en el top 3 conservado (se muestra el primero d
 
 ## Compatibilidad y auditoría antes/después
 
+Nota de mantenimiento: desde v3.7.0, la prueba separa el fingerprint intacto de
+recomendaciones del fingerprint de análisis completo, revisado por la
+[precisión de diagnóstico final](Final-Composition-Diagnosis-Precision.md).
+Se conservan todos los campos cubiertos. Las cifras siguientes describen el
+cambio original de v3.5.0 a v3.6.0.
+
 Todas las métricas siguientes se calcularon en ambas versiones con el mismo catálogo y corpus. Coinciden exactamente; no se atribuye a este cambio una mejora de calidad del ranking.
 
 | Corpus / métrica | v3.5.0 | v3.6.0 |

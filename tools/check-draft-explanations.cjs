@@ -51,10 +51,14 @@ function main() {
   const catalog = loadCandidateCatalog();
   const before = structuredClone(catalog);
   const cases = corpus(catalog);
-  // Capturado de main 63d2559 (v3.5.0), antes de añadir explicaciones.
-  // Incluye todos los campos previos, no solo nombres/afinidad, y análisis completos.
-  const digest = createHash("sha256").update(JSON.stringify(compatibilitySnapshot(engine, catalog, cases))).digest("hex");
-  assert.equal(digest, "b5821cd19c8038b8cc7e4161b44eff7dd63e77bf65d8ee0740e19541e7dba2c0", "Rankings, afinidades y análisis deben permanecer idénticos a v3.5.0");
+  const snapshots = compatibilitySnapshot(engine, catalog, cases);
+  const digest = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
+  // Separar el contrato de draft intacto de la precisión de diagnóstico completo
+  // revisada en v3.7.0. Se mantienen todos los campos cubiertos, no solo el ranking.
+  assert.equal(digest(snapshots.map(({ analysis, ...draft }) => draft)), "3b7000e7d2dc07ff5f56e9824a5548e945609997eb969c7992d922b0215bea90",
+    "Todos los campos previos de recomendaciones deben permanecer idénticos a v3.6.0");
+  assert.equal(digest(snapshots.map(({ analysis }) => analysis)), "07e2404fed71dde0a54088aa90ec7a6595f2801c36e594e23788acf251769c26",
+    "Los análisis deben conservar el contrato aprobado de v3.7.0");
 
   const normalize = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const explicit = (pick, term) => new RegExp(`(^|[^a-z0-9-])${normalize(term)}($|[^a-z0-9-])`).test(normalize(pick.strengths));
@@ -120,7 +124,7 @@ function main() {
   assert.equal(engine.recommendPicks([], { mid: [{ champion: "Sin datos" }] }).mid[0].explanation,
     "Aporta: sin señales suficientes", "Sin evidencia, conservar una descripción factual sin inventar un plan");
   assert.deepEqual(catalog, before);
-  console.log(`Draft explanations: ${cases.length} estados, ${checked} mensajes; cinco roles, 1–4 picks, cobertura veraz, brevedad, determinismo y contrato v3.5.0 intacto.`);
+  console.log(`Draft explanations: ${cases.length} estados, ${checked} mensajes; cinco roles, 1–4 picks, cobertura veraz, brevedad, determinismo y contrato de recomendaciones intacto.`);
 }
 
 if (require.main === module) main();

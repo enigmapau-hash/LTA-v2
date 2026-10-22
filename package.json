@@ -1,6 +1,6 @@
 {
   "name": "lol-team-analyzer",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "private": true,
   "description": "Analizador estratégico de composiciones de League of Legends.",
   "scripts": {
@@ -9,6 +9,7 @@
     "test:composition-engine": "node tools/check-composition-engine.cjs",
     "test:draft-strategic-fit": "node tools/check-draft-strategic-fit.cjs",
     "test:draft-explanations": "node tools/check-draft-explanations.cjs",
+    "test:final-diagnosis-precision": "node tools/check-final-diagnosis-precision.cjs",
     "test:composition-optimizer": "node tools/check-composition-optimizer.cjs",
     "test:strategic-recommendation": "node tools/check-strategic-recommendation-engine.cjs",
     "test:championship-candidate-mapper": "node tools/check-championship-candidate-mapper.cjs",

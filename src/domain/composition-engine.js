@@ -15,6 +15,8 @@
       winCondition: "Proteger al ADC y forzar teamfights.",
       strengths: ["Frontline", "Peel", "DPS sostenido"],
       weaknesses: ["Poca presión lateral"],
+      // La etiqueta no acredita por sí sola una vía de protección del carry.
+      secondaryEvidence: { fields: ["strengths"], terms: ["frontline", "peel", "anti-engage"] },
       signals: [
         { fields: ["identity"], terms: ["front to back"], weight: 3 },
         { fields: ["strengths"], terms: ["frontline"], weight: 1 },
@@ -28,6 +30,8 @@
       winCondition: "Eliminar rápidamente la backline rival.",
       strengths: ["Acceso a la backline", "Engage", "Follow-up"],
       weaknesses: ["Pierde valor si falla la iniciación"],
+      // Engage compartido no implica acceso a la backline.
+      secondaryEvidence: { fields: ["strengths"], terms: ["backline", "acceso al carry", "flanqueo"] },
       signals: [
         { fields: ["strengths"], terms: ["backline", "acceso al carry"], weight: 2 },
         { fields: ["strengths"], terms: ["engage"], weight: 1 },
@@ -211,6 +215,7 @@
       ? ARCHETYPES.find((item) => item.id === primaryScore.id)
       : null;
     const runnerUp = scores.find((item) => item.id !== primaryScore?.id);
+    const runnerUpArchetype = ARCHETYPES.find((item) => item.id === runnerUp?.id);
     const secondaryScore = useDraftThresholds
       ? primary && scores
         .filter((item) => item.id !== primaryScore.id)
@@ -220,7 +225,10 @@
             && primaryScore.score - item.score <= 14
             && archetypeSupportCount(picks, archetype) >= 2;
         })
-      : primary && runnerUp.score >= 45 && runnerUp.score >= primaryScore.score * 0.62 ? runnerUp : null;
+      : primary && runnerUp.score >= 45 && runnerUp.score >= primaryScore.score * 0.62
+        && (!runnerUpArchetype.secondaryEvidence
+          || picks.some((pick) => matchesExplicitSignal(pick, runnerUpArchetype.secondaryEvidence)))
+        ? runnerUp : null;
     const secondary = secondaryScore
       ? ARCHETYPES.find((item) => item.id === secondaryScore.id)
       : null;
@@ -272,7 +280,7 @@
       .slice(0, Math.max(0, limit - selected.length)));
   }
 
-  function supportsDraftNeed(pick, signal) {
+  function matchesExplicitSignal(pick, signal) {
     return signal.fields.some((field) => signal.terms.some((term) =>
       // Anti-frontline describe daño al frente rival, no frontline propia.
       new RegExp(`(^|[^a-z0-9-])${normalize(term)}($|[^a-z0-9-])`).test(fieldText(pick, field))));
@@ -292,7 +300,7 @@
         // hypercarry: solo las fortalezas acreditan lo que aporta por sí mismo.
         const explicit = { fields: signal.fields.filter((field) => field === "strengths"), terms: [term] };
         if (sharedTerms.includes(term)) continue;
-        if (supportsDraftNeed(candidate, explicit) && picks.some((pick) => supportsDraftNeed(pick, explicit))) sharedTerms.push(term);
+        if (matchesExplicitSignal(candidate, explicit) && picks.some((pick) => matchesExplicitSignal(pick, explicit))) sharedTerms.push(term);
       }
     }
     if (sharedTerms.length && proposedDirection === archetype.id) {
@@ -328,8 +336,8 @@
     // herramienta ausente que ese plan necesita; no se bonifica variedad genérica.
     const plan = emergingIdentity || emergingArchetype;
     const needs = STRATEGIC_GAPS.filter((gap) => plan?.draftNeeds?.includes(gap.id));
-    const coveredNeeds = needs.filter((gap) => supportsDraftNeed(candidate, gap)
-      && !picks.some((pick) => supportsDraftNeed(pick, gap)));
+    const coveredNeeds = needs.filter((gap) => matchesExplicitSignal(candidate, gap)
+      && !picks.some((pick) => matchesExplicitSignal(pick, gap)));
     const preservesPlan = emergingIdentity && proposedDirection === emergingIdentity.id;
     const coverageFit = needs.length && preservesPlan
       ? coveredNeeds.length / needs.length * 4 : 0;

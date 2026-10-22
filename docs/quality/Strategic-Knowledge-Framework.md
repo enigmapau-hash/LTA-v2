@@ -74,6 +74,13 @@ ni se modifica el diagnóstico de cinco picks. Véanse la
 
 ### Reglas generales
 
+Desde v3.7.0, una identidad secundaria de Front to Back en la evaluación
+completa necesita evidencia explícita de Frontline, Peel o Anti-engage; una de
+Dive necesita Backline, Acceso al carry o Flanqueo. Estas guardas mínimas usan
+los atributos existentes y no cambian puntuaciones ni la selección provisional
+del draft. No se exige un campeón concreto ni se elimina una mezcla solo por
+ser híbrida. Véase la [comparación y sus límites](Final-Composition-Diagnosis-Precision.md).
+
 1. Añadir una relación solo cuando describa un patrón estratégico general respaldado por atributos del catálogo.
 2. Preferir equivalencias semánticas concretas frente a términos genéricos como “fuerte”, “útil” o “bueno”.
 3. No usar una relación para rellenar artificialmente combinaciones perfil/rol o identidad/rol que el catálogo no respalde.
