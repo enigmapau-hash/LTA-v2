@@ -73,7 +73,7 @@ async function main(){
   assert.equal(await riskGuidance.count(), 1, "El equipo de referencia expone el riesgo detectado dentro de Protección");
   assert.match(await riskGuidance.innerText(), /Riesgo propio:/, "El riesgo propio llega al DOM");
   assert.match(await riskGuidance.innerText(), /Cómo cubrirlo:/, "La contramedida calculada llega al DOM");
-  assert.match(await strategy.innerText(),/Plan probable: Front to Back/i);assert.match(await strategy.innerText(),/Cómo ganar: Proteger al ADC y forzar teamfights\./i);assert.match(await strategy.innerText(),/Oportunidad de mejora: presión lateral/i);assert.match(await strategy.innerText(),/Refuerza:/i);assert.match(await strategy.innerText(),/Split Push/i);
+  assert.match(await strategy.innerText(),/Plan probable: Front to Back/i);assert.match(await strategy.innerText(),/Cómo ganar: Proteger al ADC y forzar teamfights\./i);assert.match(await strategy.innerText(),/Oportunidad de mejora: presión lateral/i);assert.match(await strategy.innerText(),/Para qué sirve:/i);assert.match(await strategy.innerText(),/Split Push/i);
   assert.equal(await strategy.locator(".result-summary__recommendation-list").count(),1,"la mejora conserva una única lista acotada de candidatos; los bans pueden aparecer en protección");
   assert.ok(await strategy.locator(".result-summary__recommendation-list > li").count()<=4,"la recomendación muestra como máximo cuatro candidatos");
   const secondCandidate = strategy.locator(".result-summary__candidate-more").first();
@@ -103,7 +103,8 @@ async function main(){
   await justificationToggle.press("Enter");
   assert.equal(await justifications.first().evaluate(node=>node.open), true, "La explicación se abre por teclado");
   assert.notEqual(await justificationToggle.evaluate(node=>getComputedStyle(node).outlineStyle), "none", "Foco visible en la explicación");
-  assert.match(await justifications.first().innerText(), /Aporta .+/s);
+  assert.match(await justifications.first().innerText(), /Señales del catálogo:/s);
+  assert.doesNotMatch(await justifications.first().innerText(), /acorde con el perfil/, "Sin redundancias de etiquetas");
   assert.doesNotMatch(await justifications.first().innerText(), /Contribuye a corregir/, "Una limitación del arquetipo no acredita una corrección real");
   for (const details of await justifications.all()) await details.evaluate(node=>{node.open=true;});
   for (const width of widths) {

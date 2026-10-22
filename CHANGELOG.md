@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.12.1
+
+### Improved
+- Explicaciones más claras: evidencia y conexiones entre campeones condensadas, sin frases repetidas ni cambios de decisiones.
+
 ## v3.12.0
 
 ### Added

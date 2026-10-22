@@ -265,9 +265,10 @@ async function main() {
     assert.equal(await explanations.count(), await recommendation.locator(":scope > li").count(),
       "Cada candidato final conserva su explicación respaldada offline.");
     for (const explanation of await explanations.all()) await explanation.locator("summary").click();
-    assert.match(await recommendation.innerText(), /Aporta .+acorde con el perfil/, "La contribución real llega al informe offline");
+    assert.match(await recommendation.innerText(), /Señales del catálogo:/, "La evidencia real llega al informe offline");
+    assert.doesNotMatch(await recommendation.innerText(), /acorde con el perfil/, "Sin repetir el nombre del perfil");
     assert.doesNotMatch(await recommendation.innerText(), /Contribuye a corregir/, "No afirma una carencia no demostrada");
-    assert.match(await recommendation.innerText(), /Compañeros beneficiados \(equipo actual\):/, "Relaciona compañeros actuales con sus atributos offline");
+    assert.match(await recommendation.innerText(), /Conexiones con el equipo:/, "Relaciona compañeros actuales con sus atributos offline");
     assert.match(await page.locator(".result-summary__detected-need").innerText(), /Límite del estilo, no carencia demostrada:/);
     assert.deepEqual(pageErrors, [], "La app no debe lanzar errores JavaScript durante la carga o el uso offline.");
 

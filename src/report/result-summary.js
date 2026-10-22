@@ -49,14 +49,31 @@
     return `<p class="result-summary__answer">${escapeHtml(answer)}</p>`;
   }
 
+  // Compact only known presentation templates. Unrecognised descriptions are left intact.
+  function briefSectionExplanation(section) {
+    const explanation = String(section.explanation || "").trim();
+    if (section.id === "correction" && Array.isArray(section.candidates)) {
+      const known = explanation.match(/^Es (?:la respuesta más directa|una alternativa compatible) a «[^»]+»(?: para el plan [^:]+)?:\s*(.+)$/);
+      if (known) return known[1].charAt(0).toLocaleUpperCase("es") + known[1].slice(1);
+    }
+    if (section.id === "protection" && explanation.startsWith("Es la amenaza prioritaria porque ")) {
+      return "Por qué importa: " + explanation.slice("Es la amenaza prioritaria porque ".length);
+    }
+    return explanation;
+  }
+
+  function cleanSentence(value) {
+    return String(value || "").replace(/\ba el\b/gi, "al");
+  }
+
   function renderCandidate(candidate, index) {
     const roleStatus = ({ habitual: "Habitual", situacional: "Situacional", experimental: "Experimental", "sin-verificar": "Rol sin verificar" })[window.LTARoleViability?.assess(candidate.champion, candidate.role)?.status] || "Rol sin verificar";
     const role = ROLE_LABELS[candidate.role]
       ? `<small class="result-summary__candidate-role">Posición: ${escapeHtml(ROLE_LABELS[candidate.role])} · ${escapeHtml(roleStatus)} (26.21)</small>` : "";
     const justification = candidate.justification
-      ? `<details class="result-summary__candidate-justification"><summary>Justificación estratégica de ${escapeHtml(candidate.champion)}</summary><small>${escapeHtml(candidate.justification.contribution)}</small>${candidate.justification.effect ? `<small class="result-summary__candidate-effect">${escapeHtml(candidate.justification.effect.text)}</small>` : ""}${candidate.justification.beneficiaries.length ? `<div class="result-summary__beneficiaries"><small><b>Compañeros beneficiados (equipo actual):</b></small><ul>${candidate.justification.beneficiaries.map((ally) => `<li>${escapeHtml(ally.text)}</li>`).join("")}</ul></div>` : ""}</details>`
+      ? `<details class="result-summary__candidate-justification"><summary>Ver señales y sinergias de ${escapeHtml(candidate.champion)}</summary><small>${escapeHtml(candidate.justification.contribution)}</small>${candidate.justification.effect ? `<small class="result-summary__candidate-effect">${escapeHtml(candidate.justification.effect.text)}</small>` : ""}${candidate.justification.beneficiaries.length ? `<div class="result-summary__beneficiaries"><small><b>Conexiones con el equipo:</b> ${escapeHtml(candidate.justification.beneficiarySummary || candidate.justification.beneficiaries.map((ally) => ally.text).join(" "))}</small></div>` : ""}</details>`
       : candidate.strengths.length ? `<small><b>Aporta:</b> ${escapeHtml(candidate.strengths.join(" · "))}</small>` : "";
-    const body = `<small class="result-summary__candidate-reason">${escapeHtml(candidate.reason)}</small>${justification}${candidate.limitations.length ? `<small class="result-summary__limitation"><b>Límite:</b> ${escapeHtml(candidate.limitations.join(" · "))}</small>` : ""}`;
+    const body = `<small class="result-summary__candidate-reason">${escapeHtml(cleanSentence(candidate.reason))}</small>${justification}${candidate.limitations.length ? `<small class="result-summary__limitation"><b>Límite:</b> ${escapeHtml(candidate.limitations.join(" · "))}</small>` : ""}`;
     const title = `<strong>${escapeHtml(candidate.champion)}</strong>`;
     if (index === 0) return `<li class="result-summary__candidate-primary"><div class="result-summary__candidate-head">${title}<span class="result-summary__priority-label">Primera alternativa</span></div>${role}${body}</li>`;
     return `<li class="result-summary__candidate-secondary"><details class="result-summary__candidate-more"><summary><span class="result-summary__candidate-name">${title}${role}</span><span class="result-summary__disclosure-label">Ver motivos</span></summary><div class="result-summary__candidate-more-body">${body}</div></details></li>`;
@@ -168,13 +185,13 @@
             <article class="result-summary__strategy-card" data-report-section="${escapeHtml(section.id)}">
               <h4>${escapeHtml(section.title)}</h4>
               ${renderHeadline(section)}
-              ${section.id === "correction" ? `<details class="result-summary__context"><summary>Fundamento de la recomendación</summary><p>${escapeHtml(section.explanation)}</p></details>` : `<p class="result-summary__section-context">${escapeHtml(section.explanation)}</p>`}
+              ${section.id === "correction" ? `<details class="result-summary__context"><summary>Fundamento de la recomendación</summary><p>${escapeHtml(briefSectionExplanation(section))}</p></details>` : `<p class="result-summary__section-context">${escapeHtml(briefSectionExplanation(section))}</p>`}
               ${section.detectedNeed ? `<p class="result-summary__detected-need"><strong>Carencia detectada:</strong> ${escapeHtml(section.detectedNeed)}</p>` : section.optionalLimitation ? `<p class="result-summary__detected-need"><strong>Límite del estilo, no carencia demostrada:</strong> ${escapeHtml(section.optionalLimitation)}</p>` : ""}
               ${section.teamRecomposition ? `<p class="result-summary__action"><strong>Equipo propuesto:</strong> ${section.teamRecomposition.pieces.map((piece) => `${escapeHtml(piece.role)}: ${escapeHtml(piece.champion)}${piece.action === "replace" ? ` (antes ${escapeHtml(piece.from)})` : ""}`).join(" · ")}.</p>
                 <p class="result-summary__action"><strong>Objetivo del cambio:</strong> ${escapeHtml(section.teamRecomposition.improvement)}${section.teamRecomposition.weaknessesCorrected.length ? ` · Limitación abordada: ${escapeHtml(section.teamRecomposition.weaknessesCorrected.join("; "))}` : ""}</p>
                 <p>${escapeHtml(section.teamRecomposition.explanation)} ${escapeHtml(section.teamRecomposition.identity.status === "preserved" ? `Identidad conservada: ${section.teamRecomposition.identity.primary}.` : `Identidad propuesta sin confirmar: ${section.teamRecomposition.identity.proposed || "pendiente"}.`)}</p>` : section.compositionOptimization ? `<p class="result-summary__action"><strong>Composición propuesta:</strong> ${escapeHtml(section.compositionOptimization.change.role)}: ${escapeHtml(section.compositionOptimization.change.from)} → ${escapeHtml(section.compositionOptimization.change.to)}. Busca reforzar ${escapeHtml(section.compositionOptimization.improvement)}; aborda ${escapeHtml(section.compositionOptimization.limitationCorrected)}.</p>
                 <p>${escapeHtml(section.compositionOptimization.identity.status === "preserved" ? `Identidad conservada: ${section.compositionOptimization.identity.primary}.` : `Identidad propuesta sin confirmar: ${section.compositionOptimization.identity.proposed || "pendiente"}.`)}</p>` : ""}
-              ${section.improves ? `<p class="result-summary__action"><strong>Refuerza:</strong> ${escapeHtml(section.improves)}</p>` : ""}
+              ${section.improves ? `<p class="result-summary__action"><strong>Para qué sirve:</strong> ${escapeHtml(section.improves)}</p>` : ""}
               ${section.action ? `<p class="result-summary__action"><strong>Protección:</strong> ${escapeHtml(section.action)}</p>` : ""}
               ${section.riskGuidance ? `<div class="result-summary__risk-guidance" aria-label="Riesgo propio y contramedida">${section.riskGuidance.risk ? `<p><strong>Riesgo propio:</strong> ${escapeHtml(section.riskGuidance.risk)}</p>` : ""}${section.riskGuidance.response ? `<p><strong>Cómo cubrirlo:</strong> ${escapeHtml(section.riskGuidance.response)}</p>` : ""}</div>` : ""}
               ${section.strategicBans?.length ? `<div class="result-summary__ban-integration" aria-label="Bans estratégicos">
