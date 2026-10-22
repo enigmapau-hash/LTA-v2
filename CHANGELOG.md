@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.7.1
+
+### Fixed
+- Jerarquía visual más clara para diagnóstico, mejora y protección, con candidatos más legibles
+
 ## v3.7.0
 
 ### Added

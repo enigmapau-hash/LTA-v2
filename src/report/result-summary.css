@@ -128,9 +128,33 @@
 
 .result-summary__strategy-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
   align-items: start;
-  gap: 10px;
+  gap: 12px;
+}
+
+/* Read the plan first, then give the actionable improvement room to breathe. */
+.result-summary__strategy-card[data-report-section="diagnosis"] {
+  grid-column: 1 / -1;
+  padding: 14px 16px;
+  background: linear-gradient(105deg, rgba(226, 41, 47, 0.07), rgba(255, 255, 255, 0.015) 60%);
+}
+
+.result-summary__strategy-card[data-report-section="correction"] {
+  grid-column: 1;
+  padding: 16px 18px;
+  border-color: rgba(226, 41, 47, 0.36);
+  background: linear-gradient(145deg, rgba(226, 41, 47, 0.075), rgba(255, 255, 255, 0.02) 44%);
+  box-shadow: inset 3px 0 0 rgba(255, 102, 112, 0.65);
+}
+
+.result-summary__strategy-card[data-report-section="correction"] h4 {
+  color: var(--accent-2);
+  font-size: 0.9rem;
+}
+
+.result-summary__strategy-card[data-report-section="protection"] {
+  grid-column: 2;
 }
 
 .result-summary__strategy-card {
@@ -157,6 +181,10 @@
 .result-summary__strategy-card .result-summary__answer {
   color: var(--text);
   font-weight: 700;
+}
+
+.result-summary__strategy-card .result-summary__answer + p {
+  margin-top: 7px;
 }
 
 .result-summary__strategy-card .result-summary__action {
@@ -186,17 +214,20 @@
 
 .result-summary__recommendation-list {
   display: grid;
-  gap: 8px;
-  margin: 9px 0 0;
-  padding: 8px 0 0 19px;
+  gap: 9px;
+  margin: 13px 0 0;
+  padding: 12px 0 0 22px;
   border-top: 1px solid var(--line);
 }
 
 .result-summary__recommendation-list li {
-  padding-left: 2px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
   color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.35;
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .result-summary__recommendation-list li strong,
@@ -206,7 +237,7 @@
 
 .result-summary__recommendation-list li strong {
   color: var(--text);
-  font-size: 0.84rem;
+  font-size: 0.9rem;
 }
 
 .result-summary__recommendation-list li small {
@@ -356,7 +387,11 @@
 
 @media (max-width: 900px) {
   .result-summary__strategy-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .result-summary__strategy-card[data-report-section] {
+    grid-column: 1;
   }
 }
 
@@ -374,7 +409,11 @@
   }
 
   .result-summary__strategy-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .result-summary__strategy-card[data-report-section="correction"] {
+    padding: 13px 14px;
   }
 }
 
