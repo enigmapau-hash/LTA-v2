@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.8.1
+
+### Fixed
+- Recomposición limitada y validada, roles de candidatos explícitos y bans contextualizados.
+
 ## v3.8.0
 
 ### Added

@@ -150,12 +150,12 @@
         || String(left.candidate.champion).localeCompare(String(right.candidate.champion), "es"));
   }
 
-  function presentBan(item, threat, priority) {
+  function presentBan(item, threat, priority, teamIdentity = "") {
     const champion = String(item.candidate.champion).trim();
     const definition = ALL_TRAITS[threat.type];
     const signalText = item.signals.slice(0, 2).join(" y ");
     const explanation = threat.source === "protection"
-      ? `${champion} presenta ${signalText}, señales asociadas a ${definition.style.toLocaleLowerCase("es")}; es una amenaza potencial para el plan del equipo.`
+      ? `${champion} tiene señales de ${signalText}. ${threat.detail || "Este estilo puede dificultar la ejecución del plan."} ${teamIdentity ? `Se valora frente al plan ${teamIdentity};` : "Se valora como"} amenaza potencial, no como counter directo demostrado.`
       : `${champion} aporta ${signalText}, señales que potencian ${definition.style.toLocaleLowerCase("es")} contra ${threat.threatens}.`;
     return {
       priority,
@@ -179,6 +179,7 @@
         source: "protection",
         severity: item.priority === "principal" ? "alta" : item.priority === "alta" ? "media" : "baja",
         threatens: String(item.style || "el plan del equipo"),
+        detail: String(item.explanation || "").trim(),
       });
     }
     // All teams have matchup vulnerabilities, even if the risk sub-engine has
@@ -235,7 +236,7 @@
           const key = normalize(item.candidate.champion);
           if (selectedBans.has(key)) continue;
           selectedBans.add(key);
-          bans.push(presentBan(item, group.threat, bans.length + 1));
+          bans.push(presentBan(item, group.threat, bans.length + 1, String(input.diagnosis?.plan?.primaryIdentity || "").trim()));
           addedThisRound = true;
           group.used = true;
           break;

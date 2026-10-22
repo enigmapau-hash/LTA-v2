@@ -43,6 +43,7 @@
         .slice(0, MAX_PRESENTED_CANDIDATES)
         .map((candidate, index) => ({
           champion: candidate.champion,
+          ...(candidate.role ? { role: candidate.role } : {}),
           priority: index + 1,
           reason: candidate.reason,
           strengths: [...(Array.isArray(candidate.strengths) ? candidate.strengths : [])],

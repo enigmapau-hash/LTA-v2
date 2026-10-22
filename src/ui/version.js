@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.8.0",
+    version: "v3.8.1",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-22",
-    summary: ["Bans contextualizados para equipos completos: tres amenazas diferenciadas basadas en Protección y el catálogo"],
+    summary: ["Recomposición limitada y validada, roles de candidatos explícitos y bans contextualizados"],
     pending: [],
   };
 

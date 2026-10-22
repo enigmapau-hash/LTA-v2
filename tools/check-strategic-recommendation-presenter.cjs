@@ -90,7 +90,7 @@ function verify(evaluation) {
     && Array.isArray(candidate.strengths) && Array.isArray(candidate.limitations)));
   assert.ok(result.compact.length < 240, "La presentación compacta debe ser breve");
   assert.ok(!("role" in result.primaryProfile) && !("score" in result.primaryProfile));
-  assert.ok(result.primaryProfile.candidates.every((candidate) => !("role" in candidate) && !("score" in candidate)));
+  assert.ok(result.primaryProfile.candidates.every((candidate) => Object.keys(roleSheets).includes(candidate.role) && !("score" in candidate)), "Se muestra el rol sin exponer puntuaciones");
 
   assert.deepEqual(presentRecommendations({
     optimizer: evaluation.optimizer,

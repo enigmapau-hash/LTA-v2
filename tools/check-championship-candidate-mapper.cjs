@@ -82,7 +82,7 @@ function verify(result) {
     assert.ok(profile.candidates.every((item) => item.reason && item.improves === profile.improves));
     assert.ok(profile.candidates.every((item) => item.identity && item.strengths.length && Array.isArray(item.weaknesses)));
     assert.ok(profile.candidates.every((item) => item.signals.length && item.matchedFields.length));
-    assert.ok(profile.candidates.every((item) => !("role" in item) && !("score" in item) && !("affinity" in item)));
+    assert.ok(profile.candidates.every((item) => Object.keys(roleSheets).includes(item.role) && !("score" in item) && !("affinity" in item)), "Cada candidato indica una posición válida del catálogo sin puntuaciones internas");
     assert.ok(profile.candidates.every((item) => item.reason.length < 120), "Las justificaciones deben ser breves");
   }
   assert.deepEqual(result.profiles.map((item) => item.priority), [...result.profiles.map((item) => item.priority)].sort((a, b) => a - b));

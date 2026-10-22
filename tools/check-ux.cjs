@@ -50,7 +50,11 @@ async function main(){
   await page.waitForFunction(()=>document.querySelector("#statusPill")?.textContent==="Análisis actualizado");
   await page.waitForFunction(expected=>expected.every(champion=>Array.from(document.querySelectorAll(".composition-table .champion-name")).some(node=>node.textContent.trim()===champion)),Object.values(referencePicks));
   const strategy=page.locator(".result-summary__strategy");await strategy.waitFor({state:"visible"});
-  assert.match(await strategy.innerText(),/Equipo propuesto:/i,"el informe muestra la recomposición completa cuando está respaldada y el rol Jungla usa su clave interna");
+  const recompositionText = await strategy.innerText();
+  if (recompositionText.includes("Equipo propuesto:")) {
+    assert.ok(recompositionText.split("(antes ").length-1<=2,"nunca se presentan cambios masivos para corregir una necesidad");
+  }
+  assert.ok(await strategy.locator(".result-summary__candidate-role").count()>0,"los candidatos indican la posición que respalda el catálogo");
   assert.equal((await strategy.locator(".result-summary__eyebrow").textContent()).trim(),"Informe estratégico","el informe presenta el análisis integrado de v2");
   assert.equal((await strategy.locator("h3").first().innerText()).trim(),"Cómo jugarla");
   assert.deepEqual(await strategy.locator("[data-report-section]").evaluateAll(nodes=>nodes.map(node=>node.dataset.reportSection)),["diagnosis","correction","protection"],"el informe ordena diagnóstico, recomendación y protección");

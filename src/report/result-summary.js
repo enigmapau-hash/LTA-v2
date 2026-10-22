@@ -3,6 +3,7 @@
   if (!result) return;
 
   const escapeHtml = window.LTAUtils?.escapeHtml || ((value) => String(value));
+  const ROLE_LABELS = Object.freeze({ top: "TOP", jungle: "JUNGLA", mid: "MID", botline: "BOTLINE", support: "SUPPORT" });
   const diagnoseComposition = window.LTADiagnosticEngine?.diagnoseComposition;
   const proposeCorrections = window.LTACorrectionEngine?.proposeCorrections;
   const protectComposition = window.LTAProtectionEngine?.protectComposition;
@@ -95,6 +96,7 @@
     });
     const strategicCounterplay = adviseCounterplay({ strategicRisks });
     const strategicBans = prioritizeBans({
+      diagnosis,
       strategicRisks,
       strategicCounterplay,
       protection,
@@ -143,6 +145,7 @@
                 ${section.candidates.map((candidate) => `
                   <li>
                     <strong>${escapeHtml(candidate.champion)}</strong>
+                    ${ROLE_LABELS[candidate.role] ? `<small class="result-summary__candidate-role">Posición: ${escapeHtml(ROLE_LABELS[candidate.role])}</small>` : ""}
                     <small>${escapeHtml(candidate.reason)}</small>
                     ${candidate.strengths.length ? `<small><b>Aporta:</b> ${escapeHtml(candidate.strengths.join(" · "))}</small>` : ""}
                     ${candidate.limitations.length ? `<small class="result-summary__limitation"><b>Límite:</b> ${escapeHtml(candidate.limitations.join(" · "))}</small>` : ""}

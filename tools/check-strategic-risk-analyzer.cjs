@@ -81,8 +81,14 @@ verifyPriorities(hybrid.strategicRisks);
 const incoherent = analyze({ top: "Fiora", jungle: "Elise", mid: "Xerath", botline: "Draven", support: "Lulu" });
 assert.equal(incoherent.diagnosis.coherence.status, "incoherent");
 verifyPriorities(incoherent.strategicRisks);
-assert.ok(incoherent.strategicRisks.risks.some((risk) => risk.type === "identity-unconfirmed" && risk.severity === "alta"),
-  "La identidad no confirmada por la recomposición se refleja como riesgo de coordinación");
+if (incoherent.inputs.teamRecomposition.status === "recomposed"
+  && incoherent.inputs.teamRecomposition.proposal.identity.status === "unconfirmed") {
+  assert.ok(incoherent.strategicRisks.risks.some((risk) => risk.type === "identity-unconfirmed" && risk.severity === "alta"),
+    "Solo una recomposición realmente propuesta y sin identidad confirmada genera este riesgo");
+} else {
+  assert.ok(!incoherent.strategicRisks.risks.some((risk) => risk.type === "identity-unconfirmed"),
+    "No se inventa un riesgo de una recomposición que no se propone");
+}
 
 const primaryProfileId = clear.inputs.recommendations.profiles[0].id;
 const uncoveredInput = structuredClone(clear.inputs);

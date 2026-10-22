@@ -80,7 +80,7 @@ function verify(evaluation) {
     assert.ok(profile.candidates.every((item) => Array.isArray(item.strengths) && item.strengths.length));
     assert.ok(profile.candidates.every((item) => Array.isArray(item.limitations)));
     assert.ok(profile.candidates.every((item) => !("score" in item) && !("probability" in item)));
-    assert.ok(profile.candidates.every((item) => !("role" in item)));
+    assert.ok(profile.candidates.every((item) => Object.keys(roleSheets).includes(item.role)), "La evaluación conserva el rol avalado por el catálogo");
   }
   assert.deepEqual(evaluateCandidates({
     diagnosis: evaluation.diagnosis,

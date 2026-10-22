@@ -82,6 +82,7 @@
       }
       candidates.push({
         champion,
+        ...(candidate.role ? { role: cleanText(candidate.role) } : {}),
         reason,
         strengths: uniqueText(candidate.strengths, 2),
         limitations: uniqueText(candidate.limitations, 1),
