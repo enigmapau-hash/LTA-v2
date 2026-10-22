@@ -56,7 +56,7 @@ function analyze(selection) {
   };
   const strategicRisks = assessStrategicRisks(riskInputs);
   const strategicCounterplay = adviseCounterplay({ strategicRisks });
-  const strategicBans = prioritizeBans({ strategicRisks, strategicCounterplay, protection, mappedCandidates, championCatalog: candidatesByRole });
+  const strategicBans = prioritizeBans({ strategicRisks, strategicCounterplay, protection, mappedCandidates, currentPicks: picks, championCatalog: candidatesByRole });
   const report = buildStrategicReport({ diagnosis, correction, protection, strategicRisks, strategicCounterplay, strategicBans });
   return { diagnosis, correction, protection, mappedCandidates, riskInputs, strategicRisks, strategicCounterplay, strategicBans, report };
 }
@@ -75,6 +75,7 @@ for (const [name, selection, expectedCoherence] of references) {
     strategicCounterplay: result.strategicCounterplay,
     protection: result.protection,
     mappedCandidates: result.mappedCandidates,
+    currentPicks: Object.entries(selection).map(([role, champion]) => ({ role, champion })),
     championCatalog: candidatesByRole,
   }), result.strategicBans, `La priorización para composición ${name} es determinista`);
   assert.equal(result.strategicBans.status, "prioritized", `Cinco picks válidos generan bans en ${name}`);
@@ -83,7 +84,7 @@ for (const [name, selection, expectedCoherence] of references) {
   if (result.strategicBans.status === "prioritized") {
     assert.ok(result.strategicBans.bans.length <= 3);
     assert.deepEqual(result.strategicBans.bans.map((ban) => ban.priority), result.strategicBans.bans.map((_, index) => index + 1));
-    const ownChampions = new Set(result.mappedCandidates.composition.picks.map((item) => item.champion.toLocaleLowerCase("es")));
+    const ownChampions = new Set(Object.values(selection).map((name) => name.toLocaleLowerCase("es")));
     assert.ok(result.strategicBans.bans.every((ban) => !ownChampions.has(ban.champion.toLocaleLowerCase("es"))));
     assert.equal(new Set(result.strategicBans.bans.map((ban) => ban.champion.toLocaleLowerCase("es"))).size, result.strategicBans.bans.length);
     assert.ok(result.strategicBans.bans.every((ban) => ban.threatStyle && ["alta", "media", "baja"].includes(ban.severity)
@@ -111,6 +112,7 @@ for (const selection of expandedReferences) {
     strategicCounterplay: analyzed.strategicCounterplay,
     protection: analyzed.protection,
     mappedCandidates: analyzed.mappedCandidates,
+    currentPicks: Object.entries(selection).map(([role, champion]) => ({ role, champion })),
     championCatalog: candidatesByRole,
   }), bans, "Determinismo");
 }
