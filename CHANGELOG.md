@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.13.0
+
+### Changed
+- La app solo recomienda cambiar campeones ante requisitos del plan sin cubrir o brechas de cohesión comprobadas; puede abstenerse sin perder Protección.
+- La priorización de bans usa los cinco picks también cuando no hay necesidad de sustituir campeones.
+
 ## v3.12.1
 
 ### Improved
