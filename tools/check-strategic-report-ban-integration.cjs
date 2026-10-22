@@ -34,9 +34,9 @@ const ordered = { status: "presented", bans: [
 ] };
 const snapshot = structuredClone(ordered);
 const compact = integrateStrategicReportBans({ banPresentation: ordered });
-assert.deepEqual(compact.bans.map((ban) => ban.champion), ["A", "B"], "Limita la salida a los dos bans más relevantes en el orden recibido");
+assert.deepEqual(compact.bans.map((ban) => ban.champion), ["A", "B", "C"], "Mantiene hasta tres bans distintos en el orden recibido");
 assert.deepEqual(ordered, snapshot, "No modifica la entrada del Presenter");
-assert.equal(compact.bans.some((ban) => ban.champion === "C"), false, "Omite los candidatos menos prioritarios");
+assert.equal(compact.bans.length, 3, "No añade un cuarto ban");
 assert.equal(integrateStrategicReportBans({ banPresentation: { status: "pending", bans: [] } }), null);
 assert.equal(integrateStrategicReportBans({ banPresentation: { status: "no-bans", bans: [] } }), null);
 assert.equal(integrateStrategicReportBans({ banPresentation: { status: "presented", bans: [{ champion: "Incomplete" }] } }), null);
