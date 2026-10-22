@@ -16,6 +16,11 @@ function pipeline({ primaryIdentity = "Front to Back", secondaryIdentity = null,
     { champion: "Sion", priority: 1, identity: "Front to Back" },
     { champion: "Rell", priority: 2, identity: "Teamfight" },
   ];
+  // Complete strategic attributes allow a genuine diagnosis of the five picks.
+  const teamAttributes = { identity: "Front to Back", function: "Tanque", tempo: "Mid",
+    strengths: "Frontline · Peel · DPS", weaknesses: "Poca presión lateral" };
+  picks.forEach((pick) => Object.assign(pick, teamAttributes));
+  Object.assign(replacements[0], teamAttributes);
   const evaluated = replacements.map((candidate, index) => ({
     ...candidate,
     priority: index + 1,
@@ -66,8 +71,30 @@ assert.equal(hybrid.proposal.identity.status, "preserved");
 const incoherent = optimizeStrategicComposition(pipeline({ primaryIdentity: null, compositionStatus: "complete" }));
 assert.equal(incoherent.status, "optimized");
 assert.equal(incoherent.proposal.identity.status, "unconfirmed");
-assert.equal(incoherent.proposal.identity.proposed, "Front to Back", "La alternativa señala una dirección, pero no afirma que el equipo completo ya tenga esa identidad");
-assert.match(incoherent.proposal.explanation, /debe confirmarse con un análisis completo/);
+assert.equal(incoherent.proposal.identity.proposed, null, "Sin identidad original no se atribuye al equipo la identidad de un candidato");
+assert.match(incoherent.proposal.explanation, /no está confirmada/);
+
+// Even if the evaluator reports primary-identity, a team that actually plays
+// for Dive must not be labeled as preserving Front to Back.
+const differentTeam = pipeline();
+differentTeam.mappedCandidates.composition.picks.forEach((pick) => Object.assign(pick, {
+  identity: "Dive", function: "Asesino", tempo: "Mid",
+  strengths: "Backline · Engage · Follow-up", weaknesses: "Poco peel",
+}));
+const changed = optimizeStrategicComposition(differentTeam);
+assert.equal(changed.status, "optimized");
+assert.equal(changed.proposal.change.to, "Sion", "La revisión no cambia el candidato seleccionado");
+assert.equal(changed.proposal.identity.status, "unconfirmed", "No proclamar conservación de identidad discrepante");
+assert.equal(changed.proposal.identity.primary, null);
+assert.equal(changed.proposal.identity.proposed, null);
+assert.match(changed.proposal.explanation, /no se puede confirmar/);
+
+const insufficientData = pipeline();
+delete insufficientData.mappedCandidates.profiles[0].alternativesByRole.top[0].strengths;
+const unverified = optimizeStrategicComposition(insufficientData);
+assert.equal(unverified.status, "optimized");
+assert.equal(unverified.proposal.identity.status, "unconfirmed", "Sin atributos completos, no inferir una identidad");
+assert.doesNotMatch(unverified.proposal.explanation, /confirma Front to Back/);
 
 const incomplete = pipeline({ compositionStatus: "incomplete" });
 incomplete.mappedCandidates.composition.picks = incomplete.mappedCandidates.composition.picks.slice(0, 4);
@@ -91,4 +118,4 @@ assert.equal(optimizeStrategicComposition(contradictoryReplacement).status, "opt
   "Puede elegir la siguiente alternativa evaluada si la primera contradice el plan");
 assert.equal(optimizeStrategicComposition(contradictoryReplacement).proposal.change.to, "Rell");
 
-console.log("Strategic Composition Optimizer validado: composición completa, debilidad prioritaria, conservación de identidad, híbridos, incoherencia, estado pendiente y determinismo.");
+console.log("Strategic Composition Optimizer validado: composición completa, debilidad prioritaria, conservación diagnosticada, discrepancia real, abstención de confianza ante atributos incompletos, híbridos, incoherencia y determinismo.");

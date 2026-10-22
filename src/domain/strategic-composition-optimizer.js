@@ -1,11 +1,14 @@
 (function (root, factory) {
-  const engine = factory();
+  const diagnosticEngine = typeof module === "object" && module.exports
+    ? require("./diagnostic-engine.js")
+    : root.LTADiagnosticEngine;
+  const engine = factory(diagnosticEngine);
   if (typeof module === "object" && module.exports) {
     module.exports = engine;
   } else {
     root.LTAStrategicCompositionOptimizer = Object.freeze(engine);
   }
-})(typeof window !== "undefined" ? window : globalThis, function () {
+})(typeof window !== "undefined" ? window : globalThis, function (diagnosticEngine) {
   "use strict";
 
   const ROLE_ORDER = Object.freeze(["top", "jungle", "mid", "botline", "support"]);
@@ -17,6 +20,36 @@
       .toLocaleLowerCase("es")
       .replace(/[^a-z0-9]+/g, " ")
       .trim();
+  }
+
+  function fieldText(value) {
+    return (Array.isArray(value) ? value.join(" · ") : String(value || "")).trim();
+  }
+
+  function verifiesPreservation(currentPicks, replacement, replacedRole, originalIdentity) {
+    if (!originalIdentity || typeof diagnosticEngine?.diagnoseComposition !== "function") return false;
+
+    const nextPicks = currentPicks.map((pick) => {
+      const source = normalize(pick.role) === normalize(replacedRole) ? replacement : pick;
+      return {
+        role: ROLE_ORDER.find((role) => normalize(role) === normalize(pick.role)) || pick.role,
+        champion: String(source.champion || "").trim(),
+        identity: fieldText(source.identity),
+        function: fieldText(source.function),
+        tempo: fieldText(source.tempo),
+        strengths: fieldText(source.strengths),
+        weaknesses: fieldText(source.weaknesses),
+      };
+    });
+
+    // All strategic attributes are needed before trusting a new team diagnosis.
+    // Missing candidate data must never be interpreted as evidence of preservation.
+    if (!nextPicks.every((pick) => pick.champion && pick.identity && pick.function
+      && pick.tempo && pick.strengths && pick.weaknesses)) return false;
+
+    const revised = diagnosticEngine.diagnoseComposition(nextPicks);
+    return revised.status === "assessed" && revised.plan?.clear
+      && normalize(revised.plan.primaryIdentity) === normalize(originalIdentity);
   }
 
   function unavailable(status, reason = "") {
@@ -104,10 +137,12 @@
       const nextPicks = currentPicks.map((pick) => normalize(pick.role) === normalize(weakest.role)
         ? { role: pick.role, champion: replacement.candidate.champion }
         : { role: pick.role, champion: pick.champion });
-      const candidateIdentity = String(replacement.candidate.identity || "").trim() || null;
-      const identity = primaryIdentity
+      // The evaluator's strategicFit is a candidate-level assessment, not proof
+      // that a five-pick team retains the same strategic identity.
+      const preserved = verifiesPreservation(currentPicks, replacement.candidate, weakest.role, primaryIdentity);
+      const identity = preserved
         ? { status: "preserved", primary: primaryIdentity, proposed: primaryIdentity }
-        : { status: "unconfirmed", primary: null, proposed: candidateIdentity };
+        : { status: "unconfirmed", primary: null, proposed: null };
       const correctedLimitation = String(input.optimizer.priority.problemAvoided || "").trim();
 
       return {
@@ -123,9 +158,11 @@
           composition: nextPicks,
           improvement: String(recommendation.improves || input.optimizer.priority.reinforces || "").trim(),
           limitationCorrected: correctedLimitation,
-          explanation: primaryIdentity
-            ? `Reemplaza la pieza menos alineada con ${recommendation.label.toLocaleLowerCase("es")} por una alternativa priorizada que conserva ${primaryIdentity}.`
-            : `Reemplaza la pieza menos alineada con ${recommendation.label.toLocaleLowerCase("es")}; la nueva identidad del equipo debe confirmarse con un análisis completo.`,
+          explanation: preserved
+            ? `Reemplaza la pieza menos alineada con ${recommendation.label.toLocaleLowerCase("es")} por una alternativa priorizada; el diagnóstico del nuevo equipo confirma ${primaryIdentity}.`
+            : primaryIdentity
+              ? `Reemplaza la pieza menos alineada con ${recommendation.label.toLocaleLowerCase("es")}; no se puede confirmar que el equipo propuesto mantenga ${primaryIdentity}.`
+              : `Reemplaza la pieza menos alineada con ${recommendation.label.toLocaleLowerCase("es")}; la identidad del equipo propuesto no está confirmada.`,
         },
       };
     }

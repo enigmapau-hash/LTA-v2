@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.11.1
+
+### Fixed
+- La sustitución individual verifica mediante diagnóstico que conserva el plan; en caso contrario evita afirmar continuidad sin pruebas.
+
 ## v3.11.0
 
 ### Added

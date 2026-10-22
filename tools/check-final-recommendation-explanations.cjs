@@ -37,10 +37,56 @@ function chain(picks) {
 
 const fixtures = generateRepresentativeCompositions(catalog);
 const snapshots = fixtures.map(({ picks }) => chain(picks));
-const digest = createHash("sha256").update(JSON.stringify(snapshots)).digest("hex");
+// Compare the complete pre-v3.11.1 chain against the v3.11.0 reference.
+ // Only identity/explanation of an individual replacement may be corrected;
+ // restore their legacy *claims* before hashing all other decisions.
+function priorOptimizerClaims(state) {
+  if (state.compositionOptimization?.status !== "optimized") return state;
+  const proposal = state.compositionOptimization.proposal;
+  const originalIdentity = String(state.recommendations?.plan?.primaryIdentity || "").trim();
+  const candidate = (state.mappedCandidates?.profiles || [])
+    .flatMap((profile) => profile.alternativesByRole?.[proposal.change.role] || [])
+    .find((item) => item.champion === proposal.change.to);
+  const candidateIdentity = String(candidate?.identity || "").trim() || null;
+  return {
+    ...state,
+    compositionOptimization: {
+      ...state.compositionOptimization,
+      proposal: {
+        ...proposal,
+        identity: originalIdentity
+          ? { status: "preserved", primary: originalIdentity, proposed: originalIdentity }
+          : { status: "unconfirmed", primary: null, proposed: candidateIdentity },
+        explanation: originalIdentity
+          ? `Reemplaza la pieza menos alineada con ${proposal.profile.label.toLocaleLowerCase("es")} por una alternativa priorizada que conserva ${originalIdentity}.`
+          : `Reemplaza la pieza menos alineada con ${proposal.profile.label.toLocaleLowerCase("es")}; la nueva identidad del equipo debe confirmarse con un análisis completo.`,
+      },
+    },
+  };
+}
+const digest = createHash("sha256").update(JSON.stringify(snapshots.map(priorOptimizerClaims))).digest("hex");
 // Captured against main b979e2a before adding any explanations; all decision fields,
 // candidate positions/order, recommendations, replacements, risks and bans are covered.
 assert.equal(digest, "371618db468bf9e142d5b958ad70e4e6b194d0d083985c90106c4035d40aa1e4", "Las decisiones completas de v3.10.0 permanecen idénticas");
+
+// In every case that claims preservation, the real team diagnosis must agree.
+for (const state of snapshots) {
+  const optimization = state.compositionOptimization;
+  if (optimization?.status !== "optimized" || optimization.proposal.identity.status !== "preserved") continue;
+  const nextPicks = state.mappedCandidates.composition.picks.map((pick) => {
+    const replacement = state.mappedCandidates.profiles.flatMap((profile) =>
+      profile.alternativesByRole?.[optimization.proposal.change.role] || [])
+      .find((candidate) => candidate.champion === optimization.proposal.change.to);
+    const source = pick.role === optimization.proposal.change.role ? replacement : pick;
+    const field = (value) => Array.isArray(value) ? value.join(" · ") : String(value || "");
+    return { role: pick.role, champion: source.champion, identity: field(source.identity),
+      function: field(source.function), tempo: field(source.tempo), strengths: field(source.strengths),
+      weaknesses: field(source.weaknesses) };
+  });
+  const diagnosis = call("domain/diagnostic-engine", "diagnoseComposition", nextPicks);
+  assert.equal(diagnosis.plan?.primaryIdentity, optimization.proposal.identity.primary,
+    "La continuidad declarada debe corresponder al diagnóstico real del equipo propuesto");
+}
 
 let explained = 0, beneficiaries = 0;
 for (const input of snapshots) {
