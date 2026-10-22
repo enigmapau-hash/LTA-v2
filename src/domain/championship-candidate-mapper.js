@@ -73,13 +73,20 @@
   }
 
   function candidateOrder(left, right) {
-    return viability.priority(right.viability) - viability.priority(left.viability)
-      || right.contextFit - left.contextFit
+    // Across DIFFERENT champions the strategic context still leads: a sourced
+    // role must not make one champion crowd out every other sensible option.
+    return right.contextFit - left.contextFit
       || right.signals.length - left.signals.length
       || right.matchedFields.length - left.matchedFields.length
+      || viability.priority(right.viability) - viability.priority(left.viability)
       || left.champion.localeCompare(right.champion, "es");
-    // No implicit TOP/JUNGLA/MID tie-break: unverified equal-role candidates
-    // are treated as ambiguous and excluded from standard recommendations.
+  }
+
+  function sameChampionRoleOrder(left, right) {
+    // For the SAME champion, positional viability must beat equal-looking
+    // workbook attributes. Never break remaining ties with ROLE_ORDER.
+    return viability.priority(right.viability) - viability.priority(left.viability)
+      || candidateOrder(left, right);
   }
 
   function normalizeIdentity(value) {
@@ -191,14 +198,14 @@
       const ranked = [];
       const roleCandidates = [];
       for (const group of grouped.values()) {
-        group.sort(candidateOrder);
+        group.sort(sameChampionRoleOrder);
         roleCandidates.push(...group);
         // If there is no evidence distinguishing two equivalent positions,
         // do not silently pick TOP just because it comes first in the sheet.
         const best = group[0], runnerUp = group[1];
         if (runnerUp && best.viability.status === "sin-verificar"
           && runnerUp.viability.status === "sin-verificar"
-          && candidateOrder(best, runnerUp) === 0) continue;
+          && sameChampionRoleOrder(best, runnerUp) === 0) continue;
         ranked.push(best);
       }
 
