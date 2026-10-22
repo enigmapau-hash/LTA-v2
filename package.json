@@ -1,9 +1,10 @@
 {
   "name": "lol-team-analyzer",
-  "version": "3.10.0",
+  "version": "3.11.0",
   "private": true,
   "description": "Analizador estratégico de composiciones de League of Legends.",
   "scripts": {
+    "test:final-recommendation-explanations": "node tools/check-final-recommendation-explanations.cjs",
     "version:bump": "node tools/bump-version.cjs",
     "version:check": "node tools/check-version-sync.cjs",
     "test:composition-engine": "node tools/check-composition-engine.cjs",

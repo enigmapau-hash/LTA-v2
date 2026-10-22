@@ -6,6 +6,7 @@
 - [Architecture](v3/Architecture.md)
 - [Roadmap](v3/Roadmap.md)
 - [Architecture Decision Records](v3/ADR.md)
+- [Justificaciones estratégicas de recomendaciones finales](v3/Final-Recommendation-Explanations.md)
 
 ## Calidad y conocimiento estratégico
 

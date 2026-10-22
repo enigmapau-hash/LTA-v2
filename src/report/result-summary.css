@@ -247,7 +247,7 @@
   border-top: 1px solid var(--line);
 }
 
-.result-summary__recommendation-list li {
+.result-summary__recommendation-list > li {
   padding: 9px 10px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -281,6 +281,31 @@
 
 .result-summary__recommendation-list .result-summary__limitation {
   color: var(--muted);
+}
+
+.result-summary__candidate-justification {
+  margin-top: 7px;
+  overflow-wrap: anywhere;
+}
+
+.result-summary__candidate-justification summary {
+  padding: 6px 0;
+  color: var(--accent-2);
+  cursor: pointer;
+}
+
+.result-summary__candidate-justification summary:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.result-summary__strategy-card .result-summary__detected-need {
+  margin-top: 7px;
+}
+
+.result-summary__beneficiaries {
+  margin-top: 5px;
 }
 
 .result-summary__strategic-closing {

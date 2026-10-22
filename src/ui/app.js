@@ -32,6 +32,7 @@ let workbookReady = false;
 let analyzeQueued = false;
 let activeRoleKey = null;
 let viewportUpdateQueued = false;
+let restoreClearSelectionFocus = false;
 
 function roleInput(roleKey) {
   return els[roleKey === "botline" ? "adc" : roleKey] || null;
@@ -46,7 +47,14 @@ function setStatus(text) {
 }
 
 function setBusy(isBusy) {
+  if (isBusy) restoreClearSelectionFocus = document.activeElement === els.demoBtn;
   els.demoBtn.disabled = isBusy;
+  // A queued redraw after leaving a picker can briefly disable the newly
+  // focused button. Preserve keyboard position across this synchronous render.
+  if (!isBusy && restoreClearSelectionFocus && document.activeElement === document.body) {
+    els.demoBtn.focus({ preventScroll: true });
+  }
+  if (!isBusy) restoreClearSelectionFocus = false;
 }
 
 function readComposition() {

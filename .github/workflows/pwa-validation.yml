@@ -120,6 +120,9 @@ jobs:
       - name: Validate risk and counterplay visibility integration
         run: node tools/check-strategic-report-risk-integration.cjs
 
+      - name: Validate final recommendation evidence and unchanged decisions
+        run: node tools/check-final-recommendation-explanations.cjs
+
       - name: Validate the v2 strategic report
         run: node tools/check-strategic-report.cjs
 

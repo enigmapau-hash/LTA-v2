@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.10.0",
+    version: "v3.11.0",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-22",
-    summary: ["Integración visible de riesgos propios y contramedidas en Protección, sin duplicaciones ni tarjetas adicionales"],
+    summary: ["Justificaciones estratégicas de recomendaciones finales con evidencia y compañeros beneficiados, sin cambiar decisiones."],
     pending: [],
   };
 

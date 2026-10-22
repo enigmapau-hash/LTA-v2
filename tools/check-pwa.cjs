@@ -248,6 +248,18 @@ async function main() {
       "El informe offline no confunde anti-engage con iniciación.");
     assert.doesNotMatch(await recommendation.innerText(), /Diana[^\n]*TOP/i,
       "El informe offline no recomienda Diana TOP experimental.");
+    // Leaving the edited picker can redraw the unchanged table. The report must
+    // still be present before opening its explanations.
+    await page.locator("h1").click();
+    await recommendation.waitFor({ state: "visible" });
+    const explanations = recommendation.locator(".result-summary__candidate-justification");
+    assert.equal(await explanations.count(), await recommendation.locator(":scope > li").count(),
+      "Cada candidato final conserva su explicación respaldada offline.");
+    for (const explanation of await explanations.all()) await explanation.locator("summary").click();
+    assert.match(await recommendation.innerText(), /Aporta .+acorde con el perfil/, "La contribución real llega al informe offline");
+    assert.match(await recommendation.innerText(), /Contribuye a corregir/, "Distingue una corrección respaldada");
+    assert.match(await recommendation.innerText(), /Compañeros beneficiados \(equipo actual\):/, "Relaciona compañeros actuales con sus atributos offline");
+    assert.match(await page.locator(".result-summary__detected-need").innerText(), /Carencia detectada:/);
     assert.deepEqual(pageErrors, [], "La app no debe lanzar errores JavaScript durante la carga o el uso offline.");
 
     console.log("PWA validada: instalación, actualización desde v12, caché de SheetJS y viabilidad 26.21, selección experimental manual y recomendaciones completas offline.");
