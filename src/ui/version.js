@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.7.1",
+    version: "v3.7.2",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-22",
-    summary: ["Jerarquía visual más clara para diagnóstico, mejora y protección, con candidatos más legibles"],
+    summary: ["Corrección de las claves internas de roles para recuperar la recomposición y los bans estratégicos cuando procedan"],
     pending: [],
   };
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.7.2
+
+### Fixed
+- Corrección de las claves internas de roles para recuperar la recomposición y los bans estratégicos cuando procedan
+
 ## v3.7.1
 
 ### Fixed
