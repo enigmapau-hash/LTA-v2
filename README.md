@@ -12,7 +12,7 @@ La v2 amplía la lectura estratégica de composiciones completas con diagnóstic
 
 ## Características
 
-- Versión visible: `v3.9.0`
+- Versión visible: `v3.10.0`
 - No permite campeones repetidos.
 - Muestra iconos oficiales de campeones cuando están disponibles.
 - El selector, la vista rápida y el resultado se actualizan sin recargar.
@@ -76,3 +76,7 @@ La lista del Excel decide qué campeones pueden **introducirse manualmente** en 
 La fotografía de datos es **26.21, verificada el 22/10/2026**. Incluye únicamente combinaciones con fuentes identificadas; el resto de las 266 parejas genera el estado conservador `sin-verificar`. Al salir parches posteriores, no se debe asumir que las categorías siguen vigentes sin auditoría de datos. Fuente externa en las entradas verificadas: METAsrc (muestras tempranas; consulta individual, no telemetría en directo).
 
 Esta capa es determinista y local: la PWA no solicita datos a los sitios de estadísticas durante su uso. Los tests comprueban integridad, datos no respaldados, selección multirrol y preservación del draft manual.
+
+## Integración de riesgos y contramedidas (v3.10.0)
+
+`Strategic Risk Analyzer` y `Strategic Counterplay Advisor` calculan vulnerabilidades internas y respuestas posibles. Cuando existe evidencia para ambos, el informe incorpora **como máximo una pareja riesgo/contramedida** en Protección, sin repetir texto visible, añadir tarjetas ni presentar inferencias sobre un rival real. Si faltan datos, la presentación se abstiene. Los bans mantienen el flujo previo, las selecciones de draft siguen intactas y la ejecución sigue siendo offline.

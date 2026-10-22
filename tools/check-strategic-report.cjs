@@ -196,4 +196,28 @@ const unavailable = buildStrategicReport({ diagnosis: { status: "not-assessable"
 assert.equal(unavailable.status, "not-assessable");
 assert.deepEqual(unavailable.sections.map((section) => section.id), ["diagnosis", "correction", "protection"]);
 
-console.log("Informe estratégico v2 validado: tono adaptado a la confianza, estructura y orden conservados.");
+const riskDiagnosis = diagnoseComposition(clearPlan);
+const riskCorrection = proposeCorrections({ picks: clearPlan, diagnosis: riskDiagnosis, candidatesByRole });
+const riskReport = buildStrategicReport({
+  diagnosis: riskDiagnosis,
+  correction: riskCorrection,
+  protection: protectComposition({ diagnosis: riskDiagnosis, correction: riskCorrection }),
+  strategicRisks: { status: "assessed", risks: [{
+    priority: 1, type: "single-point-dependency", severity: "media",
+    threatens: "la continuidad del plan",
+    explanation: "Una única pieza sostiene la parte vulnerable del plan.",
+  }] },
+  strategicCounterplay: { status: "advised", threats: [{
+    priority: 1, type: "focused-dive", severity: "media",
+    threatens: "la continuidad del plan",
+    protection: "Protege esa pieza antes de forzar el objetivo.",
+  }] },
+});
+assert.equal(riskReport.sections.length, 3, "Los riesgos se integran sin nueva tarjeta");
+assert.deepEqual(riskReport.sections[2].riskGuidance, {
+  type: "single-point-dependency", severity: "media",
+  risk: "Una única pieza sostiene la parte vulnerable del plan.",
+  response: "Protege esa pieza antes de forzar el objetivo.",
+}, "El informe entrega riesgo y contramedida respaldados a Protección");
+assert.equal(clearReport.sections[2].riskGuidance, undefined, "Sin riesgos no añade afirmaciones");
+console.log("Informe estratégico v2 validado: tono, tres secciones e integración visible de riesgos.");

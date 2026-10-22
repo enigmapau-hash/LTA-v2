@@ -20,16 +20,19 @@
   const banIntegration = typeof module === "object" && module.exports
     ? require("./strategic-report-ban-integration.js")
     : root.LTAStrategicReportBanIntegration;
+  const riskIntegration = typeof module === "object" && module.exports
+    ? require("./strategic-report-risk-integration.js")
+    : root.LTAStrategicReportRiskIntegration;
   const closingIntegration = typeof module === "object" && module.exports
     ? require("./strategic-report-closing.js")
     : root.LTAStrategicReportClosing;
-  const builder = factory(explanations, confidenceEngine, diagnosticSummaryEngine, secondaryObservationEngine, strategicStateEngine, strategicClosingEngine, banIntegration, closingIntegration);
+  const builder = factory(explanations, confidenceEngine, diagnosticSummaryEngine, secondaryObservationEngine, strategicStateEngine, strategicClosingEngine, banIntegration, closingIntegration, riskIntegration);
   if (typeof module === "object" && module.exports) {
     module.exports = builder;
   } else {
     root.LTAStrategicReportBuilder = Object.freeze(builder);
   }
-})(typeof window !== "undefined" ? window : globalThis, function (explanations, confidenceEngine, diagnosticSummaryEngine, secondaryObservationEngine, strategicStateEngine, strategicClosingEngine, banIntegration, closingIntegration) {
+})(typeof window !== "undefined" ? window : globalThis, function (explanations, confidenceEngine, diagnosticSummaryEngine, secondaryObservationEngine, strategicStateEngine, strategicClosingEngine, banIntegration, closingIntegration, riskIntegration) {
   "use strict";
 
   function diagnosisSection(diagnosis, summary) {
@@ -173,6 +176,14 @@
       strategicRecommendation || correctionSection(input.correction),
       protectionSection(input.protection, input.strategicBanPresentation),
     ].map((section) => adaptSectionTone(section, confidence.conclusions[section.id]?.level));
+    const riskGuidance = diagnosis?.status === "assessed"
+      ? riskIntegration.integrateStrategicReportRisks({
+        strategicRisks: input.strategicRisks,
+        strategicCounterplay: input.strategicCounterplay,
+        protectionSection: sections[2],
+      })
+      : null;
+    if (riskGuidance) sections[2] = { ...sections[2], riskGuidance };
     const closingGuidance = strategicClosingEngine.buildStrategicClosing({ strategicState });
     const closing = closingIntegration.integrateStrategicReportClosing({
       strategicState,

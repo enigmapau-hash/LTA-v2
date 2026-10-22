@@ -125,3 +125,7 @@ Los límites entre módulos se mantienen explícitos:
 - El informe consume resultados preparados; no razona de nuevo desde la composición original.
 - El flujo mantiene resultados deterministas: las mismas entradas y conclusiones producen las mismas salidas.
 - Los módulos pueden evolucionar mientras respeten sus responsabilidades y las salidas que ofrecen a los demás.
+
+### Trazabilidad de riesgos en v3.10.0
+
+El informe integra **un** riesgo prioritario de `Strategic Risk Analyzer` y la contramedida que `Strategic Counterplay Advisor` asocia a su tipo, severidad y aspecto del plan, solo cuando aportan información no visible en Protección. Se mantiene la tarjeta única de Protección y el informe compacto. El camino normal de los bans utiliza las amenazas de `Protection Engine`, por lo que mostrar riesgos propios no implica que hayan determinado esos bans.
