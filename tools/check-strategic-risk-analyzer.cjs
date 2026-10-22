@@ -87,12 +87,13 @@ if (incoherent.inputs.teamRecomposition.status === "recomposed"
 }
 const primaryProfileId = incoherent.inputs.recommendations.profiles[0].id;
 const uncoveredInput = structuredClone(incoherent.inputs);
+uncoveredInput.teamRecomposition = { status: "no-priority" }; // isolate uncovered-profile risk from the unrelated identity risk
 for (const pick of uncoveredInput.mappedCandidates.composition.picks) pick.fitByProfile[primaryProfileId] = { signals: [], matchedFields: [] };
 const uncovered = assessStrategicRisks(uncoveredInput);
 assert.equal(uncovered.risks[0].type, "priority-uncovered");
 assert.equal(uncovered.risks[0].severity, "alta");
 
-const dependentInput = structuredClone(incoherent.inputs);
+const dependentInput = structuredClone(uncoveredInput);
 for (const pick of dependentInput.mappedCandidates.composition.picks) pick.fitByProfile[primaryProfileId] = { signals: [], matchedFields: [] };
 dependentInput.mappedCandidates.composition.picks[1].fitByProfile[primaryProfileId] = { signals: ["engage"], matchedFields: ["strengths"] };
 const dependent = assessStrategicRisks(dependentInput);
