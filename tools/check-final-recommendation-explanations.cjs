@@ -37,6 +37,22 @@ function chain(picks) {
 
 const fixtures = generateRepresentativeCompositions(catalog);
 const snapshots = fixtures.map(({ picks }) => chain(picks));
+const protectedPoke = fixtures.find(item => item.id === "poke");
+const pokeSupport = catalog.support.find(item => item.champion === "Vel'Koz");
+assert.ok(protectedPoke && pokeSupport, "Datos reales del arquetipo Poke sin Peel");
+const unprotectedPoke = chain(protectedPoke.picks.map(pick => pick.role === "support"
+  ? { ...pokeSupport, role: "support" } : pick));
+assert.equal(unprotectedPoke.diagnosis.plan.primaryIdentity, "Poke");
+assert.equal(unprotectedPoke.correction.status, "proposed", "El requisito explícito de Peel no se silencia");
+assert.equal(unprotectedPoke.correction.improvements[0].evidenceType, "required-plan-capability");
+const explanationCases = [...snapshots, unprotectedPoke];
+for (const state of snapshots.filter(item => item.diagnosis.plan?.clear
+  && item.diagnosis.primaryProblem?.type === "identity-risk")) {
+  assert.equal(state.correction.status, "no-supported-correction",
+    "Arquetipos coherentes con herramientas cubiertas: sin cambio forzado");
+  assert.equal(state.optimizer.status, "no-priority");
+}
+
 // Compare the complete pre-v3.11.1 chain against the v3.11.0 reference.
  // Only identity/explanation of an individual replacement may be corrected;
  // restore their legacy *claims* before hashing all other decisions.
@@ -89,7 +105,7 @@ for (const state of snapshots) {
 }
 
 let explained = 0, beneficiaries = 0;
-for (const input of snapshots) {
+for (const input of explanationCases) {
   const before = structuredClone(input);
   const result = explainFinalRecommendation(input);
   assert.deepEqual(input, before, "La presentación no muta ningún motor ni sus entradas");
@@ -146,7 +162,7 @@ for (const input of snapshots) {
   if (reportPlain.sections[1].candidates) reportPlain.sections[1].candidates = reportPlain.sections[1].candidates.map(({ justification, ...candidate }) => candidate);
   assert.deepEqual(reportPlain, originalReport, "Diagnóstico, protección, bans, propuestas y cierre permanecen intactos");
 }
-assert.ok(explained > 10 && beneficiaries > 5, "Las justificaciones llegan a los casos existentes con evidencia de compañeros");
+assert.ok(explained > 0 && beneficiaries > 0, "Las brechas acreditadas mantienen justificaciones y evidencia de aliados");
 
 const example = snapshots.find(input => input.presentation.primaryProfile?.id === "engage");
 assert.ok(example);
@@ -186,4 +202,4 @@ assert.ok(!reinforced.justification.beneficiaries.some(ally => ally.role === rei
 const frozen = structuredClone(example);
 function freeze(value) { if (value && typeof value === "object") { Object.values(value).forEach(freeze); Object.freeze(value); } return value; }
 assert.deepEqual(explainFinalRecommendation(freeze(frozen)), explainFinalRecommendation(example));
-console.log(`Justificaciones finales validadas: ${fixtures.length} equipos, ${explained} candidatos, ${beneficiaries} relaciones; decisiones idénticas a v3.10.0.`);
+console.log(`Justificaciones finales v3.13: ${explanationCases.length} equipos, ${explained} candidatos y ${beneficiaries} relaciones; cambios de prioridad deliberados.`);
