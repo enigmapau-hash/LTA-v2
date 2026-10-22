@@ -69,8 +69,10 @@
       return {
         id: "correction",
         title: "Corrección",
-        answer: "Sin una mejora respaldada",
-        explanation: explanations.explainCorrection(correction),
+        answer: correction?.status === "no-supported-correction"
+          ? "Sin cambio prioritario justificado"
+          : "Sin una mejora respaldada",
+        explanation: correction?.explanation || explanations.explainCorrection(correction),
       };
     }
     const profile = String(improvement.profile?.label || "un perfil complementario");
