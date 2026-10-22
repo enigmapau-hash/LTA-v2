@@ -84,6 +84,7 @@ async function main(){
   const screenshotPicks={top:"Fiora",jungle:"Evelynn",mid:"Galio",adc:"Kai'Sa",support:"Milio"};
   for(const [role,champion] of Object.entries(screenshotPicks))await page.locator("#"+role).fill(champion);
   await page.waitForFunction(expected=>[...document.querySelectorAll(".composition-table .champion-name")].map(node=>node.textContent.trim()).join("|")===expected.join("|"),Object.values(screenshotPicks));
+  await page.locator(".result-summary__strategy-card").first().waitFor({state:"visible"});
   assert.equal(await page.locator(".result-summary__strategy-card").count(),3,"el equipo del usuario mantiene el informe completo y las claves internas");
   assert.deepEqual(await completeTable.locator("tbody tr").evaluateAll(rows=>rows.map(row=>row.dataset.role)),["top","jungle","mid","botline","support"]);
   const incoherentPicks={top:"Fiora",jungle:"Elise",mid:"Xerath",adc:"Draven",support:"Lulu"};
