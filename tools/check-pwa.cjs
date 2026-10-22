@@ -246,7 +246,13 @@ async function main() {
       "El informe completo conserva Diana como candidata en una posición respaldada.");
     assert.doesNotMatch(await recommendation.textContent(), /Anivia/,
       "El informe offline no confunde anti-engage con iniciación.");
-    assert.doesNotMatch(await recommendation.textContent(), /Diana[^\n]*TOP/i,
+    const recommendedPairs = await recommendation.locator(":scope > li").evaluateAll((entries) =>
+      entries.map((entry) => ({
+        champion: entry.querySelector("strong")?.textContent?.trim(),
+        role: entry.querySelector(".result-summary__candidate-role")?.textContent?.trim(),
+      }))
+    );
+    assert.ok(recommendedPairs.every((pair) => pair.champion !== "Diana" || !pair.role?.includes("TOP")),
       "El informe offline no recomienda Diana TOP experimental.");
     // Leaving the edited picker can redraw the unchanged table. The report must
     // still be present before opening its explanations.
