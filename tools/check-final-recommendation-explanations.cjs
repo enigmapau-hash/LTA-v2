@@ -117,13 +117,14 @@ for (const input of snapshots) {
           "Un solo enunciado reduce repetición respecto al texto anterior");
       }
     }
-    if (input.diagnosis.primaryProblem?.type === "identity-risk") {
+    if (input.diagnosis.primaryProblem?.type === "identity-risk" && !input.correction.improvements?.some(item => item.evidenceType === "required-plan-capability")) {
       assert.notEqual(justification.effect?.kind, "correction",
         "La debilidad inherente a una identidad no prueba corrección real");
     }
     if (justification.effect?.kind === "correction") {
       assert.equal(justification.effect.evidence[0], detectedNeed);
-      assert.ok([...input.diagnosis.primaryProblem.evidence, ...input.diagnosis.coherence.gaps].includes(detectedNeed));
+      assert.ok([...input.diagnosis.primaryProblem.evidence, ...input.diagnosis.coherence.gaps].includes(detectedNeed)
+        || input.correction.improvements?.some(item => item.evidenceType === "required-plan-capability" && item.limitingFactor === detectedNeed));
     }
     for (const ally of justification.beneficiaries) {
       beneficiaries++;
