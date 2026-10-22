@@ -195,7 +195,10 @@
   function prioritizeBans(input = {}) {
     const risks = input.strategicRisks;
     const counterplay = input.strategicCounterplay;
-    const composition = input.mappedCandidates?.composition;
+    // Bans concern the team, not the availability of a recommendation.
+    const composition = input.mappedCandidates?.composition || (Array.isArray(input.currentPicks)
+      ? { status: "complete", picks: input.currentPicks }
+      : null);
     if (composition?.status === "incomplete" || (!input.protection && (risks?.status === "pending" || counterplay?.status === "pending"))) {
       return unavailable("pending");
     }
