@@ -171,6 +171,7 @@
 
     const items = rows.map((row) => {
       const role = row.dataset.role;
+      const roleLabel = text(row.querySelector('[data-label="Rol"]'));
       const champion = text(row.querySelector('[data-label="Campeón"] .champion-name'));
       const identity = row.dataset.identity || text(row.querySelector('[data-label="Identidad"]'));
       const functionLabel = row.dataset.function || text(row.querySelector('[data-label="Función"]'));
@@ -179,7 +180,7 @@
       const weaknesses = row.dataset.weaknesses || text(row.querySelector('[data-label="Debilidades"]'));
       const missing = row.classList.contains("is-missing");
       const unknown = row.classList.contains("is-unknown");
-      return { role, champion, identity, functionLabel, tempo, strengths, weaknesses, missing, unknown };
+      return { role, roleLabel, champion, identity, functionLabel, tempo, strengths, weaknesses, missing, unknown };
     });
 
     const signature = items
@@ -197,7 +198,7 @@
 
     const missingRoles = items
       .filter((item) => !item.champion || item.champion === "—")
-      .map((item) => item.role);
+      .map((item) => item.roleLabel);
     const invalidChampions = items
       .filter((item) => item.champion && item.champion !== "—" && (item.missing || item.unknown))
       .map((item) => item.champion);
