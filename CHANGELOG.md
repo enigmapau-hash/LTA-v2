@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.11.2
+
+### Fixed
+- Las limitaciones propias de un estilo se muestran como oportunidades, sin afirmar carencias o correcciones no comprobadas.
+
 ## v3.11.1
 
 ### Fixed

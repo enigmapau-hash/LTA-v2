@@ -73,14 +73,14 @@ async function main(){
   assert.equal(await riskGuidance.count(), 1, "El equipo de referencia expone el riesgo detectado dentro de Protección");
   assert.match(await riskGuidance.innerText(), /Riesgo propio:/, "El riesgo propio llega al DOM");
   assert.match(await riskGuidance.innerText(), /Cómo cubrirlo:/, "La contramedida calculada llega al DOM");
-  assert.match(await strategy.innerText(),/Plan probable: Front to Back · Cómo ganar: Proteger al ADC y forzar teamfights\./i);assert.match(await strategy.innerText(),/Necesidad: presión lateral · Perfil: Presión lateral/i);assert.match(await strategy.innerText(),/Refuerza:/i);assert.match(await strategy.innerText(),/Split Push/i);
+  assert.match(await strategy.innerText(),/Plan probable: Front to Back · Cómo ganar: Proteger al ADC y forzar teamfights\./i);assert.match(await strategy.innerText(),/Oportunidad: presión lateral · Perfil: Presión lateral/i);assert.match(await strategy.innerText(),/Refuerza:/i);assert.match(await strategy.innerText(),/Split Push/i);
   assert.equal(await strategy.locator(".result-summary__recommendation-list").count(),1,"la mejora conserva una única lista acotada de candidatos; los bans pueden aparecer en protección");
   assert.ok(await strategy.locator(".result-summary__recommendation-list > li").count()<=4,"la recomendación muestra como máximo cuatro candidatos");
   const justifications = strategy.locator(".result-summary__candidate-justification");
   await page.locator("h1").click();
   await justifications.first().waitFor({state:"visible"});
   assert.equal(await justifications.count(), await strategy.locator(".result-summary__recommendation-list > li").count(), "Cada candidato respaldado ofrece una justificación");
-  assert.match(await strategy.locator(".result-summary__detected-need").innerText(), /Poca presión lateral/);
+  assert.match(await strategy.locator(".result-summary__detected-need").innerText(), /Límite del estilo, no carencia demostrada: Poca presión lateral/);
   // A blur-triggered table redraw can queue a result-summary rebuild in rAF.
   // Let the pending render settle before exercising the keyboard control.
   await page.evaluate(() => new Promise(resolve =>
@@ -89,7 +89,8 @@ async function main(){
   await justificationToggle.press("Enter");
   assert.equal(await justifications.first().evaluate(node=>node.open), true, "La explicación se abre por teclado");
   assert.notEqual(await justificationToggle.evaluate(node=>getComputedStyle(node).outlineStyle), "none", "Foco visible en la explicación");
-  assert.match(await justifications.first().innerText(), /Aporta .+Contribuye a corregir/s);
+  assert.match(await justifications.first().innerText(), /Aporta .+/s);
+  assert.doesNotMatch(await justifications.first().innerText(), /Contribuye a corregir/, "Una limitación del arquetipo no acredita una corrección real");
   for (const details of await justifications.all()) await details.evaluate(node=>{node.open=true;});
   for (const width of widths) {
     await page.setViewportSize({width,height:900});
@@ -114,7 +115,7 @@ async function main(){
   const splitPushPicks={top:"Fiora",jungle:"Viego",mid:"Twisted Fate",adc:"Ezreal",support:"Braum"};
   for(const [role,champion] of Object.entries(splitPushPicks))await page.locator("#"+role).fill(champion);
   await page.waitForFunction(expected=>expected.every(champion=>Array.from(document.querySelectorAll(".composition-table .champion-name")).some(node=>node.textContent.trim()===champion))&&document.querySelector('[data-report-section="diagnosis"] .result-summary__answer')?.textContent.includes("Split Push"),Object.values(splitPushPicks));
-  const splitStrategy=await strategy.innerText();assert.match(splitStrategy,/Lectura provisional: Plan principal: Split Push/i);assert.match(splitStrategy,/Necesidad: Pick y control del mapa · Perfil: Pick/i);assert.match(splitStrategy,/Protección provisional frente a Teamfight/i);
+  const splitStrategy=await strategy.innerText();assert.match(splitStrategy,/Lectura provisional: Plan principal: Split Push/i);assert.match(splitStrategy,/Oportunidad: Pick y control del mapa · Perfil: Pick/i);assert.match(splitStrategy,/Protección provisional frente a Teamfight/i);
   const screenshotPicks={top:"Fiora",jungle:"Evelynn",mid:"Galio",adc:"Kai'Sa",support:"Milio"};
   for(const [role,champion] of Object.entries(screenshotPicks))await page.locator("#"+role).fill(champion);
   await page.waitForFunction(expected=>[...document.querySelectorAll(".composition-table .champion-name")].map(node=>node.textContent.trim()).join("|")===expected.join("|"),Object.values(screenshotPicks));

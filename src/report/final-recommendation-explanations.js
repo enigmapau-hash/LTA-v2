@@ -68,11 +68,17 @@
     const diagnosticFactors = [...(input.diagnosis.primaryProblem?.evidence || []), ...(input.diagnosis.coherence?.gaps || [])];
     const improvement = input.correction?.status === "proposed" && input.correction.improvements?.find((item) =>
       item.profile?.id === input.optimizer.priority?.need?.id && same(item.limitingFactor, factor));
-    const detectedNeed = improvement && diagnosticFactors.some((item) => same(item, factor)) ? factor : "";
+    const evidencedFactor = improvement && diagnosticFactors.some((item) => same(item, factor));
+    // An archetype's inherent tradeoff is not a demonstrated missing capability.
+    const structuralGap = input.diagnosis.primaryProblem?.type === "cohesion-gap";
+    const detectedNeed = evidencedFactor && structuralGap ? factor : "";
+    const optionalLimitation = evidencedFactor && !structuralGap
+      && input.diagnosis.primaryProblem?.type === "identity-risk" ? factor : "";
 
     return {
       ...section,
       ...(detectedNeed ? { detectedNeed } : {}),
+      ...(optionalLimitation ? { optionalLimitation } : {}),
       candidates: section.candidates.map((candidate) => {
         const source = mapped.candidates?.find((item) => pair(item, candidate));
         const assessment = evaluated.candidates?.find((item) => pair(item, candidate));

@@ -95,7 +95,7 @@ for (const input of snapshots) {
   assert.deepEqual(input, before, "La presentación no muta ningún motor ni sus entradas");
   assert.deepEqual(result, explainFinalRecommendation(input), "Texto determinista");
   if (!result) continue;
-  const { detectedNeed, ...plain } = result;
+  const { detectedNeed, optionalLimitation, ...plain } = result;
   plain.candidates = plain.candidates.map(({ justification, ...candidate }) => candidate);
   assert.deepEqual(plain, input.section, "Solo se añaden explicaciones, nunca se filtra o reordena un candidato");
   for (const candidate of result.candidates) {
@@ -103,6 +103,10 @@ for (const input of snapshots) {
     if (!justification) continue;
     explained++;
     assert.ok(justification.evidence.length);
+    if (input.diagnosis.primaryProblem?.type === "identity-risk") {
+      assert.notEqual(justification.effect?.kind, "correction",
+        "La debilidad inherente a una identidad no prueba corrección real");
+    }
     if (justification.effect?.kind === "correction") {
       assert.equal(justification.effect.evidence[0], detectedNeed);
       assert.ok([...input.diagnosis.primaryProblem.evidence, ...input.diagnosis.coherence.gaps].includes(detectedNeed));
@@ -118,6 +122,12 @@ for (const input of snapshots) {
   const report = call("report/strategic-report", "buildStrategicReport", { ...input, recommendation: result });
   const reportPlain = structuredClone(report);
   delete reportPlain.sections[1].detectedNeed;
+  delete reportPlain.sections[1].optionalLimitation;
+  if (optionalLimitation) {
+    assert.match(report.sections[1].answer, /^Oportunidad:/,
+      "No llamar necesidad a una contrapartida propia del arquetipo");
+    reportPlain.sections[1].answer = originalReport.sections[1].answer;
+  }
   if (reportPlain.sections[1].candidates) reportPlain.sections[1].candidates = reportPlain.sections[1].candidates.map(({ justification, ...candidate }) => candidate);
   assert.deepEqual(reportPlain, originalReport, "Diagnóstico, protección, bans, propuestas y cierre permanecen intactos");
 }
