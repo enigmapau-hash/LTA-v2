@@ -1,6 +1,8 @@
 # Changelog
 
-## v3.9.0 — evidencia de viabilidad de roles (26.21)
+## v3.9.0
+
+Evidencia de viabilidad de roles para el parche 26.21.
 
 ### Added
 - Fuentes offline auditables para posiciones verificadas; estado «sin verificar» para el resto de parejas del Excel.
