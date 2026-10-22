@@ -78,7 +78,7 @@ for (const [name, selection, expectedCoherence] of [
 ]) {
   const result = analyze(selection);
   assert.equal(result.diagnosis.coherence.status, expectedCoherence, `La referencia ${name} debe conservar su clasificación`);
-  assert.equal(result.strategicCounterplay.status, result.strategicRisks.status === "no-priority" ? "no-priority" : result.strategicRisks.risks.length ? "advised" : "no-supported-threat");
+  assert.equal(result.strategicCounterplay.status, result.strategicRisks.status === "no-priority" ? "not-assessable" : result.strategicRisks.risks.length ? "advised" : "no-supported-threat");
   if (result.strategicCounterplay.status === "advised") assertAdvisedShape(result.strategicCounterplay);
   assert.deepEqual(adviseCounterplay({ strategicRisks: result.strategicRisks }), result.strategicCounterplay, `La recomendación ${name} debe ser determinista`);
 }
