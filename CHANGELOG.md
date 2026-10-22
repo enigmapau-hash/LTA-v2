@@ -1,5 +1,19 @@
 # Changelog
 
+## v3.9.0
+
+Evidencia de viabilidad de roles para el parche 26.21.
+
+### Added
+- Fuentes offline auditables para posiciones verificadas; estado «sin verificar» para el resto de parejas del Excel.
+- Recomendaciones con prioridad de viabilidad antes de afinidad y sin desempate implícito por TOP.
+- Roles experimentales se omiten en las sugerencias automáticas, pero siguen disponibles para selección manual.
+- Pruebas integrales por parejas, empate multirrol, determinismo y compatibilidad PWA.
+
+### Notes
+- La evidencia 26.21 todavía es parcial, porque el parche acaba de publicarse. No se inventan clasificadores para las 266 parejas.
+
+
 ## v3.8.1
 
 ### Fixed

@@ -25,6 +25,11 @@ function validateInstallMetadata() {
   assert.ok(manifest.icons.some((icon) => icon.sizes === "192x192" && icon.type === "image/png"));
   assert.ok(manifest.icons.some((icon) => icon.sizes === "512x512" && icon.type === "image/png"));
   assert.ok(cacheName, "El service worker debe declarar una caché versionada.");
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  for (const [, script] of html.matchAll(/<script src="([^"]+)"/g)) {
+    assert.ok(serviceWorker.includes(JSON.stringify("./" + script)),
+      "Toda dependencia de la PWA debe estar precargada para el análisis offline: " + script);
+  }
 }
 
 function createServer() {
@@ -198,6 +203,8 @@ async function main() {
     }, { current: cacheName, url: xlsxUrl });
     assert.ok(parserCache.type, "SheetJS debe estar guardado en la caché nueva: " + JSON.stringify(parserCache));
     assert.equal(parserCache.status, 200, "SheetJS debe servirse desde la caché local.");
+    assert.ok(parserCache.cachedUrls.includes(new URL("/src/data/role-viability-26-21.js", origin).href),
+      "La evidencia de posiciones se instala en la caché offline.");
 
     // A controlled reload with the network disconnected must load the workbook and picker.
     await context.setOffline(true);
@@ -212,9 +219,38 @@ async function main() {
     await resultChampion.waitFor({ state: "visible", timeout: 5_000 });
     await page.waitForFunction((name) => document.querySelector("#result .champion-name")?.textContent.trim() === name, selected);
     assert.equal(await resultChampion.innerText(), selected, "El resultado debe reflejar el campeón elegido sin conexión.");
+    assert.deepEqual(await page.evaluate(() => ({
+      patch: window.LTARoleViability.PATCH,
+      dianaTop: window.LTARoleViability.assess("Diana", "top").status,
+    })), { patch: "26.21", dianaTop: "experimental" }, "La viabilidad está disponible sin red.");
+    const offlinePicks = { top: "Diana", jungle: "Sejuani", mid: "Orianna", adc: "Jinx", support: "Lulu" };
+    for (const [role, champion] of Object.entries(offlinePicks)) {
+      await page.locator("#" + role).fill(champion);
+    }
+    await page.waitForFunction((expected) =>
+      [...document.querySelectorAll(".composition-table .champion-name")]
+        .map((node) => node.textContent.trim()).join("|") === expected.join("|"), Object.values(offlinePicks));
+    await page.locator(".result-summary__strategy").waitFor({ state: "visible" });
+    assert.ok(await page.locator(".result-summary__candidate-role").count() > 0,
+      "El análisis completo con un pick experimental manual sigue recomendando offline.");
+    const engagePicks = { top: "Malphite", jungle: "Wukong", mid: "Yasuo", adc: "Miss Fortune", support: "Rell" };
+    for (const [role, champion] of Object.entries(engagePicks)) {
+      await page.locator("#" + role).fill(champion);
+    }
+    await page.waitForFunction((expected) =>
+      [...document.querySelectorAll(".composition-table .champion-name")]
+        .map((node) => node.textContent.trim()).join("|") === expected.join("|"), Object.values(engagePicks));
+    const recommendation = page.locator(".result-summary__recommendation-list");
+    await recommendation.waitFor({ state: "visible" });
+    assert.match(await recommendation.innerText(), /Diana/,
+      "El informe completo conserva Diana como candidata en una posición respaldada.");
+    assert.doesNotMatch(await recommendation.innerText(), /Anivia/,
+      "El informe offline no confunde anti-engage con iniciación.");
+    assert.doesNotMatch(await recommendation.innerText(), /Diana[^\n]*TOP/i,
+      "El informe offline no recomienda Diana TOP experimental.");
     assert.deepEqual(pageErrors, [], "La app no debe lanzar errores JavaScript durante la carga o el uso offline.");
 
-    console.log("PWA validada: manifiesto instalable, carga inicial, actualización v12→v13, caché de SheetJS y selección offline.");
+    console.log("PWA validada: instalación, actualización desde v12, caché de SheetJS y viabilidad 26.21, selección experimental manual y recomendaciones completas offline.");
     await context.close();
   } finally {
     if (browser) await browser.close();

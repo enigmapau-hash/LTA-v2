@@ -154,6 +154,32 @@ assert.ok(!(variedNames.includes("Alpha") && variedNames.includes("Beta")), "No 
 assert.ok(!(variedNames.includes("Gamma") && variedNames.includes("Delta")), "La lista evita duplicar el mismo perfil funcional");
 assert.equal(new Set(variedNames.map((name) => name.toLocaleLowerCase("es"))).size, variedNames.length,
   "Un campeón disponible en varias posiciones solo aparece una vez");
+assert.ok(!variedNames.some((name) => name.toLowerCase() === "alpha"),
+  "Un nombre con distinta capitalización no resuelve un empate de posiciones sin evidencia");
+
+const explicitSignals = mapCandidates({
+  optimizer: { status: "prioritized" },
+  recommendations: { status: "recommended", profiles: [
+    { id: "engage", label: "Iniciación", improves: "la entrada" },
+    { id: "disengage", label: "Desenganche", improves: "la retirada" },
+    { id: "frontline", label: "Frente", improves: "el frente propio" },
+  ] },
+  candidatesByRole: { mid: [
+    { champion: "Counter only", identity: "Poke", strengths: "Anti-engage · Anti-frontline" },
+    { champion: "Both tools", identity: "Teamfight", strengths: "Engage · Anti-engage · Frontline" },
+    { champion: "Initiator", identity: "Dive", strengths: "Engage · Iniciación · Frontline" },
+    { champion: "Protector", identity: "Front to Back", strengths: "Peel · Frontline" },
+    { champion: "Substring only", identity: "Poke", strengths: "Reengagement" },
+  ] },
+});
+for (const profile of explicitSignals.profiles) {
+  const names = profile.candidates.map((item) => item.champion);
+  assert.ok(!names.includes("Substring only"), "Una subcadena no acredita una señal estratégica");
+  assert.equal(names.includes("Counter only"), profile.id === "disengage",
+    "Anti-engage acredita retirada, no iniciación; anti-frontline no acredita frente propio");
+  assert.ok(names.includes("Both tools"), "Una capacidad explícita sigue siendo válida si también existe su contra");
+}
+assert.equal(explicitSignals.profiles.length, 3);
 
 const compositionAware = mapCandidates({
   diagnosis: {

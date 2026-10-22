@@ -1,11 +1,14 @@
 (function (root, factory) {
-  const engine = factory();
+  const viability = typeof module === "object" && module.exports
+    ? require("../data/role-viability-26-21.js")
+    : root.LTARoleViability;
+  const engine = factory(viability);
   if (typeof module === "object" && module.exports) {
     module.exports = engine;
   } else {
     root.LTAChampionshipCandidateMapper = Object.freeze(engine);
   }
-})(typeof window !== "undefined" ? window : globalThis, function () {
+})(typeof window !== "undefined" ? window : globalThis, function (viability) {
   "use strict";
 
   const PROFILE_SIGNALS = Object.freeze({
@@ -41,7 +44,14 @@
     const matchedFields = [];
     for (const field of signalDefinition.fields) {
       const value = normalize(candidate[field]);
-      const matches = signalDefinition.terms.filter((term) => value.includes(normalize(term)));
+      const matches = signalDefinition.terms.filter((term) => {
+        const signal = normalize(term);
+        // Anti-engage is evidence for disengage, not for initiating a fight.
+        // Keep explicit anti-* signals, but do not count them as the capability
+        // they counter (likewise anti-frontline versus our own frontline).
+        const evidence = signal.startsWith("anti ") ? value : value.replace(/\banti [a-z0-9]+\b/g, " ");
+        return (" " + evidence + " ").includes(" " + signal + " ");
+      });
       if (matches.length) matchedFields.push(field);
       signals.push(...matches);
     }
@@ -70,11 +80,22 @@
   }
 
   function candidateOrder(left, right) {
+    // Across DIFFERENT champions the strategic context still leads: a sourced
+    // role must not make one champion crowd out every other sensible option.
     return right.contextFit - left.contextFit
       || right.signals.length - left.signals.length
       || right.matchedFields.length - left.matchedFields.length
-      || ROLE_ORDER.indexOf(left.role) - ROLE_ORDER.indexOf(right.role)
+      || viability.priority(right.viability) - viability.priority(left.viability)
       || left.champion.localeCompare(right.champion, "es");
+  }
+
+  function sameChampionRoleOrder(left, right) {
+    // For the SAME champion, positional viability must beat equal-looking
+    // workbook attributes. Role order and name casing are not role evidence.
+    return viability.priority(right.viability) - viability.priority(left.viability)
+      || right.contextFit - left.contextFit
+      || right.signals.length - left.signals.length
+      || right.matchedFields.length - left.matchedFields.length;
   }
 
   function normalizeIdentity(value) {
@@ -123,6 +144,8 @@
     return {
       champion: candidate.champion,
       role: candidate.role,
+      viabilityStatus: candidate.viability.status,
+      viabilityPatch: viability.PATCH,
       function: String(candidate.candidate.function || "").trim(),
       tempo: String(candidate.candidate.tempo || "").trim(),
       priority,
@@ -156,31 +179,53 @@
       const signalDefinition = PROFILE_SIGNALS[profile?.id];
       if (!signalDefinition || !profile.label || !profile.improves) continue;
 
-      const ranked = new Map();
+      const grouped = new Map();
       for (const candidate of candidates) {
         const champion = String(candidate?.champion || "").trim();
         if (!champion || selectedChampions.has(normalize(champion))) continue;
         const { signals, matchedFields } = findSignals(candidate, signalDefinition);
         if (!signals.length) continue;
 
+        const position = viability.assess(champion, candidate.role);
+        // A listed draft role remains manually selectable, but a position
+        // with confirmed experimental status is not a default recommendation.
+        if (position.status === "experimental") continue;
         const key = normalize(champion);
-        const existing = ranked.get(key);
         const item = {
           champion,
           role: candidate.role,
           signals,
           matchedFields,
           contextFit: contextFit(candidate, input.diagnosis),
+          viability: position,
           candidate,
         };
-        if (!existing || candidateOrder(item, existing) < 0) ranked.set(key, item);
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key).push(item);
       }
 
-      const topCandidates = selectDiverseCandidates([...ranked.values()]);
+      const ranked = [];
+      const roleCandidates = [];
+      for (const group of grouped.values()) {
+        // Canonical order makes equally supported roles deterministic. It is
+        // never evidence for resolving the unverified tie checked below.
+        group.sort((left, right) => sameChampionRoleOrder(left, right)
+          || left.role.localeCompare(right.role, "es"));
+        roleCandidates.push(...group);
+        // If there is no evidence distinguishing two equivalent positions,
+        // do not silently pick TOP just because it comes first in the sheet.
+        const best = group[0], runnerUp = group[1];
+        if (runnerUp && best.viability.status === "sin-verificar"
+          && runnerUp.viability.status === "sin-verificar"
+          && sameChampionRoleOrder(best, runnerUp) === 0) continue;
+        ranked.push(best);
+      }
+
+      const topCandidates = selectDiverseCandidates(ranked);
       if (topCandidates.length < 2) continue;
       const alternativesByRole = Object.fromEntries(ROLE_ORDER.map((role) => [
         role,
-        selectDiverseCandidates([...ranked.values()].filter((candidate) => candidate.role === role))
+        selectDiverseCandidates(roleCandidates.filter((candidate) => candidate.role === role))
           .map((candidate, index) => presentCandidate(candidate, profile, index + 1)),
       ]));
 

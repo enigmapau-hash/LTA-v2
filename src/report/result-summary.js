@@ -145,7 +145,7 @@
                 ${section.candidates.map((candidate) => `
                   <li>
                     <strong>${escapeHtml(candidate.champion)}</strong>
-                    ${ROLE_LABELS[candidate.role] ? `<small class="result-summary__candidate-role">Posición: ${escapeHtml(ROLE_LABELS[candidate.role])}</small>` : ""}
+                    ${ROLE_LABELS[candidate.role] ? `<small class="result-summary__candidate-role">Posición: ${escapeHtml(ROLE_LABELS[candidate.role])} · ${escapeHtml(({ habitual: "Habitual", situacional: "Situacional", experimental: "Experimental", "sin-verificar": "Rol sin verificar" })[window.LTARoleViability?.assess(candidate.champion, candidate.role)?.status] || "Rol sin verificar")} (26.21)</small>` : ""}
                     <small>${escapeHtml(candidate.reason)}</small>
                     ${candidate.strengths.length ? `<small><b>Aporta:</b> ${escapeHtml(candidate.strengths.join(" · "))}</small>` : ""}
                     ${candidate.limitations.length ? `<small class="result-summary__limitation"><b>Límite:</b> ${escapeHtml(candidate.limitations.join(" · "))}</small>` : ""}
