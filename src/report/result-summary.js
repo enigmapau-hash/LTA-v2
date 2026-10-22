@@ -154,6 +154,7 @@
       protection,
       mappedCandidates,
       championCatalog: candidatesByRole,
+      currentPicks: picks,
     });
     const strategicBanPresentation = presentBanRecommendations({ banPrioritizer: strategicBans });
     // Enrich only the report, after every decision engine has finished.
