@@ -184,11 +184,7 @@
                 </ul>
               </div>` : ""}
               ${Array.isArray(section.candidates) ? `<ol class="result-summary__recommendation-list" aria-label="Candidatos priorizados">
-                ${section.candidates.map(renderCandidate).join("")}</ul></div>` : ""}
-                    </details>` : candidate.strengths.length ? `<small><b>Aporta:</b> ${escapeHtml(candidate.strengths.join(" · "))}</small>` : ""}
-                    ${candidate.limitations.length ? `<small class="result-summary__limitation"><b>Límite:</b> ${escapeHtml(candidate.limitations.join(" · "))}</small>` : ""}
-                  </li>
-                `).join("")}
+                ${section.candidates.map(renderCandidate).join("")}
               </ol>` : ""}
             </article>
           `).join("")}
