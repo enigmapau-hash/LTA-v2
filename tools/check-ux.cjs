@@ -43,7 +43,7 @@ async function main(){
    await page.keyboard.press("Tab");assert.equal(await page.evaluate(()=>document.activeElement.id),"top");assert.notEqual(await page.locator("#top").evaluate(n=>getComputedStyle(n).outlineStyle),"none","focus visible");
    for(let i=0;i<champions.length;i++){const id=["top","jungle","mid","adc","support"][i];await page.keyboard.type(champions[i]);await page.keyboard.press("Enter");assert.equal(await page.locator("#"+id).inputValue(),champions[i]);if(i<4){await page.keyboard.press("Tab");assert.equal(await page.evaluate(()=>document.activeElement.id),["jungle","mid","adc","support"][i]);}}
    await page.waitForFunction(()=>document.querySelector("#statusPill")?.textContent==="Análisis actualizado");assert.equal(await page.locator(".composition-table tbody tr").count(),5);if(width<=760)assert.equal(await page.locator(".composition-table").evaluate(n=>n.getBoundingClientRect().width<=innerWidth),true);
-   await page.keyboard.press("Tab");assert.equal(await page.evaluate(()=>document.activeElement.id),"demoBtn");let badgeReached=false;for(let tab=0;tab<5;tab++){await page.keyboard.press("Tab");if(await page.evaluate(()=>document.activeElement.id)==="versionBadge"){badgeReached=true;break;}}assert.equal(badgeReached,true,"el panel de versión debe ser alcanzable por Tab");const badgeVersion=await page.locator("#versionBadge").innerText();assert.match(badgeVersion,/^v\d+\.\d+\.\d+$/,"el distintivo conserva solo el número de versión visible");await page.keyboard.press("Enter");assert.equal(await page.locator("#versionBadge").getAttribute("aria-expanded"),"true");await page.waitForFunction(()=>document.querySelector("#versionPanel")?.textContent.includes("Hecho"));assert.equal(await page.locator("#versionBadge").getAttribute("aria-label"),`Versión ${badgeVersion}`,"el distintivo mantiene un nombre accesible descriptivo");assert.doesNotMatch(await page.locator("#versionPanel").innerText(),/Actualización funcional/,"el panel de versión omite la categoría genérica");await page.keyboard.press("Escape");assert.equal(await page.locator("#versionBadge").getAttribute("aria-expanded"),"false");
+   await page.keyboard.press("Tab");assert.equal(await page.evaluate(()=>document.activeElement.id),"demoBtn");let badgeReached=false;const keyboardStops=await page.locator("summary, button, input, a[href]").count();for(let tab=0;tab<keyboardStops+1;tab++){await page.keyboard.press("Tab");if(await page.evaluate(()=>document.activeElement.id)==="versionBadge"){badgeReached=true;break;}}assert.equal(badgeReached,true,"el panel de versión debe ser alcanzable por Tab");const badgeVersion=await page.locator("#versionBadge").innerText();assert.match(badgeVersion,/^v\d+\.\d+\.\d+$/,"el distintivo conserva solo el número de versión visible");await page.keyboard.press("Enter");assert.equal(await page.locator("#versionBadge").getAttribute("aria-expanded"),"true");await page.waitForFunction(()=>document.querySelector("#versionPanel")?.textContent.includes("Hecho"));assert.equal(await page.locator("#versionBadge").getAttribute("aria-label"),`Versión ${badgeVersion}`,"el distintivo mantiene un nombre accesible descriptivo");assert.doesNotMatch(await page.locator("#versionPanel").innerText(),/Actualización funcional/,"el panel de versión omite la categoría genérica");await page.keyboard.press("Escape");assert.equal(await page.locator("#versionBadge").getAttribute("aria-expanded"),"false");
   }
   const referencePicks={top:"Ornn",jungle:"Sejuani",mid:"Orianna",adc:"Jinx",support:"Lulu"};
   for(const [role,champion] of Object.entries(referencePicks))await page.locator("#"+role).fill(champion);
@@ -73,9 +73,23 @@ async function main(){
   assert.equal(await riskGuidance.count(), 1, "El equipo de referencia expone el riesgo detectado dentro de Protección");
   assert.match(await riskGuidance.innerText(), /Riesgo propio:/, "El riesgo propio llega al DOM");
   assert.match(await riskGuidance.innerText(), /Cómo cubrirlo:/, "La contramedida calculada llega al DOM");
-  assert.match(await strategy.innerText(),/Plan probable: Front to Back · Cómo ganar: Proteger al ADC y forzar teamfights\./i);assert.match(await strategy.innerText(),/Oportunidad: presión lateral · Perfil: Presión lateral/i);assert.match(await strategy.innerText(),/Refuerza:/i);assert.match(await strategy.innerText(),/Split Push/i);
+  assert.match(await strategy.innerText(),/Plan probable: Front to Back/i);assert.match(await strategy.innerText(),/Cómo ganar: Proteger al ADC y forzar teamfights\./i);assert.match(await strategy.innerText(),/Oportunidad de mejora: presión lateral/i);assert.match(await strategy.innerText(),/Refuerza:/i);assert.match(await strategy.innerText(),/Split Push/i);
   assert.equal(await strategy.locator(".result-summary__recommendation-list").count(),1,"la mejora conserva una única lista acotada de candidatos; los bans pueden aparecer en protección");
   assert.ok(await strategy.locator(".result-summary__recommendation-list > li").count()<=4,"la recomendación muestra como máximo cuatro candidatos");
+  const secondCandidate = strategy.locator(".result-summary__candidate-more").first();
+  assert.ok(await secondCandidate.count() >= 1, "Las alternativas secundarias se muestran en formato compacto");
+  assert.equal(await secondCandidate.evaluate(node=>node.open), false, "Las alternativas secundarias empiezan plegadas");
+  await secondCandidate.locator(":scope > summary").press("Enter");
+  assert.equal(await secondCandidate.evaluate(node=>node.open), true, "Alternativas secundarias accesibles por teclado");
+  await secondCandidate.locator(":scope > summary").press("Enter");
+  assert.equal(await secondCandidate.evaluate(node=>node.open), false, "La alternativa secundaria se puede volver a plegar");
+  const firstBan = strategy.locator(".result-summary__ban-detail").first();
+  assert.equal(await firstBan.evaluate(node=>node.open), false, "Los bans arrancan resumidos");
+  await firstBan.locator(":scope > summary").press("Enter");
+  assert.equal(await firstBan.evaluate(node=>node.open), true, "Los detalles de un ban se abren por teclado");
+  assert.ok((await firstBan.innerText()).length > 40, "El análisis de un ban sigue disponible");
+  await firstBan.locator(":scope > summary").press("Enter");
+  assert.equal(await firstBan.evaluate(node=>node.open), false);
   const justifications = strategy.locator(".result-summary__candidate-justification");
   await page.locator("h1").click();
   await justifications.first().waitFor({state:"visible"});
@@ -115,7 +129,7 @@ async function main(){
   const splitPushPicks={top:"Fiora",jungle:"Viego",mid:"Twisted Fate",adc:"Ezreal",support:"Braum"};
   for(const [role,champion] of Object.entries(splitPushPicks))await page.locator("#"+role).fill(champion);
   await page.waitForFunction(expected=>expected.every(champion=>Array.from(document.querySelectorAll(".composition-table .champion-name")).some(node=>node.textContent.trim()===champion))&&document.querySelector('[data-report-section="diagnosis"] .result-summary__answer')?.textContent.includes("Split Push"),Object.values(splitPushPicks));
-  const splitStrategy=await strategy.innerText();assert.match(splitStrategy,/Lectura provisional: Plan principal: Split Push/i);assert.match(splitStrategy,/Oportunidad: Pick y control del mapa · Perfil: Pick/i);assert.match(splitStrategy,/Protección provisional frente a Teamfight/i);
+  const splitStrategy=await strategy.innerText();assert.match(splitStrategy,/Lectura provisional: Plan principal: Split Push/i);assert.match(splitStrategy,/Oportunidad de mejora: Pick y control del mapa/i);assert.match(splitStrategy,/Perfil sugerido: Pick/i);assert.match(splitStrategy,/Protección provisional frente a Teamfight/i);
   const screenshotPicks={top:"Fiora",jungle:"Evelynn",mid:"Galio",adc:"Kai'Sa",support:"Milio"};
   for(const [role,champion] of Object.entries(screenshotPicks))await page.locator("#"+role).fill(champion);
   await page.waitForFunction(expected=>[...document.querySelectorAll(".composition-table .champion-name")].map(node=>node.textContent.trim()).join("|")===expected.join("|"),Object.values(screenshotPicks));
@@ -187,7 +201,7 @@ async function main(){
   assert.match(await finalDiagnosis.innerText(),/Cómo ganar: Iniciar una pelea coordinada y encadenar las definitivas\./);
   assert.doesNotMatch(await finalDiagnosis.innerText(),/Dive/,"Engage no acredita por sí solo una vía Dive secundaria");
   await page.locator("#top").fill("Camille");
-  await page.waitForFunction(()=>document.querySelector('[data-report-section="diagnosis"] .result-summary__answer')?.textContent.includes("Dive · Cómo ganar: Eliminar rápidamente la backline rival."));
+  await page.waitForFunction(()=>document.querySelector('[data-report-section="diagnosis"] .result-summary__answer')?.textContent.includes("Dive") && document.querySelector('[data-report-section="diagnosis"] .result-summary__win-condition')?.textContent.includes("Eliminar rápidamente la backline rival."));
   assert.equal(await page.locator(".result-summary__strategy-card").count(),3,"se conserva la estructura del informe al cambiar el plan");
   assert.deepEqual(pageErrors,[],"sin errores JavaScript");assert.deepEqual(consoleErrors,[],"sin errores en consola");console.log("UX validada: 320, 375, 390, 768, 1280 px; informe estratégico adaptativo; teclado, accesibilidad, tabla y consola.");
  }finally{if(browser)await browser.close();await new Promise((r,j)=>server.close(e=>e?j(e):r()));}

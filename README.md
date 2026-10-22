@@ -12,7 +12,8 @@ La v2 amplía la lectura estratégica de composiciones completas con diagnóstic
 
 ## Características
 
-- Versión visible: `v3.11.2`
+- Versión visible: `v3.12.0`
+- Informe estratégico con jerarquía visual renovada: diagnóstico legible, principal alternativa destacada, alternativas secundarias y bans plegables. Los diagnósticos, decisiones y advertencias siguen intactos.
 - El informe distingue las limitaciones inherentes al estilo de las carencias diagnosticadas y evita afirmar que una propuesta corrigió una debilidad no comprobada.
 - La sustitución individual vuelve a diagnosticar la composición propuesta antes de afirmar que conserva el plan; con evidencia insuficiente presenta la identidad como no confirmada. [Criterios](docs/v3/Single-Replacement-Identity-Validation.md).
 - Las recomendaciones finales explican la carencia, la contribución de cada candidato y los compañeros beneficiados cuando existe evidencia. Distinguen corrección y refuerzo sin cambiar decisiones, rankings o posiciones. [Alcance y límites](docs/v3/Final-Recommendation-Explanations.md).
