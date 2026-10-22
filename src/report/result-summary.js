@@ -170,7 +170,7 @@
     }
 
     const items = rows.map((row) => {
-      const role = text(row.querySelector('[data-label="Rol"]'));
+      const role = row.dataset.role;
       const champion = text(row.querySelector('[data-label="Campeón"] .champion-name'));
       const identity = row.dataset.identity || text(row.querySelector('[data-label="Identidad"]'));
       const functionLabel = row.dataset.function || text(row.querySelector('[data-label="Función"]'));

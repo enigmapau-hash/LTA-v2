@@ -50,7 +50,7 @@ async function main(){
   await page.waitForFunction(()=>document.querySelector("#statusPill")?.textContent==="Análisis actualizado");
   await page.waitForFunction(expected=>expected.every(champion=>Array.from(document.querySelectorAll(".composition-table .champion-name")).some(node=>node.textContent.trim()===champion)),Object.values(referencePicks));
   const strategy=page.locator(".result-summary__strategy");await strategy.waitFor({state:"visible"});
-  assert.match(await strategy.innerText(),/Composición propuesta:/i,"el informe incorpora la sustitución prioritaria cuando está respaldada");
+  assert.match(await strategy.innerText(),/Equipo propuesto:/i,"el informe muestra la recomposición completa cuando está respaldada y el rol Jungla usa su clave interna");
   assert.equal((await strategy.locator(".result-summary__eyebrow").textContent()).trim(),"Informe estratégico","el informe presenta el análisis integrado de v2");
   assert.equal((await strategy.locator("h3").first().innerText()).trim(),"Cómo jugarla");
   assert.deepEqual(await strategy.locator("[data-report-section]").evaluateAll(nodes=>nodes.map(node=>node.dataset.reportSection)),["diagnosis","correction","protection"],"el informe ordena diagnóstico, recomendación y protección");
@@ -59,7 +59,7 @@ async function main(){
   for(const heading of ["Win condition","Sinergia interna","Debilidades","Recomendaciones","Picks","Bans","Plan de partida","Fortalezas","Riesgos"]){assert.equal(await strategy.getByRole("heading",{name:heading,exact:true}).count(),0,"el informe no repite el bloque "+heading);}
   assert.equal(await strategy.locator(".result-summary__strategy-card").count(),3,"la recomendación ocupa el bloque de mejora existente y evita añadir una cuarta tarjeta");
   assert.match(await strategy.innerText(),/Plan probable: Front to Back · Cómo ganar: Proteger al ADC y forzar teamfights\./i);assert.match(await strategy.innerText(),/Necesidad: presión lateral · Perfil: Presión lateral/i);assert.match(await strategy.innerText(),/Refuerza:/i);assert.match(await strategy.innerText(),/Split Push/i);
-  assert.equal(await strategy.locator("ul, ol").count(),1,"solo se muestra la lista breve y acotada de candidatos priorizados");
+  assert.equal(await strategy.locator(".result-summary__recommendation-list").count(),1,"la mejora conserva una única lista acotada de candidatos; los bans pueden aparecer en protección");
   assert.ok(await strategy.locator(".result-summary__recommendation-list li").count()<=4,"la recomendación muestra como máximo cuatro candidatos");
   assert.equal(await page.locator(".result-summary__header").evaluate(n=>getComputedStyle(n).display),"none","el estado de validación se omite en composiciones completas");
   assert.equal(await page.locator(".result-summary.is-ready").evaluate(n=>getComputedStyle(n).paddingTop),"0px","el informe completo evita un marco exterior redundante");
@@ -68,6 +68,7 @@ async function main(){
   assert.equal(await page.locator(".result-summary__roles").count(),0,"no se genera una segunda lista de campeones redundante");
   assert.equal(await strategy.evaluate(n=>n.closest(".table-wrap")===null),true,"el informe estratégico debe quedar fuera del contenedor desplazable de la tabla");
   const completeTable=page.locator(".composition-table.is-complete");
+  assert.deepEqual(await completeTable.locator("tbody tr").evaluateAll(rows=>rows.map(row=>row.dataset.role)),["top","jungle","mid","botline","support"],"las claves internas son independientes de las etiquetas visibles de los roles");
   assert.equal(await completeTable.locator("thead th").allInnerTexts().then(values=>values.map(value=>value.trim()).join("|")),"Rol|Campeón|Función|Ritmo","la alineación conserva solo columnas que complementan el informe");
   assert.equal(await completeTable.locator("tbody tr").count(),5,"la alineación completa mantiene los cinco roles");
   assert.equal(await completeTable.locator("tbody tr").first().locator("td").count(),4,"cada rol mantiene campeón, función y ritmo");
@@ -80,6 +81,20 @@ async function main(){
   for(const [role,champion] of Object.entries(splitPushPicks))await page.locator("#"+role).fill(champion);
   await page.waitForFunction(expected=>expected.every(champion=>Array.from(document.querySelectorAll(".composition-table .champion-name")).some(node=>node.textContent.trim()===champion))&&document.querySelector('[data-report-section="diagnosis"] .result-summary__answer')?.textContent.includes("Split Push"),Object.values(splitPushPicks));
   const splitStrategy=await strategy.innerText();assert.match(splitStrategy,/Lectura provisional: Plan principal: Split Push/i);assert.match(splitStrategy,/Necesidad: Pick y control del mapa · Perfil: Pick/i);assert.match(splitStrategy,/Protección provisional frente a Teamfight/i);
+  const screenshotPicks={top:"Fiora",jungle:"Evelynn",mid:"Galio",adc:"Kai'Sa",support:"Milio"};
+  for(const [role,champion] of Object.entries(screenshotPicks))await page.locator("#"+role).fill(champion);
+  await page.waitForFunction(expected=>[...document.querySelectorAll(".composition-table .champion-name")].map(node=>node.textContent.trim()).join("|")===expected.join("|"),Object.values(screenshotPicks));
+  assert.equal(await page.locator(".result-summary__strategy-card").count(),3,"el equipo del usuario mantiene el informe completo y las claves internas");
+  assert.deepEqual(await completeTable.locator("tbody tr").evaluateAll(rows=>rows.map(row=>row.dataset.role)),["top","jungle","mid","botline","support"]);
+  const incoherentPicks={top:"Fiora",jungle:"Elise",mid:"Xerath",adc:"Draven",support:"Lulu"};
+  for(const [role,champion] of Object.entries(incoherentPicks))await page.locator("#"+role).fill(champion);
+  await page.waitForFunction(expected=>[...document.querySelectorAll(".composition-table .champion-name")].map(node=>node.textContent.trim()).join("|")===expected.join("|")&&document.querySelector(".result-summary__ban-integration li"),Object.values(incoherentPicks));
+  const banItems=await strategy.locator(".result-summary__ban-integration li").allInnerTexts();
+  assert.ok(banItems.length>0&&banItems.length<=2,"el informe integra hasta dos bans cuando hay amenazas respaldadas");
+  const banChampions=await strategy.locator(".result-summary__ban-integration li strong").allInnerTexts();
+  assert.equal(new Set(banChampions).size,banChampions.length,"los bans son distintos");
+  assert.ok(banChampions.every(name=>!Object.values(incoherentPicks).includes(name)),"no se recomienda banear campeones propios");
+  assert.equal(await strategy.locator('[data-report-section="protection"] .result-summary__ban-integration').count(),1,"los bans se muestran dentro de protección, sin una cuarta tarjeta");
   const topInput=page.locator("#top"),selectedTop=await topInput.inputValue();await topInput.click();
   assert.deepEqual(await topInput.evaluate(input=>[input.selectionStart,input.selectionEnd]),[0,selectedTop.length],"al enfocar un pick se selecciona todo el texto para reemplazarlo sin borrarlo");
   const topOptions=page.locator("#topMenu .picker-item");await topOptions.first().waitFor({state:"visible"});

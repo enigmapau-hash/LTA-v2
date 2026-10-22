@@ -73,6 +73,7 @@
       return `
         <tr
           class="${notFound ? "is-missing is-unknown" : ""}"
+          data-role="${escapeHtml(role.key)}"
           data-identity="${escapeHtml(data?.identity || "")}"
           data-function="${escapeHtml(data?.function || "")}"
           data-tempo="${escapeHtml(data?.tempo || "")}"
