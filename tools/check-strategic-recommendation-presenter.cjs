@@ -100,21 +100,18 @@ function verify(evaluation) {
   }), result, "La presentación debe ser determinista");
 }
 
-const frontToBack = present(composition({
-  top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu",
-}));
+const frontToBack = present(composition({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" }));
 assert.equal(frontToBack.diagnosis.plan.primaryIdentity, "Front to Back");
-verify(frontToBack);
-assert.ok(frontToBack.result.compact.includes(frontToBack.optimizer.priority.need.label.toLocaleLowerCase("es")));
-assert.ok(frontToBack.result.compact.includes(frontToBack.result.primaryProfile.label));
-assert.ok(frontToBack.result.compact.includes(frontToBack.result.primaryProfile.improves));
-assert.ok(frontToBack.result.primaryProfile.candidates.every((candidate) => frontToBack.result.compact.includes(candidate.champion)));
-
-const dive = present(composition({
-  top: "Camille", jungle: "Vi", mid: "Ahri", botline: "Kai'Sa", support: "Rakan",
-}));
+assert.deepEqual(frontToBack.result, { status: "no-priority", primaryProfile: null, compact: "" });
+const dive = present(composition({ top: "Camille", jungle: "Vi", mid: "Ahri", botline: "Kai'Sa", support: "Rakan" }));
 assert.equal(dive.diagnosis.winCondition.primary.identity, "Dive");
-verify(dive);
+assert.equal(dive.result.status, "no-priority");
+const poke = present(composition({ top: "Jayce", jungle: "Nidalee", mid: "Xerath", botline: "Ezreal", support: "Vel'Koz" }));
+verify(poke);
+assert.ok(poke.result.compact.includes(poke.optimizer.priority.need.label.toLocaleLowerCase("es")));
+assert.ok(poke.result.compact.includes(poke.result.primaryProfile.label));
+assert.ok(poke.result.compact.includes(poke.result.primaryProfile.improves));
+assert.ok(poke.result.primaryProfile.candidates.every(candidate => poke.result.compact.includes(candidate.champion)));
 
 const incoherent = present([
   pick("top", "Fiora"),
