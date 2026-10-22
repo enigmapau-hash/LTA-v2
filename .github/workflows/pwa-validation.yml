@@ -117,6 +117,9 @@ jobs:
       - name: Validate strategic report closing
         run: node tools/check-strategic-report-closing.cjs
 
+      - name: Validate risk and counterplay visibility integration
+        run: node tools/check-strategic-report-risk-integration.cjs
+
       - name: Validate the v2 strategic report
         run: node tools/check-strategic-report.cjs
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## v3.10.0
+
+### Added
+- Riesgo propio prioritario y contramedida correspondiente, conectados con la tarjeta de Protección cuando aportan información distinta.
+- Integración sin recomputar motores ni alterar los bans existentes; abstención ante datos incompletos y sin duplicados.
+- Pruebas del contrato de integración, salida del informe y visibilidad en la PWA.
+
+
+
 ## v3.9.0
 
 Evidencia de viabilidad de roles para el parche 26.21.

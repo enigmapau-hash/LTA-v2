@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.9.0",
+    version: "v3.10.0",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-22",
-    summary: ["Viabilidad de posiciones 26.21: evidencia auditada, sin preferencias automáticas por TOP ni roles experimentales como estándar"],
+    summary: ["Integración visible de riesgos propios y contramedidas en Protección, sin duplicaciones ni tarjetas adicionales"],
     pending: [],
   };
 

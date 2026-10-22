@@ -135,6 +135,7 @@
                 <p>${escapeHtml(section.compositionOptimization.identity.status === "preserved" ? `Identidad conservada: ${section.compositionOptimization.identity.primary}.` : `Identidad propuesta sin confirmar: ${section.compositionOptimization.identity.proposed || "pendiente"}.`)}</p>` : ""}
               ${section.improves ? `<p class="result-summary__action"><strong>Refuerza:</strong> ${escapeHtml(section.improves)}</p>` : ""}
               ${section.action ? `<p class="result-summary__action"><strong>Protección:</strong> ${escapeHtml(section.action)}</p>` : ""}
+              ${section.riskGuidance ? `<p class="result-summary__action result-summary__risk-guidance" aria-label="Riesgo propio y contramedida">${section.riskGuidance.risk ? `<strong>Riesgo propio:</strong> ${escapeHtml(section.riskGuidance.risk)} ` : ""}${section.riskGuidance.response ? `<strong>Cómo cubrirlo:</strong> ${escapeHtml(section.riskGuidance.response)}` : ""}</p>` : ""}
               ${section.strategicBans?.length ? `<div class="result-summary__ban-integration" aria-label="Bans estratégicos">
                 <p><strong>Bans prioritarios</strong></p>
                 <ul>

@@ -69,6 +69,10 @@ async function main(){
   for(const heading of ["Diagnóstico","Recomendación estratégica","Protección estratégica"]){assert.equal(await strategy.getByRole("heading",{name:heading,exact:true}).count(),1,"el informe muestra "+heading);}
   for(const heading of ["Win condition","Sinergia interna","Debilidades","Recomendaciones","Picks","Bans","Plan de partida","Fortalezas","Riesgos"]){assert.equal(await strategy.getByRole("heading",{name:heading,exact:true}).count(),0,"el informe no repite el bloque "+heading);}
   assert.equal(await strategy.locator(".result-summary__strategy-card").count(),3,"la recomendación ocupa el bloque de mejora existente y evita añadir una cuarta tarjeta");
+  const riskGuidance = strategy.locator('[data-report-section="protection"] .result-summary__risk-guidance');
+  assert.equal(await riskGuidance.count(), 1, "El equipo de referencia expone el riesgo detectado dentro de Protección");
+  assert.match(await riskGuidance.innerText(), /Riesgo propio:/, "El riesgo propio llega al DOM");
+  assert.match(await riskGuidance.innerText(), /Cómo cubrirlo:/, "La contramedida calculada llega al DOM");
   assert.match(await strategy.innerText(),/Plan probable: Front to Back · Cómo ganar: Proteger al ADC y forzar teamfights\./i);assert.match(await strategy.innerText(),/Necesidad: presión lateral · Perfil: Presión lateral/i);assert.match(await strategy.innerText(),/Refuerza:/i);assert.match(await strategy.innerText(),/Split Push/i);
   assert.equal(await strategy.locator(".result-summary__recommendation-list").count(),1,"la mejora conserva una única lista acotada de candidatos; los bans pueden aparecer en protección");
   assert.ok(await strategy.locator(".result-summary__recommendation-list li").count()<=4,"la recomendación muestra como máximo cuatro candidatos");
