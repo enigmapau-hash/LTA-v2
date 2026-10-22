@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.11.0",
+    version: "v3.11.1",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-22",
-    summary: ["Justificaciones estratégicas de recomendaciones finales con evidencia y compañeros beneficiados, sin cambiar decisiones."],
+    summary: ["La sustitución individual verifica mediante diagnóstico que conserva el plan; en caso contrario evita afirmar continuidad sin pruebas."],
     pending: [],
   };
 

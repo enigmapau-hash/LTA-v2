@@ -45,6 +45,9 @@ jobs:
       - name: Validate the internal Composition Optimizer
         run: node tools/check-composition-optimizer.cjs
 
+      - name: Validate single-replacement identity against a complete team diagnosis
+        run: node tools/check-strategic-composition-optimizer.cjs
+
       - name: Validate the internal Strategic Recommendation Engine
         run: node tools/check-strategic-recommendation-engine.cjs
 
