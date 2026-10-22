@@ -55,6 +55,13 @@ async function main(){
     assert.ok(recompositionText.split("(antes ").length-1<=2,"nunca se presentan cambios masivos para corregir una necesidad");
   }
   assert.ok(await strategy.locator(".result-summary__candidate-role").count()>0,"los candidatos indican la posición que respalda el catálogo");
+  assert.ok((await strategy.locator(".result-summary__candidate-role").allInnerTexts()).every(text=>text.includes("(26.21)")),
+    "Cada candidato indica el parche de la evidencia de rol");
+  assert.deepEqual(await page.evaluate(() => ({
+    top: window.LTARoleViability.assess("Diana", "top").status,
+    jungle: window.LTARoleViability.assess("Diana", "jungle").status,
+    unknown: window.LTARoleViability.assess("Campeón no contrastado", "top").status,
+  })), { top:"experimental", jungle:"habitual", unknown:"sin-verificar" }, "La evidencia del parche funciona también en el navegador");
   assert.equal((await strategy.locator(".result-summary__eyebrow").textContent()).trim(),"Informe estratégico","el informe presenta el análisis integrado de v2");
   assert.equal((await strategy.locator("h3").first().innerText()).trim(),"Cómo jugarla");
   assert.deepEqual(await strategy.locator("[data-report-section]").evaluateAll(nodes=>nodes.map(node=>node.dataset.reportSection)),["diagnosis","correction","protection"],"el informe ordena diagnóstico, recomendación y protección");

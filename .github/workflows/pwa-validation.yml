@@ -51,6 +51,9 @@ jobs:
       - name: Validate recommendation audit reproducibility
         run: node tools/check-recommendation-audit.cjs
 
+      - name: Validate patch 26.21 role viability and conservative recommendations
+        run: node tools/check-role-viability.cjs
+
       - name: Validate the Championship Candidate Mapper
         run: node tools/check-championship-candidate-mapper.cjs
 

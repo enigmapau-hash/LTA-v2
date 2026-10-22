@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.8.1",
+    version: "v3.9.0",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-22",
-    summary: ["Recomposición limitada y validada, roles de candidatos explícitos y bans contextualizados"],
+    summary: ["Viabilidad de posiciones 26.21: evidencia auditada, sin preferencias automáticas por TOP ni roles experimentales como estándar"],
     pending: [],
   };
 

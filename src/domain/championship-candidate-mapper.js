@@ -1,11 +1,14 @@
 (function (root, factory) {
-  const engine = factory();
+  const viability = typeof module === "object" && module.exports
+    ? require("../data/role-viability-26-21.js")
+    : root.LTARoleViability;
+  const engine = factory(viability);
   if (typeof module === "object" && module.exports) {
     module.exports = engine;
   } else {
     root.LTAChampionshipCandidateMapper = Object.freeze(engine);
   }
-})(typeof window !== "undefined" ? window : globalThis, function () {
+})(typeof window !== "undefined" ? window : globalThis, function (viability) {
   "use strict";
 
   const PROFILE_SIGNALS = Object.freeze({
@@ -70,11 +73,13 @@
   }
 
   function candidateOrder(left, right) {
-    return right.contextFit - left.contextFit
+    return viability.priority(right.viability) - viability.priority(left.viability)
+      || right.contextFit - left.contextFit
       || right.signals.length - left.signals.length
       || right.matchedFields.length - left.matchedFields.length
-      || ROLE_ORDER.indexOf(left.role) - ROLE_ORDER.indexOf(right.role)
       || left.champion.localeCompare(right.champion, "es");
+    // No implicit TOP/JUNGLA/MID tie-break: unverified equal-role candidates
+    // are treated as ambiguous and excluded from standard recommendations.
   }
 
   function normalizeIdentity(value) {
@@ -123,6 +128,8 @@
     return {
       champion: candidate.champion,
       role: candidate.role,
+      viabilityStatus: candidate.viability.status,
+      viabilityPatch: viability.PATCH,
       function: String(candidate.candidate.function || "").trim(),
       tempo: String(candidate.candidate.tempo || "").trim(),
       priority,
@@ -156,31 +163,50 @@
       const signalDefinition = PROFILE_SIGNALS[profile?.id];
       if (!signalDefinition || !profile.label || !profile.improves) continue;
 
-      const ranked = new Map();
+      const grouped = new Map();
       for (const candidate of candidates) {
         const champion = String(candidate?.champion || "").trim();
         if (!champion || selectedChampions.has(normalize(champion))) continue;
         const { signals, matchedFields } = findSignals(candidate, signalDefinition);
         if (!signals.length) continue;
 
+        const position = viability.assess(champion, candidate.role);
+        // A listed draft role remains manually selectable, but a position
+        // with confirmed experimental status is not a default recommendation.
+        if (position.status === "experimental") continue;
         const key = normalize(champion);
-        const existing = ranked.get(key);
         const item = {
           champion,
           role: candidate.role,
           signals,
           matchedFields,
           contextFit: contextFit(candidate, input.diagnosis),
+          viability: position,
           candidate,
         };
-        if (!existing || candidateOrder(item, existing) < 0) ranked.set(key, item);
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key).push(item);
       }
 
-      const topCandidates = selectDiverseCandidates([...ranked.values()]);
+      const ranked = [];
+      const roleCandidates = [];
+      for (const group of grouped.values()) {
+        group.sort(candidateOrder);
+        roleCandidates.push(...group);
+        // If there is no evidence distinguishing two equivalent positions,
+        // do not silently pick TOP just because it comes first in the sheet.
+        const best = group[0], runnerUp = group[1];
+        if (runnerUp && best.viability.status === "sin-verificar"
+          && runnerUp.viability.status === "sin-verificar"
+          && candidateOrder(best, runnerUp) === 0) continue;
+        ranked.push(best);
+      }
+
+      const topCandidates = selectDiverseCandidates(ranked);
       if (topCandidates.length < 2) continue;
       const alternativesByRole = Object.fromEntries(ROLE_ORDER.map((role) => [
         role,
-        selectDiverseCandidates([...ranked.values()].filter((candidate) => candidate.role === role))
+        selectDiverseCandidates(roleCandidates.filter((candidate) => candidate.role === role))
           .map((candidate, index) => presentCandidate(candidate, profile, index + 1)),
       ]));
 
