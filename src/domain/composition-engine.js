@@ -484,6 +484,18 @@
     };
   }
 
+  // Reuse explicit draft requirements for complete-team decisions.
+  // Generic archetype drawbacks are tradeoffs, not mandatory fixes.
+  function assessPlanNeeds(input = {}) {
+    const picks = Array.isArray(input.picks) ? input.picks : [];
+    const archetype = ARCHETYPES.find((item) => normalize(item.label) === normalize(input.identity));
+    if (!archetype || picks.length !== 5 || !archetype.draftNeeds?.length) return [];
+    return STRATEGIC_GAPS
+      .filter((gap) => archetype.draftNeeds.includes(gap.id))
+      .filter((gap) => !picks.some((pick) => matchesExplicitSignal(pick, gap)))
+      .map((gap) => ({ id: gap.id, label: gap.label }));
+  }
+
   function auditArchetypeKnowledge(candidatesByRole = {}) {
     const candidates = Object.entries(candidatesByRole).flatMap(([role, items]) =>
       (Array.isArray(items) ? items : []).map((candidate) => ({ ...candidate, role }))
@@ -577,5 +589,5 @@
       }, {});
   }
 
-  return { analyzeComposition, recommendPicks, auditArchetypeKnowledge };
+  return { analyzeComposition, recommendPicks, assessPlanNeeds, auditArchetypeKnowledge };
 });
