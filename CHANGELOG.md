@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.7.0
+
+### Added
+- Diagnósticos completos con evidencia explícita para las identidades secundarias, sin alterar el draft
+
+
 ## v3.6.0
 
 ### Added

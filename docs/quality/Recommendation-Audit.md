@@ -141,7 +141,7 @@ Pares con recomendaciones de alta coincidencia:
 | Pick | Pick | hybrid | recommended | sustainedDamage, frontToBack |
 | Poke | Poke | hybrid | recommended | peel, disengage |
 | Split Push | Split Push | hybrid | recommended | pick, mapControl |
-| Teamfight | Teamfight | hybrid | recommended | engage, followUp |
+| Teamfight | Teamfight | coherent | recommended | engage, followUp |
 | Escalado | Escalado | hybrid | recommended | earlyPressure, pick |
 | Early Game | Early Game | hybrid | recommended | scaling, frontline |
 | Híbrida | Front to Back | hybrid | recommended | sideLane, scaling |

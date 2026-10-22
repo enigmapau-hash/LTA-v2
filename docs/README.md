@@ -14,6 +14,7 @@
 - [Strategic Knowledge Framework](quality/Strategic-Knowledge-Framework.md)
 - [Draft Reasoning Review](quality/Draft-Reasoning-Review.md)
 - [Contextual Recommendation Explanations](quality/Contextual-Recommendation-Explanations.md)
+- [Final Composition Diagnosis Precision](quality/Final-Composition-Diagnosis-Precision.md)
 
 ## Índice
 

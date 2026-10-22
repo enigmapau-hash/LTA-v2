@@ -128,6 +128,14 @@ async function main(){
    await page.waitForFunction(()=>document.querySelector(".pick-recommendations")?.textContent.includes("Heimerdinger")&&!document.querySelector(".pick-recommendations")?.textContent.includes("Cubre la falta"));
    assert.match(await page.locator(".pick-recommendations").innerText(),/Refuerza el plan de Poke que ya comparten los picks actuales\./);
   }
+  for(const [id,value] of [["top","Malphite"],["jungle","Wukong"],["mid","Yasuo"],["adc","Miss Fortune"],["support","Rell"]])await page.locator("#"+id).fill(value);
+  const finalDiagnosis=page.locator('[data-report-section="diagnosis"]');
+  await page.waitForFunction(()=>document.querySelector('[data-report-section="diagnosis"] .result-summary__answer')?.textContent.startsWith("Plan principal: Teamfight"));
+  assert.match(await finalDiagnosis.innerText(),/Cómo ganar: Iniciar una pelea coordinada y encadenar las definitivas\./);
+  assert.doesNotMatch(await finalDiagnosis.innerText(),/Dive/,"Engage no acredita por sí solo una vía Dive secundaria");
+  await page.locator("#top").fill("Camille");
+  await page.waitForFunction(()=>document.querySelector('[data-report-section="diagnosis"] .result-summary__answer')?.textContent.includes("Dive · Cómo ganar: Eliminar rápidamente la backline rival."));
+  assert.equal(await page.locator(".result-summary__strategy-card").count(),3,"se conserva la estructura del informe al cambiar el plan");
   assert.deepEqual(pageErrors,[],"sin errores JavaScript");assert.deepEqual(consoleErrors,[],"sin errores en consola");console.log("UX validada: 320, 375, 390, 768, 1280 px; informe estratégico adaptativo; teclado, accesibilidad, tabla y consola.");
  }finally{if(browser)await browser.close();await new Promise((r,j)=>server.close(e=>e?j(e):r()));}
 }
