@@ -183,7 +183,8 @@ assert.equal(
   }).summary,
   "El informe reutiliza el resumen compacto en el bloque de diagnóstico existente"
 );
-assert.equal(explainCorrection(proposeCorrections({ picks: clearPlan, diagnosis: diagnoseComposition(clearPlan), candidatesByRole })), clearReport.sections[1].explanation);
+assert.equal(proposeCorrections({ picks: clearPlan, diagnosis: diagnoseComposition(clearPlan), candidatesByRole }).explanation, clearReport.sections[1].explanation,
+  "La abstención explica por qué no se exige sustituir campeones");
 assert.equal(explainProtection(protectComposition({ diagnosis: diagnoseComposition(clearPlan) })), clearReport.sections[2].explanation);
 for (const report of [clearReport, hybridReport, incoherentReport, contradictoryReport]) {
   const explanations = report.sections.map((section) => section.explanation);
