@@ -87,11 +87,13 @@ async function main(){
   await page.locator(".result-summary__strategy-card").first().waitFor({state:"visible"});
   assert.equal(await page.locator(".result-summary__strategy-card").count(),3,"el equipo del usuario mantiene el informe completo y las claves internas");
   assert.deepEqual(await completeTable.locator("tbody tr").evaluateAll(rows=>rows.map(row=>row.dataset.role)),["top","jungle","mid","botline","support"]);
+  await page.waitForFunction(()=>document.querySelectorAll(".result-summary__ban-integration li").length===3);
+  assert.equal(new Set(await strategy.locator(".result-summary__ban-threat").allInnerTexts()).size,3,"el equipo del usuario obtiene amenazas distintas");
   const incoherentPicks={top:"Fiora",jungle:"Elise",mid:"Xerath",adc:"Draven",support:"Lulu"};
   for(const [role,champion] of Object.entries(incoherentPicks))await page.locator("#"+role).fill(champion);
   await page.waitForFunction(expected=>[...document.querySelectorAll(".composition-table .champion-name")].map(node=>node.textContent.trim()).join("|")===expected.join("|")&&document.querySelector(".result-summary__ban-integration li"),Object.values(incoherentPicks));
   const banItems=await strategy.locator(".result-summary__ban-integration li").allInnerTexts();
-  assert.ok(banItems.length>0&&banItems.length<=2,"el informe integra hasta dos bans cuando hay amenazas respaldadas");
+  assert.equal(banItems.length,3,"el informe integra tres bans distintos para un equipo completo");
   const banChampions=await strategy.locator(".result-summary__ban-integration li strong").allInnerTexts();
   assert.equal(new Set(banChampions).size,banChampions.length,"los bans son distintos");
   assert.ok(banChampions.every(name=>!Object.values(incoherentPicks).includes(name)),"no se recomienda banear campeones propios");

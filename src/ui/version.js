@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.7.2",
+    version: "v3.8.0",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-22",
-    summary: ["Corrección de las claves internas de roles para recuperar la recomposición y los bans estratégicos cuando procedan"],
+    summary: ["Bans contextualizados para equipos completos: tres amenazas diferenciadas basadas en Protección y el catálogo"],
     pending: [],
   };
 

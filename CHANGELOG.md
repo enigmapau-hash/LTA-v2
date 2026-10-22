@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.8.0
+
+### Added
+- Bans contextualizados para equipos completos: tres amenazas diferenciadas basadas en Protección y el catálogo
+
 ## v3.7.2
 
 ### Fixed

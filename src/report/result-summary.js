@@ -97,6 +97,7 @@
     const strategicBans = prioritizeBans({
       strategicRisks,
       strategicCounterplay,
+      protection,
       mappedCandidates,
       championCatalog: candidatesByRole,
     });
@@ -135,7 +136,7 @@
               ${section.strategicBans?.length ? `<div class="result-summary__ban-integration" aria-label="Bans estratégicos">
                 <p><strong>Bans prioritarios</strong></p>
                 <ul>
-                  ${section.strategicBans.map((ban) => `<li><strong>${escapeHtml(ban.champion)}</strong> · Amenaza: ${escapeHtml(ban.threat)}. ${escapeHtml(ban.reason)} Si se banea: ${escapeHtml(ban.expectedImpact)}</li>`).join("")}
+                  ${section.strategicBans.map((ban) => `<li><strong>${escapeHtml(ban.champion)}</strong><small class="result-summary__ban-threat">${escapeHtml(ban.threat)}</small><small>${escapeHtml(ban.reason)}</small><small class="result-summary__ban-impact">${escapeHtml(ban.expectedImpact)}</small></li>`).join("")}
                 </ul>
               </div>` : ""}
               ${Array.isArray(section.candidates) ? `<ol class="result-summary__recommendation-list" aria-label="Candidatos priorizados">

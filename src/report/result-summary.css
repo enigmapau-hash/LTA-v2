@@ -204,12 +204,39 @@
 
 .result-summary__ban-integration ul {
   display: grid;
-  gap: 4px;
-  padding-left: 18px;
+  gap: 9px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 .result-summary__ban-integration li {
-  font-size: 0.78rem;
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.result-summary__ban-integration li strong {
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.result-summary__ban-integration li small {
+  display: block;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.result-summary__ban-integration .result-summary__ban-threat {
+  color: var(--accent-2);
+  font-weight: 700;
+}
+
+.result-summary__ban-integration .result-summary__ban-impact {
+  color: var(--text);
 }
 
 .result-summary__recommendation-list {

@@ -58,7 +58,7 @@ function analyze(selection) {
   };
   const strategicRisks = assessStrategicRisks(riskInputs);
   const strategicCounterplay = adviseCounterplay({ strategicRisks });
-  const strategicBans = prioritizeBans({ strategicRisks, strategicCounterplay, mappedCandidates, championCatalog: candidatesByRole });
+  const strategicBans = prioritizeBans({ strategicRisks, strategicCounterplay, protection, mappedCandidates, championCatalog: candidatesByRole });
   const banPresentation = presentBanRecommendations({ banPrioritizer: strategicBans });
   const reportInput = { diagnosis, correction, protection, strategicRisks, strategicCounterplay, strategicBans };
   const report = buildStrategicReport({ ...reportInput, strategicBanPresentation: banPresentation });
@@ -79,9 +79,10 @@ for (const [name, selection, expectedCoherence] of references) {
   const expectedIntegration = integrateStrategicReportBans({ banPresentation: result.banPresentation });
   assert.deepEqual(protectionSection.strategicBans || null, expectedIntegration?.bans || null, `La integración ${name} conserva solo los bans presentados`);
   assert.equal(result.report.sections.length, 3, "La integración conserva los tres bloques existentes del informe");
-  assert.ok(["presented", "no-bans", "not-assessable"].includes(result.banPresentation.status));
+  assert.equal(result.banPresentation.status, "presented", "Cada draft completo recibe recomendaciones de ban");
   if (result.banPresentation.status === "presented") {
-    assert.ok(result.banPresentation.bans.length <= 3);
+    assert.equal(result.banPresentation.bans.length, 3);
+    assert.equal(new Set(result.banPresentation.bans.map((ban) => ban.threat)).size, 3, "Bans sobre amenazas diferentes");
     assert.deepEqual(result.banPresentation.bans.map((ban) => ban.priority), result.banPresentation.bans.map((_, index) => index + 1));
     assert.ok(result.banPresentation.bans.every((ban) => ban.champion && ban.threat && ["alta", "media", "baja"].includes(ban.severity)
       && ban.reason && ban.expectedImpact));
@@ -125,7 +126,7 @@ const clear = analyze({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline:
 const reportWithoutPresentation = buildStrategicReport(clear.reportInput);
 assert.equal(clear.report.sections.length, reportWithoutPresentation.sections.length, "Integra bans en un bloque existente sin añadir secciones");
 assert.deepEqual(clear.report.sections.slice(0, 2), reportWithoutPresentation.sections.slice(0, 2), "No altera diagnóstico ni corrección");
-assert.deepEqual(clear.report.sections[2].strategicBans, clear.banPresentation.bans.slice(0, 2), "La integración muestra solo los dos bans prioritarios dentro de protección");
+assert.deepEqual(clear.report.sections[2].strategicBans, clear.banPresentation.bans.slice(0, 3), "La integración muestra tres bans dentro de protección");
 assert.deepEqual(clear.report.strategicBanPresentation, clear.banPresentation, "El informe conserva la presentación solo como dato interno");
 assert.equal(JSON.stringify(clear.report.sections).includes("strategicBanPresentation"), false, "No filtra el nombre de la capa interna a los bloques del informe");
 

@@ -8,7 +8,7 @@
 })(typeof window !== "undefined" ? window : globalThis, function () {
   "use strict";
 
-  const MAX_VISIBLE_BANS = 2;
+  const MAX_VISIBLE_BANS = 3;
   const SEVERITIES = new Set(["alta", "media", "baja"]);
 
   function integrateStrategicReportBans(input = {}) {
