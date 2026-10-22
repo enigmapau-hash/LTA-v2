@@ -184,6 +184,7 @@
       improvements.push({
         profile: { id: profile.id, label: profile.label },
         limitingFactor: label,
+        evidenceType: clearPlan ? "required-plan-capability" : "cohesion-gap",
         priority: improvements.length === 0 ? "principal" : "alternativa",
         explanation: `Falta respaldo para «${label}». ${profile.label} puede cubrir esa necesidad; debe verificarse el plan resultante de cualquier cambio.`,
         candidates,
