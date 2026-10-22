@@ -37,6 +37,29 @@
     scaling: { terms: ["late", "escalado", "hypercarry"], action: "acompaña la ventana de escalado respaldada por" },
     zoneControl: { terms: ["poke", "asedio", "objetivos"], action: "ofrece control del espacio para acompañar" },
   });
+  const BENEFIT_INTRO = Object.freeze({
+    engage: "La iniciación encaja con",
+    followUp: "El seguimiento encaja con",
+    frontline: "La primera línea complementa a",
+    peel: "La protección complementa a",
+    disengage: "El desenganche apoya a",
+    sustainedDamage: "El daño sostenido complementa a",
+    frontToBack: "El juego frontal complementa a",
+    pick: "Las oportunidades de cazada encajan con",
+    sideLane: "La presión lateral complementa a",
+    mapControl: "El control del mapa apoya a",
+    earlyPressure: "La presión temprana acompaña a",
+    scaling: "El escalado acompaña a",
+    zoneControl: "El control de zonas complementa a",
+  });
+
+  function summarizeBeneficiaries(profileId, beneficiaries) {
+    if (!beneficiaries.length) return "";
+    const intro = BENEFIT_INTRO[profileId] || "La propuesta encaja con";
+    const related = beneficiaries.map((ally) => `${ally.champion} («${ally.evidence[0].value}»)`);
+    return `${intro} ${related.join(", ")}.`;
+  }
+
   const DIRECT_PROFILE = Object.freeze({ engage: "engage", frontline: "frontline", "sustained-damage": "sustainedDamage",
     "side-lane": "sideLane", peel: "peel", pick: "pick", "early-pressure": "earlyPressure", scaling: "scaling" });
 
@@ -93,16 +116,18 @@
         // A contradictory candidate may still be displayed by the existing chain;
         // do not turn its warning into a positive claim or change its ranking.
         const compatible = assessment.contradictsPlan === false;
+        const beneficiaries = compatible ? beneficiaryEvidence(profile.id, picks, candidate) : [];
         const effect = compatible && detectedNeed && DIRECT_PROFILE[input.optimizer.priority.need.id] === profile.id
           ? { kind: "correction", text: `Contribuye a corregir «${detectedNeed}».`, evidence: [detectedNeed] }
           : compatible && shared.length
-            ? { kind: "reinforcement", text: `Refuerza una fortaleza ya presente: ${shared.join(" y ")}.`, evidence: shared }
+            ? { kind: "reinforcement", text: `También comparte con el equipo: ${shared.join(" y ")}.`, evidence: shared }
             : null;
         return { ...candidate, justification: {
-          contribution: `Aporta ${evidence.slice(0, 2).join(" y ")}, acorde con el perfil ${profile.label}.`,
+          contribution: `Señales del catálogo: ${evidence.slice(0, 2).join(" · ")}.`,
           evidence,
           ...(effect ? { effect } : {}),
-          beneficiaries: compatible ? beneficiaryEvidence(profile.id, picks, candidate) : [],
+          beneficiaries,
+          ...(beneficiaries.length ? { beneficiarySummary: summarizeBeneficiaries(profile.id, beneficiaries) } : {}),
         } };
       }),
     };

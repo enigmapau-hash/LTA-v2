@@ -103,6 +103,20 @@ for (const input of snapshots) {
     if (!justification) continue;
     explained++;
     assert.ok(justification.evidence.length);
+    assert.match(justification.contribution, /^Señales del catálogo:/, "Solo señales del origen sin reiterar el perfil");
+    assert.doesNotMatch(justification.contribution, /acorde con el perfil/, "No repetir la categoría del candidato");
+    if (justification.beneficiaries.length) {
+      assert.ok(justification.beneficiarySummary, "Las relaciones con aliados deben estar resumidas");
+      for (const ally of justification.beneficiaries) {
+        assert.ok(justification.beneficiarySummary.includes(ally.champion), "El resumen conserva cada compañero");
+        assert.ok(justification.beneficiarySummary.includes(ally.evidence[0].value), "El resumen conserva su evidencia");
+      }
+      if (justification.beneficiaries.length > 1) {
+        assert.ok(justification.beneficiarySummary.length <
+          justification.beneficiaries.map((ally) => ally.text).join(" ").length,
+          "Un solo enunciado reduce repetición respecto al texto anterior");
+      }
+    }
     if (input.diagnosis.primaryProblem?.type === "identity-risk") {
       assert.notEqual(justification.effect?.kind, "correction",
         "La debilidad inherente a una identidad no prueba corrección real");

@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.12.0",
+    version: "v3.12.1",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-22",
-    summary: ["Rediseño del informe: plan y condición de victoria separados, alternativa principal destacada, motivos secundarios y bans desplegables."],
+    summary: ["Explicaciones más claras: evidencia y conexiones entre campeones condensadas, sin frases repetidas ni cambios de decisiones."],
     pending: [],
   };
 
