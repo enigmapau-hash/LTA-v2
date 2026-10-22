@@ -159,8 +159,11 @@ assert.match(renderMarkdown(first, firstDraft), /Diversidad \| 22\.0% \| 24\.0% 
   "La comparación QP2 conserva sus métricas históricas tras nuevas auditorías");
 assert.match(renderMarkdown(first, firstDraft), /Diversidad de candidatos \| 24\.0% \| 24\.0% \| 0\.0 p\.p\./,
   "La comparación QP3 queda fijada en su resultado histórico");
-assert.match(renderMarkdown(first, firstDraft), /38\.6% \| 56\.1% \| \+17\.5 p\.p\./,
-  "El informe conserva la comparación de diversidad antes/después");
+// The QP1 table compares its historical baseline with the current result.
+// 26.21 conservatively abstains on unverified role ties: 30/56 = 53.6%,
+// versus 32/57 = 56.1% before role viability. Quality thresholds above remain.
+assert.match(renderMarkdown(first, firstDraft), /38\.6% \| 53\.6% \| \+15\.0 p\.p\./,
+  "El informe compara la línea base histórica con la diversidad actual de 26.21");
 
 const noRecommendations = auditRecommendations(Object.fromEntries(Object.keys(catalog).map((role) => [
   role,

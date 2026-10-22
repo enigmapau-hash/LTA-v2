@@ -87,4 +87,14 @@ assert.ok(first.profiles[0].alternativesByRole.jungle.some((item) => item.champi
   "La posición habitual permanece disponible para recomposición");
 assert.deepEqual(mapCandidates(inputs), first, "La prioridad por rol es determinista y local");
 
+const renamedInputs = structuredClone(inputs);
+renamedInputs.candidatesByRole.jungle.find((item) => item.champion === "Flexible").champion = "flexible";
+assert.ok(!mapCandidates(renamedInputs).profiles[0].candidates.some((item) => item.champion.toLowerCase() === "flexible"),
+  "Las mayúsculas del nombre no son evidencia para desempatar posiciones sin verificar");
+const reorderedInputs = { ...inputs, candidatesByRole: Object.fromEntries(
+  Object.entries(candidateCatalog).reverse().map(([role, items]) => [role, [...items].reverse()])
+) };
+assert.deepEqual(mapCandidates(reorderedInputs), first,
+  "La selección no depende del orden de los roles ni del catálogo");
+
 console.log("Viabilidad por rol 26.21 validada: 266 parejas, evidencia explícita, sin inventar etiquetas, no TOP automático, sin bloquear el draft.");

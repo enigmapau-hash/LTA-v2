@@ -44,7 +44,14 @@
     const matchedFields = [];
     for (const field of signalDefinition.fields) {
       const value = normalize(candidate[field]);
-      const matches = signalDefinition.terms.filter((term) => value.includes(normalize(term)));
+      const matches = signalDefinition.terms.filter((term) => {
+        const signal = normalize(term);
+        // Anti-engage is evidence for disengage, not for initiating a fight.
+        // Keep explicit anti-* signals, but do not count them as the capability
+        // they counter (likewise anti-frontline versus our own frontline).
+        const evidence = signal.startsWith("anti ") ? value : value.replace(/\banti [a-z0-9]+\b/g, " ");
+        return (" " + evidence + " ").includes(" " + signal + " ");
+      });
       if (matches.length) matchedFields.push(field);
       signals.push(...matches);
     }
@@ -84,9 +91,11 @@
 
   function sameChampionRoleOrder(left, right) {
     // For the SAME champion, positional viability must beat equal-looking
-    // workbook attributes. Never break remaining ties with ROLE_ORDER.
+    // workbook attributes. Role order and name casing are not role evidence.
     return viability.priority(right.viability) - viability.priority(left.viability)
-      || candidateOrder(left, right);
+      || right.contextFit - left.contextFit
+      || right.signals.length - left.signals.length
+      || right.matchedFields.length - left.matchedFields.length;
   }
 
   function normalizeIdentity(value) {
@@ -198,7 +207,10 @@
       const ranked = [];
       const roleCandidates = [];
       for (const group of grouped.values()) {
-        group.sort(sameChampionRoleOrder);
+        // Canonical order makes equally supported roles deterministic. It is
+        // never evidence for resolving the unverified tie checked below.
+        group.sort((left, right) => sameChampionRoleOrder(left, right)
+          || left.role.localeCompare(right.role, "es"));
         roleCandidates.push(...group);
         // If there is no evidence distinguishing two equivalent positions,
         // do not silently pick TOP just because it comes first in the sheet.
