@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.7.0",
+    version: "v3.7.1",
     track: "Actualización funcional",
     label: "Versión",
-    updated: "2026-10-21",
-    summary: ["Diagnósticos completos con evidencia explícita para las identidades secundarias, sin alterar el draft"],
+    updated: "2026-10-22",
+    summary: ["Jerarquía visual más clara para diagnóstico, mejora y protección, con candidatos más legibles"],
     pending: [],
   };
 

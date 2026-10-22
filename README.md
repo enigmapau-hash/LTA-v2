@@ -12,7 +12,7 @@ La v2 amplía la lectura estratégica de composiciones completas con diagnóstic
 
 ## Características
 
-- Versión visible: `v3.7.0`
+- Versión visible: `v3.7.1`
 - No permite campeones repetidos.
 - Muestra iconos oficiales de campeones cuando están disponibles.
 - El selector, la vista rápida y el resultado se actualizan sin recargar.
