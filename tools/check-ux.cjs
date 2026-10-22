@@ -81,9 +81,12 @@ async function main(){
   await justifications.first().waitFor({state:"visible"});
   assert.equal(await justifications.count(), await strategy.locator(".result-summary__recommendation-list > li").count(), "Cada candidato respaldado ofrece una justificación");
   assert.match(await strategy.locator(".result-summary__detected-need").innerText(), /Poca presión lateral/);
+  // A blur-triggered table redraw can queue a result-summary rebuild in rAF.
+  // Let the pending render settle before exercising the keyboard control.
+  await page.evaluate(() => new Promise(resolve =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const justificationToggle = justifications.first().locator("summary");
-  await justificationToggle.focus();
-  await page.keyboard.press("Enter");
+  await justificationToggle.press("Enter");
   assert.equal(await justifications.first().evaluate(node=>node.open), true, "La explicación se abre por teclado");
   assert.notEqual(await justificationToggle.evaluate(node=>getComputedStyle(node).outlineStyle), "none", "Foco visible en la explicación");
   assert.match(await justifications.first().innerText(), /Aporta .+Contribuye a corregir/s);
