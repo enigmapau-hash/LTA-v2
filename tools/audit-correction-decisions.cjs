@@ -91,6 +91,10 @@ function audit(item){
       .map(candidate=>replacementEvidence(item.picks,diagnosis,candidate))} : {}),
     evaluatedProfiles:(evaluatedCandidates.profiles||[]).map(x=>({
       id:x.id,champions:(x.candidates||[]).map(y=>y.champion),
+      replacementChecks:(x.candidates||[]).map(y=>({
+        champion:y.champion,role:y.role,status:y.replacementCheck?.status||null,
+        introduced:y.replacementCheck?.introduced||[],
+      })),
     })),
     mappedRoles:(mappedCandidates.profiles||[]).map(x=>({
       id:x.id,roleAlternativeCounts:Object.fromEntries(Object.entries(x.alternativesByRole||{}).map(([r,a])=>[r,a.length])),
@@ -106,6 +110,19 @@ for(const x of traced.slice(-2)){
   assert.equal(x.optimizerStatus,"prioritized","Do not regress user's evidenced priority: "+x.id);
   assert.equal(x.mapperStatus,"mapped","Do not lose the screenshot's candidates: "+x.id);
 }
+const frontline=traced.find(x=>x.id==="user-frontline");
+const frontlineChecks=Object.fromEntries(frontline.evaluatedProfiles[0].replacementChecks.map(x=>[x.champion,x]));
+assert.equal(frontlineChecks.Swain.status,"new-gap");
+assert.deepEqual(frontlineChecks.Swain.introduced,["peel"],"Swain SUPPORT removes Ashe's protection");
+assert.equal(frontlineChecks.Aatrox.status,"new-gap");
+assert.deepEqual(frontlineChecks.Aatrox.introduced,["sustained-damage"],"Aatrox TOP loses Irelia's sustained damage");
+assert.equal(frontlineChecks["K'Sante"].status,"plan-changed","K'Sante TOP cannot be presented as proven plan preservation");
+const peel=traced.find(x=>x.id==="user-peel");
+const peelChecks=Object.fromEntries(peel.evaluatedProfiles[0].replacementChecks.map(x=>[x.champion,x]));
+assert.equal(peelChecks.Ashe.status,"validated");
+assert.equal(peelChecks.Alistar.status,"validated");
+assert.deepEqual(peelChecks.Ashe.introduced,[]);
+assert.deepEqual(peelChecks.Alistar.introduced,[]);
 assert.ok(traced.some(x=>x.optimizerStatus==="no-priority"),"The audit needs a true abstention control");
 assert.ok(traced.some(x=>x.optimizerStatus==="prioritized"),"The audit needs a positive control");
 console.log(JSON.stringify({checkedAt:"2026-10-23",referenceCount:traced.length,
