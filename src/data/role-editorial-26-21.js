@@ -636,6 +636,11 @@
   ]
 ]);
 
+  // Declaraciones humanas recibidas el 23/10/2026. NO son hechos
+  // estadísticos ni autorizan a declarar los demás roles inviables.
+  const MANUAL_HABITUAL = Object.freeze([["Maokai","support"],["Poppy","top"],["Poppy","support"],["Gragas","top"],["Gragas","mid"],["Galio","mid"],["Cho'Gath","jungle"],["Cho'Gath","top"],["Garen","top"],["Dr. Mundo","jungle"],["Dr. Mundo","top"],["Nautilus","support"],["Viego","jungle"],["Fiddlesticks","jungle"],["Brand","support"],["Yorick","top"]]);
+  const MANUAL_KEYS = new Set(MANUAL_HABITUAL.map(([champion, role]) => champion + "|" + role));
+
   // Seven manually transcribed positional facts (NOT a third-party dataset).
   // Source: LeagueOfGraphs, patch 16.21; all regions, Platinum+,
   // normal and ranked, last two days as observed on 2026-10-23.
@@ -675,13 +680,27 @@
       sourcePatch: "16.21", reviewedAt: REVIEWED_AT,
       source: PRIMARY_SOURCE + "lux" }),
   ]);
-  const entries = [...PAIRS, ...ADDITIONAL_PAIRS].map(([champion,role,status]) => {
-    const primary = status === "principal";
+  const established = [...PAIRS, ...ADDITIONAL_PAIRS];
+  const establishedKeys = new Set(established.map(([champion, role]) => champion + "|" + role));
+  const manualOnlyPairs = MANUAL_HABITUAL.filter(([champion, role]) =>
+    !establishedKeys.has(champion + "|" + role))
+    .map(([champion, role]) => [champion, role, "habitual"]);
+  const entries = [...established, ...manualOnlyPairs].map(([champion,role,initialStatus]) => {
+    const key = champion + "|" + role;
+    const manualHabitual = MANUAL_KEYS.has(key);
+    const manualOnly = !establishedKeys.has(key);
+    // Nunca rebajar un principal cuantitativo por ser también habitual manual.
+    const status = initialStatus === "compatible" && manualHabitual ? "habitual" : initialStatus;
     const experimental = status === "experimental";
-    const roleShare = STATISTICAL_SHARE[champion + "|" + role] || null;
+    const roleShare = STATISTICAL_SHARE[key] || null;
     return Object.freeze({
       champion, role, status, reviewedAt: REVIEWED_AT,
-      source: roleShare
+      ...(manualHabitual ? {
+        manualRoleReview: "habitual",
+        manualReviewedAt: REVIEWED_AT,
+        manualProvenance: "Declaración del usuario de LTA, no estadística",
+      } : {}),
+      source: manualOnly ? null : roleShare
         ? PRIMARY_SOURCE + champion.toLowerCase().replace(/[^a-z0-9]/g,"")
         : experimental
           ? "https://www.metasrc.com/lol/champions/diana/top/stats"
@@ -694,10 +713,14 @@
       sourcePatch: roleShare ? "16.21" : null,
       evidenceType: roleShare
         ? "Distribución puntual de partidas del campeón; estado editorial: " + status
+        : manualOnly ? "Habitual declarada por el usuario; sin validación estadística ni externa"
+        : manualHabitual && status === "habitual"
+          ? "Compatible en League Wiki; habitual según criterio manual del usuario"
         : status === "compatible" ? "Posición reconocida por Riot según listado de League Wiki"
         : experimental ? "Muestra anterior pequeña, no apta para recomendación normal"
         : "Solo 3P en League Wiki; no etiquetar principal",
       scope: roleShare ? "Todas las regiones, Platino+, normales y clasificatorias, ventana de dos días (consulta 23/10/2026)"
+        : manualOnly ? "Declaración humana, sin cuota estadística, cola, región o parche"
         : "Listado descriptivo; no certifica cuota ni parche",
     });
   });
