@@ -3,7 +3,7 @@
 ## v3.13.4
 
 ### Improved
-- Revisión editorial por campeón de 125 posiciones con clasificación principal, habitual, compatible y secundaria; descarte de predominio no equivale a prohibir elecciones manuales.
+- Revisión editorial por campeón de 124 posiciones con clasificación principal, habitual, compatible y secundaria; descarte de predominio no equivale a prohibir elecciones manuales.
 
 
 ## v3.13.3
