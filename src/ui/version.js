@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.13.3",
+    version: "v3.13.4",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-23",
-    summary: ["Roles revisados offline: principales editoriales, compatibles y secundarios; alternativas sin verificar solo provisionales."],
+    summary: ["Segunda revisión offline por campeón: 125 parejas, posiciones principales y habituales con evidencia y descarte no destructivo."],
     pending: [],
   };
 
