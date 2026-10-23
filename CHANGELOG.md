@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.13.6
+
+### Improved
+- Audita por qué la corrección se abstiene: plan ya respaldado, contradicción no resuelta, factor no mapeado o alternativas insuficientes.
+- Evalúa sustituciones individuales con diagnóstico posterior del mismo rol: mantiene la identidad y señala pérdidas nuevas de frontline, peel u otros requisitos; no confunde rol estadísticamente principal con beneficio estratégico.
+- Sustituye la cuota artificial de abstenciones de la auditoría por controles positivos/negativos por composición. Comprueba los dos equipos reales enviados por el usuario y mantiene picks, bans y catálogo sin cambios.
+
+
 ## v3.13.5
 
 ### Fixed
