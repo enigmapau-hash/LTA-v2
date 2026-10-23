@@ -267,11 +267,7 @@
     "support",
     "principal"
   ],
-  [
-    "Lux",
-    "support",
-    "principal"
-  ],
+  
   [
     "Jax",
     "top",
@@ -676,6 +672,13 @@
     "Pantheon|mid": [11.1],
   });
   const PRIMARY_SOURCE = "https://www.leagueofgraphs.com/en/champions/stats/";
+  // Posición predominante externa al Excel: sirve para descartar predominio
+  // de Lux MID, NO para aumentar artificialmente la cobertura del catálogo.
+  const externalDominance = Object.freeze([
+    Object.freeze({ champion: "Lux", role: "support", roleSharePct: 61.0,
+      sourcePatch: "16.21", reviewedAt: REVIEWED_AT,
+      source: PRIMARY_SOURCE + "lux" }),
+  ]);
   const entries = [...PAIRS, ...ADDITIONAL_PAIRS].map(([champion,role,status]) => {
     const primary = status === "principal";
     const experimental = status === "experimental";
@@ -702,5 +705,5 @@
         : "Listado descriptivo; no certifica cuota ni parche",
     });
   });
-  return Object.freeze({ REVIEWED_AT, entries: Object.freeze(entries) });
+  return Object.freeze({ REVIEWED_AT, entries: Object.freeze(entries), externalDominance });
 });
