@@ -3,8 +3,7 @@
 ## v3.13.4
 
 ### Improved
-- Revisión editorial por campeón de 139 parejas, incluyendo 16 posiciones habituales, 6 situacionales del catálogo y Maokai JUNGLA fuera del Excel y 4 descartadas para alternativas automáticas según criterio manual; sin modificar picks manuales ni bans con clasificación principal, habitual, compatible y secundaria; descarte de predominio no equivale a prohibir elecciones manuales.
-
+- Curación offline de 203 parejas del catálogo, incluyendo 65 decisiones manuales nuevas (35 habituales, 20 situacionales, 10 descartadas). Ekko MID/JUNGLA habitual; picks manuales y bans intactos.
 
 ## v3.13.3
 
