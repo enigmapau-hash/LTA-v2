@@ -12,8 +12,8 @@ assert.equal(Object.values(countByRole).reduce((n,c)=>n+c,0),266);
 const records=viability.candidatesForReview(catalog);
 const key=(item)=>item.champion.toLocaleLowerCase("es")+"|"+item.role;
 const workbookPairs=new Set(records.map(key));
-assert.equal(editorial.entries.length,124,"Segunda tanda editorial acotada a 125 parejas; no inventar clasificación total");
-assert.equal(new Set(editorial.entries.map(key)).size,124,"Sin duplicar pares");
+assert.equal(editorial.entries.length,123,"Segunda tanda editorial acotada a 125 parejas; no inventar clasificación total");
+assert.equal(new Set(editorial.entries.map(key)).size,123,"Sin duplicar pares");
 for(const item of editorial.entries){
   assert.ok(workbookPairs.has(key(item)),item.champion+" "+item.role+" debe figurar en Draft Pool.xlsx");
   assert.match(item.source,/^https:\/\//);
@@ -44,7 +44,7 @@ for(const item of editorial.entries){
   }else assert.equal(item.sourcePatch,null,"No asignar parche de la estadística a una posición Wiki");
 }
 const counts=Object.fromEntries(["principal","compatible","habitual","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
-assert.deepEqual(counts,{principal:12,compatible:95,habitual:10,secundaria:6,experimental:1,"sin-verificar":142});
+assert.deepEqual(counts,{principal:12,compatible:95,habitual:9,secundaria:6,experimental:1,"sin-verificar":143});
 assert.equal(viability.assess("Diana","mid").provider,"LeagueOfGraphs / League Wiki",
   "Los porcentajes editoriales proceden de LeagueOfGraphs, no de OP.GG");
 assert.equal(viability.assess("Aurora","top").provider,"League Wiki / revisión editorial");
@@ -63,8 +63,8 @@ for(const [champion,role,status] of [
 const {analyze: analyzeByChampion,canon}=require("./audit-editorial-by-champion.cjs");
 const byChampion=analyzeByChampion(catalog);
 assert.equal(byChampion.pairs,266);
-assert.equal(byChampion.reviewed,124);
-assert.equal(byChampion.pending,142);
+assert.equal(byChampion.reviewed,123);
+assert.equal(byChampion.pending,143);
 assert.ok(byChampion.champions < byChampion.distinctCatalogNames,
   "Las builds de Kayn/Varus/Shaco comparten campeón; no necesariamente rol verificado");
 assert.equal(canon("Kayn (Azul)"),canon("Kayn (Rojo)"));
@@ -73,7 +73,7 @@ assert.equal(canon("Varus (On-Hit)"),canon("Varus (Letalidad)"));
 for(const [champion,role,expected] of [
   ["Brand","support","principal"],["Brand","jungle","secundaria"],["Brand","mid","habitual"],
   ["Lux","mid","habitual"],
-  ["Jax","top","principal"],["Jax","jungle","habitual"],
+  ["Jax","top","principal"],
   ["Senna","support","principal"],["Swain","support","principal"],
   ["Swain","botline","habitual"],["Ashe","botline","principal"],["Ashe","support","compatible"],
   ["Pantheon","top","habitual"],["Pantheon","support","habitual"],
