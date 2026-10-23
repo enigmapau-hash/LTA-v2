@@ -160,3 +160,20 @@ jobs:
           node tools/check-candidate-evaluator.cjs
           node tools/check-strategic-composition-optimizer.cjs
           node tools/check-strategic-team-recomposer.cjs
+
+  fast-ban-regressions:
+    name: Fast ban identity and presenter regressions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Verify ban champion identities, allied picks and threat diversity
+        run: node tools/check-ban-prioritizer.cjs
+      - name: Verify ban output and report integration
+        run: |
+          node tools/check-ban-recommendation-presenter.cjs
+          node tools/check-strategic-report-ban-integration.cjs
+      - name: Verify version synchronization
+        run: npm run version:check

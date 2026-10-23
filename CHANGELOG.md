@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.13.5
+
+### Fixed
+- Los bans usan el campeón real, no las variantes de build de Shaco, Kayn y Varus. Evitan sugerir bans contra la otra variante de un campeón aliado, sin cambiar los picks manuales ni atribuir counters no demostrados.
+
+
 ## v3.13.4
 
 ### Improved

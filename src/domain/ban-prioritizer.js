@@ -85,6 +85,24 @@
       .trim();
   }
 
+  // Draft Pool.xlsx distinguishes build variants, but bans in League of
+  // Legends apply to the champion. Scope the aliasing to these known builds:
+  // never collapse other, potentially meaningful parenthesized names.
+  const KNOWN_BUILD_VARIANTS = Object.freeze({
+    shaco: Object.freeze(["ad", "ap"]),
+    kayn: Object.freeze(["azul", "rojo"]),
+    varus: Object.freeze(["letalidad", "on hit"]),
+  });
+
+  function canonicalBanChampion(value) {
+    const champion = String(value || "").trim();
+    const variant = /^(.+?)\s*\(([^)]+)\)$/.exec(champion);
+    if (!variant) return champion;
+    const base = variant[1].trim();
+    const build = normalize(variant[2]);
+    return KNOWN_BUILD_VARIANTS[normalize(base)]?.includes(build) ? base : champion;
+  }
+
   function unavailable(status) {
     return { status, bans: [] };
   }
@@ -94,7 +112,11 @@
       .flatMap(([rawRole, champions]) => {
         const role = ROLE_ORDER.find((item) => normalize(item) === normalize(rawRole));
         if (!role || !Array.isArray(champions)) return [];
-        return champions.map((champion) => ({ ...champion, role }));
+        return champions.map((champion) => ({
+          ...champion,
+          champion: canonicalBanChampion(champion?.champion),
+          role,
+        }));
       });
     const unique = new Map();
     for (const champion of entries) {
@@ -206,7 +228,7 @@
       || composition.picks.length !== ROLE_ORDER.length
       || new Set(composition.picks.map((pick) => normalize(pick?.role))).size !== ROLE_ORDER.length
       || !ROLE_ORDER.every((role) => composition.picks.some((pick) => normalize(pick?.role) === role))
-      || new Set(composition.picks.map((pick) => normalize(pick?.champion))).size !== ROLE_ORDER.length) {
+      || new Set(composition.picks.map((pick) => normalize(canonicalBanChampion(pick?.champion)))).size !== ROLE_ORDER.length) {
       return unavailable("not-assessable");
     }
 
@@ -219,7 +241,7 @@
     const catalog = collectChampionCatalog(input.championCatalog);
     if (!catalog.length) return unavailable("no-candidates");
 
-    const selected = new Set(composition.picks.map((pick) => normalize(pick?.champion)).filter(Boolean));
+    const selected = new Set(composition.picks.map((pick) => normalize(canonicalBanChampion(pick?.champion))).filter(Boolean));
     const rankedByThreat = threats.map((threat) => ({
       threat,
       candidates: candidatesForThreat(catalog, selected, threat),

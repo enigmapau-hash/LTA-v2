@@ -12,7 +12,7 @@ La v2 amplía la lectura estratégica de composiciones completas con diagnóstic
 
 ## Características
 
-- Versión visible: `v3.13.4`
+- Versión visible: `v3.13.5`
 - El informe separa la recomposición de dos campeones de las alternativas individuales; elimina afirmaciones repetidas y mantiene evidencia consultable.
 - La identidad estratégica reconocida no equivale a un plan ejecutable: el diagnóstico verifica recursos necesarios y la recomendación corrige las carencias acreditadas.
 - Las correcciones de equipos completos exigen una brecha de cohesión o una herramienta explícitamente requerida por el plan que falte. No se fuerzan cambios por debilidades normales del arquetipo. Protección y bans siguen funcionando aunque no se recomienden sustituciones.
