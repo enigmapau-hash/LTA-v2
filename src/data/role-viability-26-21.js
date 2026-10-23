@@ -70,7 +70,8 @@
     const curated = reviewed.get(key);
     if (curated) return {
       ...curated, patch: PATCH, checkedAt: curated.reviewedAt,
-      provider: curated.status === "principal" ? "OP.GG / League Wiki" : "League Wiki / revisión editorial",
+      provider: curated.status === "principal" ? "LeagueOfGraphs / League Wiki"
+        : curated.status === "experimental" ? "METAsrc" : "League Wiki / revisión editorial",
       reviewed: true,
     };
     const known = byPair.get(key);
