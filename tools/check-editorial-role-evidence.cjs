@@ -93,6 +93,30 @@ assert.ok(!byChampion.groups.find(x=>x.id==="pantheon").nonPrincipalByExclusion.
 assert.ok(viability.isReviewedRecommendation(viability.assess("Poppy","support")),
   "Una posición habitual documentada también se puede recomendar");
 
+// Fuente de estas posiciones: confirmaciones humanas (no porcentajes externos).
+const manuallyConfirmed=[["Maokai","support","principal"],["Poppy","top","habitual"],["Poppy","support","habitual"],["Gragas","top","habitual"],["Gragas","mid","habitual"],["Galio","mid","habitual"],["Cho'Gath","jungle","habitual"],["Cho'Gath","top","habitual"],["Garen","top","habitual"],["Dr. Mundo","jungle","habitual"],["Dr. Mundo","top","habitual"],["Nautilus","support","habitual"],["Viego","jungle","habitual"],["Fiddlesticks","jungle","habitual"],["Brand","support","principal"],["Yorick","top","habitual"]];
+assert.equal(manuallyConfirmed.length,16);
+for(const [champion,role,status] of manuallyConfirmed) {
+  const actual=viability.assess(champion,role);
+  assert.equal(actual.status,status,champion+" "+role);
+  assert.equal(actual.manualRoleReview,"habitual");
+  assert.equal(actual.manualProvenance,"Declaración del usuario de LTA, no estadística");
+}
+for(const [champion,role] of [["Poppy","top"],["Gragas","top"],["Gragas","mid"],["Cho'Gath","jungle"],["Dr. Mundo","jungle"],["Yorick","top"]]) {
+  const record=viability.assess(champion,role);
+  assert.equal(record.source,null,"No inventar fuente externa");
+  assert.equal(record.sourcePatch,null,"Una declaración humana no acredita parche");
+  assert.equal(record.provider,"Criterio manual del usuario");
+  assert.ok(viability.isReviewedRecommendation(record));
+}
+for(const [champion,role] of [["Maokai","jungle"],["Galio","top"],["Galio","support"],["Garen","jungle"],["Garen","mid"],["Nautilus","jungle"],["Viego","top"],["Fiddlesticks","support"],["Brand","botline"],["Yorick","jungle"]]) {
+  assert.equal(viability.assess(champion,role).status,"sin-verificar",
+    "El usuario no afirmó que un rol omitido sea secundario o inviable");
+}
+assert.equal(viability.assess("Galio","mid").provider,"League Wiki / criterio manual del usuario");
+assert.equal(viability.assess("Maokai","support").provider,"LeagueOfGraphs / League Wiki",
+  "No rebajar evidencia numérica a mera declaración manual");
+
 const reviewedCatalog=Object.fromEntries(Object.entries(catalog).map(([role,cs])=>[
  role,cs.filter(c=>viability.isReviewedRecommendation(viability.assess(c.champion,role)))
 ]));
