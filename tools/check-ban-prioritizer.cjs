@@ -140,6 +140,80 @@ const completeMapped = { status: "mapped", composition: { status: "complete", pi
   { role: "top", champion: "Ornn" }, { role: "jungle", champion: "Sejuani" }, { role: "mid", champion: "Orianna" },
   { role: "botline", champion: "Jinx" }, { role: "support", champion: "Lulu" },
 ] } };
+// The workbook splits Shaco/Kayn/Varus by build, but the game bans the
+// champion once. Candidate names and allied picks must use the same identity.
+const buildCatalog = {
+  jungle: [
+    { champion: "Kayn (Azul)", strengths: "Dive · flanqueo · movilidad", function: "Asesino", identity: "Dive", tempo: "Early" },
+    { champion: "Kayn (Rojo)", strengths: "Dive · teamfight · movilidad", function: "Bruiser", identity: "Teamfight", tempo: "Mid" },
+    { champion: "Shaco (AD)", strengths: "Dive · burst", function: "Asesino", identity: "Pick", tempo: "Early" },
+    { champion: "Shaco (AP)", strengths: "Pick · ganks · burst", function: "Mago", identity: "Pick", tempo: "Mid" },
+  ],
+  botline: [
+    { champion: "Varus (On-Hit)", strengths: "DPS · daño sostenido", function: "Carry", identity: "Front to Back", tempo: "Late" },
+    { champion: "Varus (Letalidad)", strengths: "Poke · asedio", function: "Carry", identity: "Poke", tempo: "Mid" },
+  ],
+};
+const buildBasedBans = prioritizeBans({
+  protection: { status: "assessed", threats: [
+    { id: "dive", priority: "principal", style: "Dive" },
+    { id: "pick", priority: "alta", style: "Pick" },
+    { id: "scaling", priority: "alta", style: "Escalado" },
+  ] },
+  mappedCandidates: completeMapped,
+  championCatalog: buildCatalog,
+});
+assert.equal(buildBasedBans.status,"prioritized");
+assert.deepEqual(buildBasedBans.bans.map(b => b.champion).sort(),["Kayn","Shaco","Varus"],
+  "Kayn, Shaco y Varus se banean por campeón base, nunca por build");
+assert.equal(new Set(buildBasedBans.bans.map(b => b.champion)).size,buildBasedBans.bans.length);
+assert.ok(buildBasedBans.bans.every(b => !/[()]/.test(b.champion)),
+  "El nombre mostrado en un ban es el del campeón, no el de su build");
+const buildAlliedPicks = [
+  {role:"top",champion:"Ornn"}, {role:"jungle",champion:"Kayn (Azul)"},
+  {role:"mid",champion:"Orianna"}, {role:"botline",champion:"Varus (On-Hit)"},
+  {role:"support",champion:"Shaco (AP)"},
+];
+const mixedBans=prioritizeBans({
+  protection:{status:"assessed",threats: [
+    {id:"dive",priority:"principal",style:"Dive"},
+    {id:"pick",priority:"alta",style:"Pick"},
+  ]},
+  currentPicks:buildAlliedPicks,
+  championCatalog:{
+    ...buildCatalog,
+    top:[{champion:"Contrincante",strengths:"Dive · pick",function:"Asesino",identity:"Dive",tempo:"Early"}],
+  },
+});
+assert.equal(mixedBans.status,"prioritized");
+assert.deepEqual(mixedBans.bans.map(b=>b.champion),["Contrincante"],
+  "No banear Kayn, Shaco o Varus aliados aunque aparezca su otra variante en el catálogo");
+assert.deepEqual(prioritizeBans({
+  protection:{status:"assessed",threats:[]},
+  currentPicks:[
+    {role:"top",champion:"Ornn"}, {role:"jungle",champion:"Kayn (Azul)"},
+    {role:"mid",champion:"Orianna"}, {role:"botline",champion:"Varus (Letalidad)"},
+    {role:"support",champion:"Kayn (Rojo)"},
+  ],
+  championCatalog:buildCatalog,
+}),{status:"not-assessable",bans:[]},
+  "Dos builds del mismo campeón no pueden ocupar picks aliados independientes");
+const unknownBuildName=prioritizeBans({
+  protection:{status:"assessed",threats:[{id:"dive",priority:"principal",style:"Dive"}]},
+  mappedCandidates:completeMapped,
+  championCatalog:{jungle:[{
+    champion:"Personaje (Variante ajena)",strengths:"Dive",function:"Asesino",identity:"Dive",tempo:"Early",
+  }]},
+});
+assert.equal(unknownBuildName.bans[0].champion,"Personaje (Variante ajena)",
+  "No transformar nombres parentéticos fuera de las tres familias conocidas");
+assert.deepEqual(prioritizeBans({
+  protection:{status:"assessed",threats:[]},mappedCandidates:completeMapped,championCatalog:buildCatalog,
+}),prioritizeBans({
+  protection:{status:"assessed",threats:[]},mappedCandidates:completeMapped,
+  championCatalog:Object.fromEntries(Object.entries(buildCatalog).reverse().map(([role,items])=>[role,[...items].reverse()])),
+}),"Los bans canónicos deben ser independientes del orden del Excel");
+
 const prioritized = prioritizeBans({ strategicRisks: rankedRisks, strategicCounterplay: rankedCounterplay, mappedCandidates: completeMapped, championCatalog: banCatalog });
 assert.equal(prioritized.status, "prioritized");
 assert.deepEqual(prioritized.bans.map((ban) => [ban.champion, ban.threatType]), [
