@@ -12,8 +12,8 @@ assert.equal(Object.values(countByRole).reduce((n,c)=>n+c,0),266);
 const records=viability.candidatesForReview(catalog);
 const key=(item)=>item.champion.toLocaleLowerCase("es")+"|"+item.role;
 const workbookPairs=new Set(records.map(key));
-assert.equal(editorial.entries.length,140,"Curación revisada, incluyendo seis nuevas parejas manuales; no inventar clasificación total");
-assert.equal(new Set(editorial.entries.map(key)).size,140,"Sin duplicar pares");
+assert.equal(editorial.entries.length,139,"Curación revisada, incluyendo seis nuevas parejas manuales; no inventar clasificación total");
+assert.equal(new Set(editorial.entries.map(key)).size,139,"Sin duplicar pares");
 for(const item of editorial.entries){
   assert.ok(workbookPairs.has(key(item)),item.champion+" "+item.role+" debe figurar en Draft Pool.xlsx");
   if(item.manualRoleReview && !item.source) {
@@ -48,7 +48,7 @@ for(const item of editorial.entries){
   }else assert.equal(item.sourcePatch,null,"No asignar parche de la estadística a una posición Wiki");
 }
 const counts=Object.fromEntries(["principal","compatible","habitual","situacional","descartada","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
-assert.deepEqual(counts,{principal:12,compatible:88,habitual:22,situacional:7,descartada:4,secundaria:6,experimental:1,"sin-verificar":126});
+assert.deepEqual(counts,{principal:12,compatible:88,habitual:22,situacional:6,descartada:4,secundaria:6,experimental:1,"sin-verificar":127});
 assert.equal(viability.assess("Diana","mid").provider,"LeagueOfGraphs / League Wiki",
   "Los porcentajes editoriales proceden de LeagueOfGraphs, no de OP.GG");
 assert.equal(viability.assess("Aurora","top").provider,"League Wiki / revisión editorial");
@@ -67,8 +67,8 @@ for(const [champion,role,status] of [
 const {analyze: analyzeByChampion,canon}=require("./audit-editorial-by-champion.cjs");
 const byChampion=analyzeByChampion(catalog);
 assert.equal(byChampion.pairs,266);
-assert.equal(byChampion.reviewed,140);
-assert.equal(byChampion.pending,126);
+assert.equal(byChampion.reviewed,139);
+assert.equal(byChampion.pending,127);
 assert.ok(byChampion.champions < byChampion.distinctCatalogNames,
   "Las builds de Kayn/Varus/Shaco comparten campeón; no necesariamente rol verificado");
 assert.equal(canon("Kayn (Azul)"),canon("Kayn (Rojo)"));
@@ -109,21 +109,23 @@ for(const [champion,role] of [["Poppy","top"],["Gragas","top"],["Gragas","mid"],
   assert.equal(record.provider,"Criterio manual del usuario");
   assert.ok(viability.isReviewedRecommendation(record));
 }
-for(const [champion,role] of []) {
-  assert.equal(viability.assess(champion,role).status,"sin-verificar",
-    "El usuario no afirmó que un rol omitido sea secundario o inviable");
-}
+
 assert.equal(viability.assess("Galio","mid").provider,"League Wiki / criterio manual del usuario");
 assert.equal(viability.assess("Maokai","support").provider,"LeagueOfGraphs / League Wiki",
   "No rebajar evidencia numérica a mera declaración manual");
 
 // Segunda ronda del usuario: situacional NO equivale a descartada.
-const userSituational=[["Maokai","jungle"],["Galio","top"],["Galio","support"],
+const userSituational=[["Galio","top"],["Galio","support"],
   ["Garen","jungle"],["Garen","mid"],["Fiddlesticks","support"],["Brand","botline"]];
 const userDiscarded=[["Dr. Mundo","mid"],["Nautilus","jungle"],
   ["Viego","top"],["Yorick","jungle"]];
-assert.equal(userSituational.length,7);
+assert.equal(userSituational.length,6);
 assert.equal(userDiscarded.length,4);
+assert.ok(!workbookPairs.has("maokai|jungle"),"No incorporar Maokai JUNGLA al catálogo sin estar en Excel");
+assert.deepEqual(editorial.manualOutsideCatalog.map(x=>[x.champion,x.role,x.status]),
+  [["Maokai","jungle","situacional"]]);
+assert.equal(viability.assess("Maokai","jungle").status,"sin-verificar",
+  "El usuario puede considerarlo situacional fuera del catálogo sin activar recomendaciones");
 for(const [champion,role] of userSituational) {
   const record=viability.assess(champion,role);
   assert.equal(record.status,"situacional");
