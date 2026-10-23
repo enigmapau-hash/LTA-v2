@@ -62,7 +62,21 @@ const incoherentCase = first.cases.find(item => item.id === "incoherent");
 assert.equal(incoherentCase.recommendationStatus, "recommended",
   "La falta explícita de cohesión sigue habilitando candidatos");
 assert.ok(first.metrics.recommendedCaseCount >= 2, "El diagnóstico recupera recomendaciones por carencias explícitas además de la incoherencia");
-assert.ok(first.cases.filter(item => item.recommendationStatus === "no-priority").length >= 5, "La abstención continúa siendo correcta cuando no faltan requisitos");
+// Do not enforce an arbitrary quota of abstentions. Each known healthy
+// fixture must demonstrate why it needs no substitution; genuinely incomplete
+// or incoherent teams must still reach the recommendation pipeline.
+for (const id of ["front-to-back","dive","pick","poke","split-push","teamfight","scaling","early-game"]) {
+  const example=first.cases.find(item=>item.id===id);
+  const diagnosis=diagnoseComposition(casesById.get(id).picks);
+  assert.ok(example,id+" must remain part of the audit");
+  assert.equal(diagnosis.execution.missing.length,0,id+" has its required plan capabilities");
+  assert.equal(example.recommendationStatus,"no-priority",
+    id+" should abstain because the actual requirements are covered, not to meet a quota");
+}
+for (const id of ["hybrid","incoherent"]) {
+  assert.equal(first.cases.find(item=>item.id===id).recommendationStatus,"recommended",
+    id+" must preserve a meaningful correction path");
+}
 assert.ok(first.metrics.totalCandidateMentions > 0 && first.metrics.totalCandidateMentions <= 57,
   "Las menciones se reducen al conjunto con necesidad demostrada");
 assert.ok(first.metrics.uniqueRecommendedChampions >= 2
