@@ -109,7 +109,7 @@ for(const [champion,role] of [["Poppy","top"],["Gragas","top"],["Gragas","mid"],
   assert.equal(record.provider,"Criterio manual del usuario");
   assert.ok(viability.isReviewedRecommendation(record));
 }
-for(const [champion,role] of [["Maokai","jungle"],["Galio","top"],["Galio","support"],["Garen","jungle"],["Garen","mid"],["Nautilus","jungle"],["Viego","top"],["Fiddlesticks","support"],["Brand","botline"],["Yorick","jungle"]]) {
+for(const [champion,role] of [["Maokai","jungle"],["Galio","top"],["Galio","support"],["Dr. Mundo","mid"],["Garen","jungle"],["Garen","mid"],["Nautilus","jungle"],["Viego","top"],["Fiddlesticks","support"],["Brand","botline"],["Yorick","jungle"]]) {
   assert.equal(viability.assess(champion,role).status,"sin-verificar",
     "El usuario no afirmó que un rol omitido sea secundario o inviable");
 }
