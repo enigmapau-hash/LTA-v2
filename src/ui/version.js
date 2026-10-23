@@ -7,7 +7,7 @@
     version: "v3.13.1",
     track: "Actualización funcional",
     label: "Versión",
-    updated: "2026-10-22",
+    updated: "2026-10-23",
     summary: ["Distingue plan reconocido de herramientas necesarias; recupera correcciones útiles sin cambiar los rankings del draft parcial."],
     pending: [],
   };
