@@ -70,7 +70,15 @@
         id: "correction",
         title: "Corrección",
         answer: correction?.status === "no-supported-correction"
-          ? "Sin cambio prioritario justificado"
+          ? correction.reasonCode === "requirements-covered"
+            ? "Sin cambio prioritario justificado"
+            : correction.reasonCode === "unresolved-contradiction"
+              ? "Conflicto estratégico sin corrección validada"
+              : correction.reasonCode === "insufficient-candidate-evidence"
+                ? "Carencia detectada, sin sustitución fiable"
+                : correction.reasonCode === "unmapped-diagnostic-factor"
+                  ? "Carencia sin perfil de corrección validado"
+                  : "Sin mejora prioritaria respaldada"
           : "Sin una mejora respaldada",
         explanation: correction?.explanation || explanations.explainCorrection(correction),
       };
@@ -125,7 +133,9 @@
 
   function adaptSectionTone(section, level) {
     // Abstaining is a meaningful, deliberate recommendation outcome at any confidence level.
-    if (section.id === "correction" && section.answer === "Sin cambio prioritario justificado") return section;
+    // Preserve the exact reason for abstaining; confidence styling must not
+    // collapse missing data or unresolved contradictions into a generic denial.
+    if (section.id === "correction" && !section.answer.startsWith("Reforzar ")) return section;
     if (level === "alta" || Array.isArray(section.candidates)) return section;
     const action = section.action
       ? level === "media"

@@ -86,12 +86,16 @@ const clearCorrection = proposeCorrections({ picks: dive, diagnosis: clearDiagno
 assert.equal(clearDiagnosis.primaryProblem.type, "identity-risk");
 assert.equal(clearCorrection.status, "no-supported-correction", "Dive: falla de inicio es un riesgo, no ausencia de recurso");
 assert.deepEqual(clearCorrection.improvements, []);
+assert.equal(clearCorrection.reasonCode, "requirements-covered",
+  "Una composición con capacidades acreditadas puede abstenerse justificadamente");
+assert.deepEqual(clearCorrection.consideredFactors, []);
 
 const hybridDiagnosis = diagnoseComposition(frontToBack);
 assert.equal(hybridDiagnosis.coherence.status, "hybrid");
 const hybridCorrection = proposeCorrections({ picks: frontToBack, diagnosis: hybridDiagnosis, candidatesByRole });
 assert.equal(hybridCorrection.status, "no-supported-correction", "Front to Back no necesita presión lateral por defecto");
 assert.equal(hybridCorrection.limitingFactor, null);
+assert.equal(hybridCorrection.reasonCode, "requirements-covered");
 
 const poke = composition({ top: "Jayce", jungle: "Nidalee", mid: "Xerath", botline: "Ezreal", support: "Vel'Koz" });
 const protectedPoke = composition({ top: "Jayce", jungle: "Nidalee", mid: "Xerath", botline: "Ezreal", support: "Karma" });
@@ -139,6 +143,26 @@ assert.equal(proposeCorrections({
   candidatesByRole: fakeAntifrontline,
 }).status, "no-supported-correction",
   "Anti-frontline no demuestra la capacidad propia de sostener una frontline");
+const insufficient=proposeCorrections({picks: frontWithoutTank,
+  diagnosis: diagnoseComposition(frontWithoutTank),candidatesByRole:fakeAntifrontline});
+assert.equal(insufficient.reasonCode,"insufficient-candidate-evidence",
+  "La falta de candidatos útiles es distinta de un equipo que ya cubre sus necesidades");
+assert.ok(insufficient.consideredFactors.some(x=>x.result==="insufficient-candidates"));
+const unresolved=proposeCorrections({picks:frontWithoutTank,
+  diagnosis:{
+    status:"assessed",plan:{clear:true,primaryIdentity:"Front to Back"},
+    primaryProblem:{type:"strategic-contradiction"},
+    execution:{missing:[{id:"frontline",label:"frontline"}]},
+  },candidatesByRole});
+assert.equal(unresolved.reasonCode,"unresolved-contradiction",
+  "Nunca forzar una sustitución basada solo en una identidad contradictoria");
+const unmapped=proposeCorrections({picks:frontWithoutTank,
+  diagnosis:{
+    status:"assessed",plan:{clear:true,primaryIdentity:"Front to Back"},
+    primaryProblem:{type:"identity-risk"},
+    execution:{missing:[{id:"invented",label:"una carencia sin perfil registrado"}]},
+  },candidatesByRole});
+assert.equal(unmapped.reasonCode,"unmapped-diagnostic-factor");
 
 const protectedDiagnosis = diagnoseComposition(protectedPoke);
 assert.equal(proposeCorrections({ picks: protectedPoke, diagnosis: protectedDiagnosis, candidatesByRole }).status,
