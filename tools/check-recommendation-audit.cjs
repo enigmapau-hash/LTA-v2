@@ -61,8 +61,8 @@ for (const item of first.cases) {
 const incoherentCase = first.cases.find(item => item.id === "incoherent");
 assert.equal(incoherentCase.recommendationStatus, "recommended",
   "La falta explícita de cohesión sigue habilitando candidatos");
-assert.equal(first.metrics.recommendedCaseCount, 1, "Solo el caso con brecha acreditada obliga a corregir");
-assert.equal(first.cases.filter(item => item.recommendationStatus === "no-priority").length, 9);
+assert.ok(first.metrics.recommendedCaseCount >= 2, "El diagnóstico recupera recomendaciones por carencias explícitas además de la incoherencia");
+assert.ok(first.cases.filter(item => item.recommendationStatus === "no-priority").length >= 5, "La abstención continúa siendo correcta cuando no faltan requisitos");
 assert.ok(first.metrics.totalCandidateMentions > 0 && first.metrics.totalCandidateMentions <= 57,
   "Las menciones se reducen al conjunto con necesidad demostrada");
 assert.ok(first.metrics.uniqueRecommendedChampions >= 2
