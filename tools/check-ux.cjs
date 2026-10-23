@@ -91,7 +91,10 @@ async function main(){
   await page.waitForFunction(() => document.querySelector(".result-summary__ban-detail")?.open === false,
     null, { timeout: 3000 });
   assert.equal(await firstBan.evaluate(node=>node.open), false);
-  assert.equal(await page.locator(".result-summary__header").evaluate(n=>getComputedStyle(n).display),"none","el estado de validación se omite en composiciones completas");
+  await page.waitForFunction(() => {
+    const n = document.querySelector(".result-summary.is-ready .result-summary__header");
+    return n?.isConnected && getComputedStyle(n).display === "none";
+  }, null, { timeout: 5000 }); // Assert against the live version of the report.
   await page.waitForFunction(() => {
     const n = document.querySelector(".result-summary.is-ready");
     return n?.isConnected && getComputedStyle(n).paddingTop === "0px";
