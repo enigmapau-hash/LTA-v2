@@ -124,7 +124,9 @@ async function main(){
   await page.waitForFunction(expected=>[...document.querySelectorAll(".composition-table .champion-name")].map(node=>node.textContent.trim()).join("|")===expected.join("|")&&document.querySelector(".result-summary__ban-integration li"),Object.values(incoherentPicks));
   const candidateRoles = strategy.locator(".result-summary__candidate-role");
   assert.ok(await candidateRoles.count()>0, "Una brecha de cohesión mantiene alternativas explicables");
-  assert.ok((await candidateRoles.allInnerTexts()).every(label=>label.includes("(26.21)")));
+  assert.ok((await candidateRoles.allInnerTexts()).every(label =>
+    /(?:parche 16\.21|revisión \d{4}-\d{2}-\d{2})/.test(label)),
+    "Cada recomendación distingue corte estadístico de revisión descriptiva sin parche");
   // The report is reconstructed on the next animation frame after changes
   // to the five picks. Ensure the final DOM has settled before testing focus.
   await page.evaluate(() => new Promise(resolve =>
