@@ -8,7 +8,7 @@
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-23",
-    summary: ["Clasificación offline por campeón: 129 parejas revisadas; 16 posiciones habituales confirmadas manualmente, sin confundirlas con estadísticas."],
+    summary: ["Clasificación offline de 140 parejas por campeón: habituales, situacionales y descartadas según revisión humana con procedencia explícita."],
     pending: [],
   };
 
