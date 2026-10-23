@@ -638,13 +638,13 @@
 
   // Declaraciones humanas recibidas el 23/10/2026. NO son hechos
   // estadísticos ni autorizan a declarar los demás roles inviables.
-  const MANUAL_HABITUAL = Object.freeze([["Maokai","support"],["Poppy","top"],["Poppy","support"],["Gragas","top"],["Gragas","mid"],["Galio","mid"],["Cho'Gath","jungle"],["Cho'Gath","top"],["Garen","top"],["Dr. Mundo","jungle"],["Dr. Mundo","top"],["Nautilus","support"],["Viego","jungle"],["Fiddlesticks","jungle"],["Brand","support"],["Yorick","top"]]);
+  const MANUAL_HABITUAL = Object.freeze([["Maokai","support"],["Poppy","top"],["Poppy","support"],["Gragas","top"],["Gragas","mid"],["Galio","mid"],["Cho'Gath","jungle"],["Cho'Gath","top"],["Garen","top"],["Dr. Mundo","jungle"],["Dr. Mundo","top"],["Nautilus","support"],["Viego","jungle"],["Fiddlesticks","jungle"],["Brand","support"],["Yorick","top"],["Annie","mid"],["Akshan","mid"],["Cassiopeia","mid"],["Hwei","mid"],["Heimerdinger","top"],["Heimerdinger","mid"],["Karma","support"],["Karthus","jungle"],["Morgana","support"],["Neeko","mid"],["Tristana","botline"],["Aurelion Sol","mid"],["Ekko","mid"],["Ekko","jungle"],["Naafiri","mid"],["Ryze","top"],["Ryze","mid"],["Veigar","mid"],["Viktor","mid"],["Ziggs","mid"],["Ziggs","botline"],["Zoe","mid"],["Yone","top"],["Twitch","botline"],["Teemo","top"],["Warwick","jungle"],["Zac","jungle"],["Sylas","mid"],["Sylas","jungle"],["Talon","mid"],["Talon","jungle"],["Zyra","support"],["Trundle","top"],["Trundle","jungle"],["Kled","top"]]);
   const MANUAL_KEYS = new Set(MANUAL_HABITUAL.map(([champion, role]) => champion + "|" + role));
   // Segundo dictamen del usuario (23/10/2026): situacional no es descartado;
   // descartada indica que NO se debe recomendar automáticamente, pero la
   // elección manual en el draft permanece intacta.
-  const MANUAL_SITUATIONAL = Object.freeze([["Galio","top"],["Galio","support"],["Garen","jungle"],["Garen","mid"],["Fiddlesticks","support"],["Brand","botline"]]);
-  const MANUAL_DISCARDED = Object.freeze([["Dr. Mundo","mid"],["Nautilus","jungle"],["Viego","top"],["Yorick","jungle"]]);
+  const MANUAL_SITUATIONAL = Object.freeze([["Galio","top"],["Galio","support"],["Garen","jungle"],["Garen","mid"],["Fiddlesticks","support"],["Brand","botline"],["Annie","support"],["Cassiopeia","top"],["Cassiopeia","botline"],["Karma","top"],["Karthus","botline"],["Morgana","jungle"],["Morgana","mid"],["Neeko","support"],["Tristana","mid"],["Aurelion Sol","botline"],["Irelia","mid"],["Naafiri","top"],["Veigar","botline"],["Veigar","support"],["Viktor","botline"],["Yone","botline"],["Teemo","jungle"],["Warwick","top"],["Zac","top"],["Zyra","jungle"]]);
+  const MANUAL_DISCARDED = Object.freeze([["Dr. Mundo","mid"],["Nautilus","jungle"],["Viego","top"],["Yorick","jungle"],["Akshan","botline"],["Hwei","botline"],["Heimerdinger","support"],["Karma","mid"],["Lucian","top"],["Lucian","mid"],["Ziggs","top"],["Zoe","support"],["Twitch","support"],["Kled","mid"]]);
   const MANUAL_SITUATIONAL_KEYS = new Set(MANUAL_SITUATIONAL.map(([champion, role]) => champion + "|" + role));
   const MANUAL_DISCARDED_KEYS = new Set(MANUAL_DISCARDED.map(([champion, role]) => champion + "|" + role));
 
@@ -708,7 +708,7 @@
       : manualSituational ? "situacional" : manualDiscarded ? "descartada" : null;
     const manualOnly = !establishedKeys.has(key);
     // Nunca rebajar un principal cuantitativo por ser también habitual manual.
-    const status = initialStatus === "compatible" && manualHabitual ? "habitual" : initialStatus;
+    const status = initialStatus === "compatible" && manualRoleReview ? manualRoleReview : initialStatus;
     const experimental = status === "experimental";
     const roleShare = STATISTICAL_SHARE[key] || null;
     return Object.freeze({
@@ -734,8 +734,8 @@
         : manualOnly && manualSituational ? "Situacional según criterio manual; requiere justificación contextual, sin estadística externa"
         : manualOnly && manualDiscarded ? "Descartada para recomendaciones automáticas por criterio manual, no prohibida en picks manuales"
         : manualOnly ? "Habitual declarada por el usuario; sin validación estadística ni externa"
-        : manualHabitual && status === "habitual"
-          ? "Compatible en League Wiki; habitual según criterio manual del usuario"
+        : !manualOnly && manualRoleReview && status !== "principal"
+          ? "Posición registrada en League Wiki; clasificación " + status + " por criterio manual del usuario"
         : status === "compatible" ? "Posición reconocida por Riot según listado de League Wiki"
         : experimental ? "Muestra anterior pequeña, no apta para recomendación normal"
         : "Solo 3P en League Wiki; no etiquetar principal",
