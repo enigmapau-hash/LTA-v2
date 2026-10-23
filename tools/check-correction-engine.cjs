@@ -127,6 +127,19 @@ for (const [picks, identity] of [
   assert.equal(correction.improvements[0].evidenceType, "required-plan-capability");
   verifyCandidates(correction, new Set(picks.map((pick) => pick.champion)));
 }
+const fakeAntifrontline = {
+  top: [
+    { champion: "Anti-frontline A", strengths: "Anti-frontline", function: "Asesino AD" },
+    { champion: "Anti-frontline B", strengths: "Anti-frontline", function: "Asesino AP" },
+  ],
+};
+assert.equal(proposeCorrections({
+  picks: frontWithoutTank,
+  diagnosis: diagnoseComposition(frontWithoutTank),
+  candidatesByRole: fakeAntifrontline,
+}).status, "no-supported-correction",
+  "Anti-frontline no demuestra la capacidad propia de sostener una frontline");
+
 const protectedDiagnosis = diagnoseComposition(protectedPoke);
 assert.equal(proposeCorrections({ picks: protectedPoke, diagnosis: protectedDiagnosis, candidatesByRole }).status,
   "no-supported-correction", "Con Peel acreditado no se fuerza reemplazo");
