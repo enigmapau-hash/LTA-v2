@@ -28,6 +28,28 @@ const screenshotCases=[
     top:"Garen",jungle:"Elise",mid:"Azir",botline:"Nilah",support:"Brand"})},
 ];
 const cases=[...generateRepresentativeCompositions(catalog),...screenshotCases];
+function replacementEvidence(picks, diagnosis, candidate) {
+  const original=picks.find(pick=>pick.role===candidate.role);
+  if(!original) return {champion:candidate.champion,role:candidate.role,assessable:false,why:"missing-original-role"};
+  const normalizeAttrs=value=>Array.isArray(value)?value.join(" · "):String(value||"").trim();
+  const next=picks.map(pick=>pick.role===candidate.role?{
+    role:pick.role,champion:candidate.champion,identity:normalizeAttrs(candidate.identity),
+    function:normalizeAttrs(candidate.function),tempo:normalizeAttrs(candidate.tempo),
+    strengths:normalizeAttrs(candidate.strengths),weaknesses:normalizeAttrs(candidate.weaknesses),
+  }:pick);
+  if(next.some(pick=>!pick.identity||!pick.function||!pick.tempo||!pick.strengths||!pick.weaknesses))
+    return {champion:candidate.champion,role:candidate.role,assessable:false,why:"incomplete-candidate-evidence"};
+  const revised=diagnoseComposition(next);
+  const oldNeedIds=new Set((diagnosis.execution?.missing||[]).map(x=>x.id));
+  const newNeedIds=new Set((revised.execution?.missing||[]).map(x=>x.id));
+  return {champion:candidate.champion,role:candidate.role,replaces:original.champion,assessable:revised.status==="assessed",
+    oldPlan:diagnosis.plan?.primaryIdentity||null,newPlan:revised.plan?.primaryIdentity||null,
+    preservesPlan:revised.plan?.primaryIdentity===diagnosis.plan?.primaryIdentity && Boolean(diagnosis.plan?.primaryIdentity),
+    previouslyMissing:[...oldNeedIds],remainingMissing:[...newNeedIds],
+    fixedMissing:[...oldNeedIds].filter(id=>!newNeedIds.has(id)),
+    newDeficits:[...newNeedIds].filter(id=>!oldNeedIds.has(id)),
+  };
+}
 function audit(item){
   const diagnosis=diagnoseComposition(item.picks);
   const correction=proposeCorrections({picks:item.picks,diagnosis,candidatesByRole:catalog});
@@ -65,6 +87,8 @@ function audit(item){
     recommendationStatus:recommendations.status,
     mapperStatus:mappedCandidates.status,
     evaluatedStatus:evaluatedCandidates.status,
+    ...(item.id.startsWith("user-") ? {whatIf:((mappedCandidates.profiles||[])[0]?.candidates||[])
+      .map(candidate=>replacementEvidence(item.picks,diagnosis,candidate))} : {}),
     evaluatedProfiles:(evaluatedCandidates.profiles||[]).map(x=>({
       id:x.id,champions:(x.candidates||[]).map(y=>y.champion),
     })),
