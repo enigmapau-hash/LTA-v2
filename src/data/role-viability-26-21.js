@@ -71,6 +71,8 @@
     if (curated) return {
       ...curated, patch: PATCH, checkedAt: curated.reviewedAt,
       provider: curated.source?.includes("leagueofgraphs.com") ? "LeagueOfGraphs / League Wiki"
+        : curated.manualRoleReview ? (curated.source
+          ? "League Wiki / criterio manual del usuario" : "Criterio manual del usuario")
         : curated.status === "experimental" ? "METAsrc" : "League Wiki / revisión editorial",
       reviewed: true,
     };
