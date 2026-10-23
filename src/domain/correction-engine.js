@@ -161,6 +161,7 @@
     if (diagnosis?.status !== "assessed") {
       return {
         status: "not-assessable",
+        reasonCode: "diagnosis-unavailable",
         limitingFactor: null,
         explanation: "Se necesita un diagnóstico completo para proponer una corrección.",
         improvements: [],
@@ -182,14 +183,21 @@
     const improvements = [];
     const seenProfiles = new Set();
     let limitingFactor = null;
+    const consideredFactors = [];
 
     for (const factor of factors) {
       const label = String(factor || "").trim();
       const profile = profileForFactor(label);
-      if (!profile || seenProfiles.has(profile.id)) continue;
+      if (!profile) {
+        consideredFactors.push({ factor: label, result: "unmapped-factor" });
+        continue;
+      }
+      if (seenProfiles.has(profile.id)) continue;
       if (!limitingFactor) limitingFactor = label;
       seenProfiles.add(profile.id);
       const candidates = rankCandidates(profile, input?.candidatesByRole, selectedChampions);
+      consideredFactors.push({ factor: label, profile: profile.id, candidateCount: candidates.length,
+        result: candidates.length >= 2 ? "supported" : "insufficient-candidates" });
       if (candidates.length < 2) continue;
 
       improvements.push({
@@ -203,8 +211,18 @@
       if (improvements.length >= MAX_PROFILES) break;
     }
 
+    const reasonCode = improvements.length ? "supported-improvement"
+      : problemType === "strategic-contradiction" ? "unresolved-contradiction"
+      : clearPlan && !missingRequirements.length ? "requirements-covered"
+      : consideredFactors.some(item => item.result === "insufficient-candidates")
+        ? "insufficient-candidate-evidence"
+        : consideredFactors.some(item => item.result === "unmapped-factor")
+          ? "unmapped-diagnostic-factor"
+          : "no-actionable-diagnostic-gap";
     return {
       status: improvements.length ? "proposed" : "no-supported-correction",
+      reasonCode,
+      consideredFactors,
       limitingFactor,
       explanation: improvements.length
         ? "La prioridad procede de una herramienta exigida por el plan que falta o de una brecha de cohesión explícita."
@@ -212,7 +230,11 @@
           ? "No hay una sustitución prioritaria demostrada: las limitaciones propias del estilo no obligan a cambiar campeones."
           : problemType === "strategic-contradiction"
             ? "Los planes estratégicos entran en conflicto; no se ha demostrado qué cambio individual resolvería la contradicción."
-            : "Las señales disponibles no justifican una corrección concreta.",
+            : reasonCode === "insufficient-candidate-evidence"
+              ? "Existe una carencia, pero el catálogo no aporta suficientes candidatos contrastados para sostener una corrección."
+              : reasonCode === "unmapped-diagnostic-factor"
+                ? "Se ha detectado una carencia que todavía no dispone de un perfil de corrección documentado."
+                : "Las señales disponibles no justifican una corrección concreta.",
       improvements,
     };
   }
