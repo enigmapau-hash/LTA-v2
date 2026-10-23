@@ -46,7 +46,8 @@ for (const item of viability.evidence) {
 assert.equal(viability.assess("Diana", "top").status, "experimental");
 assert.equal(viability.assess("Diana", "mid").status, "principal");
 assert.equal(viability.assess("Diana", "jungle").status, "principal");
-assert.equal(viability.assess("Viego", "jungle").status, "compatible");
+assert.equal(viability.assess("Viego", "jungle").status, "habitual",
+  "Viego JUNGLA está confirmado manualmente, sin afirmar que el respaldo sea estadístico");
 assert.equal(viability.assess("Smolder", "top").status, "secundaria");
 assert.equal(viability.assess("Smolder", "botline").status, "compatible");
 assert.equal(viability.assess("Unverified Champion", "top").status, "sin-verificar");
