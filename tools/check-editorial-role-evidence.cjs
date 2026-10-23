@@ -80,7 +80,8 @@ const userRecommendations=recommendProfiles({diagnosis:userDiagnosis,optimizer:u
 const userMapped=mapCandidates({diagnosis:userDiagnosis,optimizer:userOptimizer,
  recommendations:userRecommendations,candidatesByRole:catalog,
  selectedChampions:userPicks.map(p=>p.champion),currentPicks:userPicks});
-if(userMapped.status==="mapped")for(const profile of userMapped.profiles){
+assert.equal(userMapped.status,"mapped", "El equipo Aurora/Elise/Corki/Miss Fortune/Lulu conserva recomendaciones útiles");
+for(const profile of userMapped.profiles){
   for(const item of profile.candidates){
     assert.ok(!Object.values(userSelection).includes(item.champion),"Nunca recomendar un campeón seleccionado");
     assert.ok(!(item.champion==="Maokai" && item.role==="top"),"Maokai TOP no reaparece en candidatos");
