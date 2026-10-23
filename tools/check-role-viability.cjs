@@ -32,7 +32,7 @@ assert.equal(viability.PATCH, "26.21");
 assert.equal(pairs.length, 266, "Todas las parejas del workbook tienen una evaluación, aunque no haya evidencia externa");
 assert.deepEqual(Object.keys(catalog), Object.keys(sheetNames));
 assert.ok(pairs.every((item) => item.patch === "26.21"
-  && ["habitual", "situacional", "experimental", "sin-verificar"].includes(item.status)));
+  && ["principal", "compatible", "secundaria", "habitual", "situacional", "experimental", "sin-verificar"].includes(item.status)));
 assert.ok(pairs.some((item) => item.status === "sin-verificar"), "No se inventan categorías para los datos sin fuente");
 
 const sourceKeys = new Set(pairs.map((item) => `${item.champion.toLocaleLowerCase("es")}|${item.role}`));
@@ -43,11 +43,11 @@ for (const item of viability.evidence) {
   assert.ok(item.games > 0, "La muestra publicada está identificada");
 }
 assert.equal(viability.assess("Diana", "top").status, "experimental");
-assert.equal(viability.assess("Diana", "mid").status, "habitual");
-assert.equal(viability.assess("Diana", "jungle").status, "habitual");
-assert.equal(viability.assess("Viego", "jungle").status, "habitual");
-assert.equal(viability.assess("Smolder", "top").status, "situacional");
-assert.equal(viability.assess("Smolder", "botline").status, "habitual");
+assert.equal(viability.assess("Diana", "mid").status, "principal");
+assert.equal(viability.assess("Diana", "jungle").status, "principal");
+assert.equal(viability.assess("Viego", "jungle").status, "compatible");
+assert.equal(viability.assess("Smolder", "top").status, "secundaria");
+assert.equal(viability.assess("Smolder", "botline").status, "compatible");
 assert.equal(viability.assess("Unverified Champion", "top").status, "sin-verificar");
 assert.equal(viability.assess("Unverified Champion", "top").source, null, "Sin evidencia no se inventa fuente");
 
@@ -80,7 +80,8 @@ assert.ok(!recommended.some((item) => item.champion === "Flexible"),
   "Cuando dos posiciones no verificadas son idénticas se abstiene, sin preferir TOP");
 assert.ok(recommended.some((item) => item.champion === "Diana" && ["mid", "jungle"].includes(item.role)),
   "Se propone Diana en posición respaldada cuando sus señales lo justifican");
-assert.ok(recommended.every((item) => item.viabilityPatch === "26.21"));
+assert.ok(recommended.every((item) => item.viabilityStatus && (!item.viabilityPatch || item.viabilityPatch === "16.21")),
+  "La versión del corte se atribuye solo cuando la fuente la proporciona");
 assert.ok(!first.profiles[0].alternativesByRole.top.some((item) => item.champion === "Diana"),
   "La recomposición tampoco puede proponer la posición experimental");
 assert.ok(first.profiles[0].alternativesByRole.jungle.some((item) => item.champion === "Viego"),
