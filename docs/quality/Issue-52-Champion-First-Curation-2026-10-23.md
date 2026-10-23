@@ -2,18 +2,18 @@
 
 ## Qué cambia
 
-Desde las 49 primeras parejas, se han incorporado **154 parejas adicionales**, incluidas las tandas de revisión manual: **203/266** parejas del catálogo tienen clasificación editorial y **63/266** permanecen sin verificar. Este avance NO es una certificación estadística de todos los campeones.
+Desde las 49 primeras parejas se han clasificado **217 parejas adicionales** mediante revisión de fuentes y criterios editoriales manuales: **266/266** parejas del catálogo cuentan con clasificación. **0/266** están pendientes; completar cobertura editorial no convierte las opiniones del usuario en datos estadísticos. Este avance NO es una certificación estadística de todos los campeones.
 
 | Estado | Antes | Propuesto |
 | --- | ---: | ---: |
 | Principal, criterio editorial | 7 | 12 |
-| Habitual (9 con cuota estadística, 48 por criterio manual sin cuota propia) | 0 | 57 |
+| Habitual (9 con cuota estadística, 95 sin cuota estadística propia) | 0 | 104 |
 | Compatible por posición Riot (League Wiki) | 37 | 87 |
-| Situacional (criterio manual, sin frecuencia acreditada) | 0 | 26 |
-| Descartada para recomendación automática (criterio manual) | 0 | 14 |
+| Situacional (criterio manual, sin frecuencia acreditada) | 0 | 40 |
+| Descartada para recomendación automática (criterio manual) | 0 | 16 |
 | Secundaria / no normal | 4 | 6 |
 | Experimental | 1 | 1 |
-| Sin verificar | 217 | 63 |
+| Sin verificar | 217 | 0 |
 | **Total** | **266** | **266** |
 
 Las posiciones respaldadas por fuentes no incluyen Lux SUPPORT ni Jax JUNGLA, ausentes del Excel. Su predominio cuantitativo se conserva como **referencia externa**, pero nunca suma cobertura ni añade el campeón a esa posición.
@@ -51,7 +51,7 @@ El usuario completó las **11 parejas** del primer grupo que estaban sin verific
 
 Estas dos categorías son distintas: `situacional` expresa que el campeón puede jugarse en la posición en circunstancias concretas, **pero no se promueve como rol habitual ni entra en sustituciones automáticas normales sin un criterio contextual adicional**. El mapeador existente solo puede mostrarlo en la salida informativa provisional cuando no dispone de suficientes roles contrastados. `descartada` se excluye del mapeador y de las alternativas de optimizadores, pero **nunca bloquea un pick manual ni constituye un ban**.
 
-Los diez registros dentro del Excel y la nota externa de Maokai incluyen fecha y procedencia manual, `source: null` y `sourcePatch: null`, sin alegar validación estadística o cliente Riot. Los 63 casos aún pendientes permanecen sin verificar; los once roles nuevos no se convierten en principales por descarte.
+Los diez registros dentro del Excel y la nota externa de Maokai incluyen fecha y procedencia manual, `source: null` y `sourcePatch: null`, sin alegar validación estadística o cliente Riot. Las parejas no tratadas en esa segunda tanda permanecieron entonces sin verificar; nunca se convirtieron en principales por descarte.
 
 ## Tercera tanda — 30 campeones y Ekko JUNGLA (23/10/2026)
 
@@ -64,6 +64,20 @@ Se recibieron **65 decisiones editoriales** (las 64 posiciones del formulario y 
 **Integración:** Ekko JUNGLA ya era `compatible` por League Wiki y pasa a `habitual` mediante confirmación del usuario; conserva el enlace Wiki como evidencia de **compatibilidad** y no se presenta como muestra estadística. Las restantes 64 parejas estaban sin verificar. Cada una incluye fecha, `manualRoleReview`, `manualProvenance` y `sourcePatch: null`. Los roles descartados se excluyen de recomendaciones normales y optimizadores, **sin impedir picks manuales ni introducir bans**. Los situacionales siguen separados de los habituales; solo se admiten como fallback informativo provisional si faltan alternativas corroboradas, no en sustituciones automáticas normales.
 
 Las pruebas comprueban individualmente las 65 decisiones y sus restricciones de uso, junto con las tandas anteriores, perfiles y casos representativos.
+
+## Cuarta tanda — cierre de las últimas 63 parejas (23/10/2026)
+
+Se incorporan **63 juicios manuales nuevos**: **47 habituales**, **14 situacionales** y **2 descartados para las recomendaciones automáticas**. Todas las parejas se encuentran en `Draft Pool.xlsx`; antes figuraban `sin-verificar`. Ninguna clasificación de las rondas anteriores cambia.
+
+- **Habituales (47):** Shaco (AD) JUNGLA, Shaco (AP) JUNGLA; Kayn (Azul) JUNGLA, Kayn (Rojo) JUNGLA; Sett TOP; Udyr JUNGLA; Varus (Letalidad) BOTLINE, Varus (On-Hit) BOTLINE; Vayne BOTLINE; Vel'Koz MID/SUPPORT; Vladimir TOP/MID; Darius JUNGLA; Gwen JUNGLA; Volibear JUNGLA; Wukong TOP; Ambessa TOP; Bard SUPPORT; Fizz MID; Gangplank TOP; Kalista BOTLINE; Kennen TOP; Kha'Zix JUNGLA; Kog'Maw BOTLINE; Lissandra MID; Malzahar MID; Master Yi JUNGLA; Nasus TOP; Nidalee JUNGLA; Nunu & Willump JUNGLA; Olaf TOP; Quinn TOP; Rek'Sai JUNGLA; Renata Glasc SUPPORT; Rengar JUNGLA; Rumble TOP; Singed TOP; Sona SUPPORT; Soraka SUPPORT; Tahm Kench SUPPORT; Taric SUPPORT; Tryndamere TOP; Urgot TOP; Vex MID; Yunara BOTLINE; Zilean SUPPORT.
+- **Situacionales (14):** Shaco SUPPORT; Udyr TOP; Vayne TOP; Swain TOP; Smolder MID; Akali TOP; Camille SUPPORT; Miss Fortune SUPPORT; Shen JUNGLA; Sion JUNGLA; Syndra BOTLINE; Taliyah BOTLINE; Zed JUNGLA; Mel MID.
+- **Descartadas de recomendaciones automáticas (2):** Sett SUPPORT y Seraphine MID.
+
+El criterio humano está almacenado con `manualRoleReview`, `manualReviewedAt`, `manualProvenance`, `source: null` y `sourcePatch: null`; no representa datos de Riot ni porcentajes reales. **Los roles situacionales no equivalen a posiciones habituales** y no forman parte de las sustituciones automáticas normales; los descartados quedan fuera de toda recomendación automática. **El usuario puede seguir seleccionando manualmente cualquiera de estas posiciones** y no se modifican sus bans ni el Excel.
+
+Se conserva la distinción entre **Shaco AD/AP**, **Kayn Azul/Rojo** y **Varus Letalidad/On-Hit**, con un registro por pareja; la agrupación de auditoría no confunde variantes con una sola clasificación. Las pruebas certifican las 63 decisiones individualmente y verifican que no existen parejas del catálogo con estado `sin-verificar`.
+
+**Cobertura completa es editorial, no estadística:** las posiciones cuya frecuencia no ha sido acreditada siguen identificadas como decisiones humanas. Fuera del Excel, Maokai JUNGLA conserva únicamente su nota manual situacional, sin poder añadir una pareja artificial a la cobertura. Cualquier futuro campeón/posición ajeno al catálogo sigue devolviendo `sin-verificar` por defecto.
 
 ## Descarte correcto (sin exclusión indebida)
 
@@ -105,7 +119,7 @@ La documentación y los porcentajes son hechos puntuales fechados; pueden variar
 
 ## Límites y decisión de integración
 
-**63 parejas siguen pendientes**; la reducción de filas investigables se consigue agrupando por campeón, pero no autoriza a inventar el rol de las variantes o roles ausentes de fuentes. El estado `compatible` sigue siendo reconocimiento de cliente, no garantía estadística de predominio. La cobertura por perfil medida antes de excluir picks no prueba disponibilidad universal en cualquier draft.
+**No quedan parejas del Excel pendientes de clasificación editorial.** El catálogo es un conjunto cerrado de 266 parejas, no todas las cinco posiciones de todos los campeones. La revisión por campeón evitó inventar etiquetas a variantes de builds o roles ausentes del Excel. El estado `compatible` sigue siendo reconocimiento de cliente, no garantía estadística de predominio. La cobertura por perfil medida antes de excluir picks no prueba disponibilidad universal en cualquier draft.
 
 Exigir **GitHub Actions completamente verde** (auditoría editorial, PWA lifecycle, UX/teclado, dos optimizadores y versionado 3.13.4), revisar diferencias en los 10 casos de referencia, y comprobar que el caso Aurora TOP / Elise JUNGLA / Corki MID / Miss Fortune BOTLINE / Lulu SUPPORT no incorpore Maokai TOP.
 
