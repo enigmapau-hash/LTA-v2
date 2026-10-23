@@ -37,7 +37,7 @@ De esas 16, **Maokai SUPPORT y Brand SUPPORT** conservan la clasificación estad
 
 Todas las parejas declaradas manualmente incluyen `manualRoleReview`, fecha y procedencia. Las seis incorporadas sin respaldo externo mantienen **`source: null`**, **`sourcePatch: null`** y etiqueta explícita *Criterio manual del usuario*, sin atribuciones estadísticas o de Riot inventadas. Los 7 roles antes compatibles mantienen el enlace Wiki como evidencia **de compatibilidad**, no de frecuencia. Así, la revisión editorial manual mejora la disponibilidad de alternativas sin hacer pasar una opinión humana por estadísticas actuales.
 
-**No deducir descarte** de las posiciones omitidas: Maokai JUNGLA, Galio TOP/SUPPORT, Garen JUNGLA/MID, Nautilus JUNGLA, Viego TOP, Fiddlesticks SUPPORT, Brand BOTLINE y Yorick JUNGLA siguen `sin-verificar`. Queda pendiente decidir si son situacionales o no recomendables, en otra ronda específica.
+**No deducir descarte** de las posiciones omitidas: Maokai JUNGLA, Galio TOP/SUPPORT, Garen JUNGLA/MID, Dr. Mundo MID, Nautilus JUNGLA, Viego TOP, Fiddlesticks SUPPORT, Brand BOTLINE y Yorick JUNGLA siguen `sin-verificar`. Queda pendiente decidir si son situacionales o no recomendables, en otra ronda específica.
 
 ## Descarte correcto (sin exclusión indebida)
 
