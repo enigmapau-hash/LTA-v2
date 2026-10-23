@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.13.2
+
+### Improved
+- Informe más claro: motivos breves y recomposiciones independientes de las alternativas individuales, sin cambiar rankings.
+
 ## v3.13.1
 
 ### Fixed

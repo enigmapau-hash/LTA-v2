@@ -279,3 +279,17 @@
   .result-summary__candidate-more > summary, .result-summary__ban-detail > summary { gap: 6px; }
   .result-summary__disclosure-label { font-size: .7rem; }
 }
+
+/* Secondary optimizer suggestions are a distinct, opt-in calculation. */
+.result-summary__advanced-change {
+  margin-top: 13px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .018);
+}
+.result-summary__advanced-change summary {
+  font-weight: 700;
+  color: var(--text) !important;
+}
+.result-summary__advanced-change p + p { margin-top: 8px; }

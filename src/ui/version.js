@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.13.1",
+    version: "v3.13.2",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-23",
-    summary: ["Distingue plan reconocido de herramientas necesarias; recupera correcciones útiles sin cambiar los rankings del draft parcial."],
+    summary: ["Informe más claro: motivos breves y recomposiciones independientes de las alternativas individuales, sin cambiar rankings."],
     pending: [],
   };
 
