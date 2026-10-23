@@ -177,3 +177,18 @@ jobs:
           node tools/check-strategic-report-ban-integration.cjs
       - name: Verify version synchronization
         run: npm run version:check
+
+  fast-correction-audit:
+    name: Fast correction abstention and screenshot audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Trace ten fixtures and two screenshot compositions
+        run: node tools/audit-correction-decisions.cjs
+      - name: Check conservative correction and optimizer baselines
+        run: |
+          node tools/check-correction-engine.cjs
+          node tools/check-composition-optimizer.cjs
