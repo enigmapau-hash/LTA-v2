@@ -80,6 +80,15 @@
       };
     }
 
+    const missing = Array.isArray(diagnosis.execution?.missing) ? diagnosis.execution.missing : [];
+    if (missing.length) {
+      const labels = missing.map((item) => item.label).filter(Boolean);
+      const firstTwo = labels.slice(0, 2);
+      return {
+        status: "risk",
+        summary: `El plan se reconoce, pero faltan herramientas acreditadas: ${firstTwo.join(" y ")}${labels.length > 2 ? " (entre otras)" : ""}.`,
+      };
+    }
     const fullyAligned = coherence.status === "fully-coherent";
     const stable = stability.status === "stable";
     const dependencySummary = stabilitySummary(diagnosis);
