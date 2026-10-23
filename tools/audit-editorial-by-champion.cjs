@@ -3,6 +3,7 @@
 // Auditoría offline por campeón. Nunca convierte ausencia de prueba en posición secundaria.
 const { loadCandidateCatalog } = require("./recommendation-audit.cjs");
 const viability = require("../src/data/role-viability-26-21.js");
+const editorial = require("../src/data/role-editorial-26-21.js");
 
 function canon(champion) {
   return String(champion || "").replace(/&amp;/g, "&")
@@ -25,9 +26,13 @@ function analyze(catalog = loadCandidateCatalog()) {
     // Only a quantitatively supported >=60% primary proves that a *different* role
     // cannot be a co-principal under the same patch/scope. This is NOT a veto
     // of compatible, habitual or manually selected positions.
-    const max = Math.max(0, ...g.roles.filter(r => r.status === "principal" && r.share !== null)
-      .map(r => r.share));
-    const dominant = max >= 60 ? g.roles.find(r => r.status === "principal" && r.share === max) : null;
+    const offCatalog = editorial.externalDominance?.filter(x => canon(x.champion) === g.id) || [];
+    const observations = [
+      ...g.roles.filter(r => r.status === "principal" && r.share !== null),
+      ...offCatalog.map(x=>({ role:x.role, status:"principal", share:x.roleSharePct })),
+    ];
+    const max = Math.max(0, ...observations.map(x=>x.share));
+    const dominant = max >= 60 ? observations.find(r => r.status === "principal" && r.share === max) : null;
     return {
       id: g.id, variants: [...g.names].sort(), pairCount: g.roles.length,
       reviewed: g.roles.filter(r => r.status !== "sin-verificar").length,
