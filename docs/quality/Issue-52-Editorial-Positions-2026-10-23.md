@@ -4,14 +4,15 @@
 
 Esta intervención sustituye el enfoque de recolección Match-V5 por un **catálogo editorial pequeño** y offline. No se recopilan estadísticas en bloque, ni se crea scraper, API, infraestructura o actualización automática. La fuente se consulta para confirmar hechos puntuales y se guardan únicamente clasificaciones humanas mínimas, enlaces de atribución y metadatos.
 
-**No es una certificación estadística de cuota por campeón/rol.** `principal` designa aquí una *conclusión editorial de predominio* corroborada con la posición destacada de OP.GG para el parche 16.21 y la posición Riot del listado de League Wiki; no afirmamos porcentaje, umbral de muestra ni predominio demostrado con un corte uniforme de partidas. Las páginas de OP.GG muestran métricas de pick rate relativas a esa posición y no aportan por sí solas un denominador por campeón y todos sus roles. El rotulado de la PWA dice explícitamente **«Principal · criterio editorial»** y jamás «principal estadísticamente verificado». Esta limitación mantiene la cuestión de una verificación estadística exhaustiva abierta.
+**No es una certificación de predominio universal.** `principal` identifica una *conclusión editorial* respaldada por siete porcentajes puntuales de la distribución de partidas del campeón por posición en LeagueOfGraphs (parche 16.21, ventana de dos días, todas las regiones, Platino+, normales y clasificatorias). No representa todos los rangos, una estimación de incertidumbre o un dataset de todas las posiciones y parches. La condición editorial es: **posición con al menos 60 % de las partidas del campeón**, o **dos posiciones con al menos 30 % cada una y una diferencia no superior a cinco puntos porcentuales**. Este criterio explica el multirrol Diana sin convertir roles secundarios en principales. En la PWA la etiqueta es «Principal · criterio editorial», no «principal estadísticamente verificado». La muestra y la licencia del agregador no permiten una certificación exhaustiva ni la importación de tablas.
 
 **Compatibilidad**: la lista de posiciones de la League Wiki distingue `Riot` de `3P`. Se han elegido roles con marca Riot para clasificar `compatible`; esto no prueba qué porcentaje de partidas ni asegura que sea habitual en un parche. **Secundaria**: posición que la lista atribuye solo a `3P`, insuficiente para recomendación normal. **Experimental**: evidencia anterior pequeña. **Sin verificar**: hoja del Excel, ninguna prueba externa suficiente.
 
 ### Procedencia y reutilización
 
 - [League Wiki, posiciones por campeón](https://wiki.leagueoflegends.com/en-us/List_of_champions_by_draft_position). Se usan hechos editoriales y atribución por enlace; no se importa ni transcribe la tabla ni imágenes. La Wiki es de colaboración comunitaria: «Riot» en esta página describe la procedencia de las posiciones del cliente, no que la Wiki sea una publicación oficial de Riot. Su texto puede tener licencia CC BY-SA; no se copia contenido protegido y se mantiene un enlace explícito.
-- [OP.GG, ejemplo Maokai](https://op.gg/lol/champions/maokai/build), [Aatrox](https://op.gg/lol/champions/aatrox/build), [K'Sante](https://op.gg/lol/champions/ksante/build), [Diana](https://op.gg/lol/champions/diana/build), [Aurora](https://op.gg/lol/champions/aurora/build), [Seraphine](https://op.gg/lol/champions/seraphine/build). Corte observado 16.21 (correspondiente a denominación de temporada 26.21); modo Solo/Duo, Global, Emerald+ en la vista de consulta. **No** se descargan o redistribuyen agregados ni se infiere que el acceso web otorgue licencia para ello. Cada entrada mantiene un enlace, no un volcado.
+- **Predominio editorial:** las páginas de LeagueOfGraphs para [Maokai](https://www.leagueofgraphs.com/en/champions/stats/maokai/support), [Aatrox](https://www.leagueofgraphs.com/en/champions/stats/aatrox/top), [K'Sante](https://www.leagueofgraphs.com/en/champions/stats/ksante/top), [Diana](https://www.leagueofgraphs.com/en/champions/stats/diana/jungle), [Aurora](https://www.leagueofgraphs.com/en/champions/stats/aurora/middle) y [Seraphine](https://www.leagueofgraphs.com/en/champions/stats/seraphine/support) muestran el corte 16.21 y la proporción de partidas por posición. Se conservan **siete hechos numéricos aislados**, atribuidos y fechados; no se descargan bases, capturas, HTML ni estadísticas masivas. Ventana de dos días; el valor en vivo puede variar tras la revisión. La página y sus datos de terceros no se presuponen reutilizables en bloque.
+- **Contraste y derechos:** [OP.GG](https://op.gg/lol/champions-tier/ranked) se consulta como segunda referencia para posiciones y parche; su [Centro de Ayuda sobre uso de datos](https://help.op.gg/hc/en-us/articles/31091405109401-Can-I-use-OP-GG-data) exige atribución y alerta sobre usos comerciales sin ella y consultas excesivas. Esto **no es una licencia de redistribución de una base completa**. La PWA no consume ni descarga datos de terceros.
 - La antigua muestra METAsrc para Diana TOP solo justifica **excluir** su recomendación estándar, no titular otras posiciones «principal 26.21».
 
 ### Datos revisados
@@ -27,7 +28,21 @@ Esta intervención sustituye el enfoque de recolección Match-V5 por un **catál
 | Aurora | Compatible (Riot) | — | Principal editorial | — | — |
 | Seraphine | — | — | — | Compatible (Riot) | Principal editorial |
 
+Datos puntuales de posición principal, capturados el 23/10/2026 (porcentaje de las partidas del **campeón**, no cuota de selección del carril):
+
+| Campeón / rol principal | Cuota de partidas del campeón | Otra posición destacada |
+| --- | ---: | --- |
+| Aatrox TOP | 84,3 % | JUNGLA 11,9 % |
+| K'Sante TOP | 93,6 % | MID 3,2 % |
+| Maokai SUPPORT | 65,3 % | JUNGLA 19,2 %; TOP 14,8 % |
+| Diana MID | 48,5 % | JUNGLA 47,7 % |
+| Diana JUNGLA | 47,7 % | MID 48,5 % |
+| Aurora MID | 79,5 % | TOP 16,3 % |
+| Seraphine SUPPORT | 92,0 % | BOTLINE 5,8 % |
+
 La distinción entre Diana JUNGLA/MID es explícita: ambas pueden figurar como principales editoriales (sin una relación ordenada entre ellas); cuando el desempate de contexto no basta, el informe expone ambas posiciones, sin declararla predominante por ser TOP u orden alfabético.
+
+**Interpretación:** Aurora TOP y Seraphine BOTLINE son compatibles según la clasificación del cliente, aunque no son principales en esta muestra. Maokai TOP es secundario (14,8 %) y solo 3P. Diana MID/JUNGLA sí cumple el umbral editorial de dos posiciones comparables. Son resultados del corte descrito, no una regla intemporal.
 
 ### Comportamiento de la cadena
 
