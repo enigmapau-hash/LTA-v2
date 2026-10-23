@@ -93,8 +93,8 @@ if(userMapped.status==="mapped")for(const profile of userMapped.profiles){
   }
 }
 const provisional=mapCandidates({...mock,candidatesByRole:{top:[
- {champion:"Unverified A",identity:"Front to Back",strengths:"Frontline · Tanque",function:"Tanque",tempo:"Mid"},
- {champion:"Unverified B",identity:"Front to Back",strengths:"Frontline · Tanque",function:"Tanque",tempo:"Mid"}
+ {champion:"Unverified A",identity:"Front to Back",strengths:"Frontline",function:"Vanguardia",tempo:"Mid"},
+ {champion:"Unverified B",identity:"Teamfight",strengths:"Tanque",function:"Protección",tempo:"Mid"}
 ]}});
 assert.equal(provisional.status,"mapped");
 assert.ok(provisional.profiles[0].candidates.every(item=>item.viabilityStatus==="sin-verificar"),
