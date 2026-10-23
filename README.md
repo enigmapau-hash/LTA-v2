@@ -12,7 +12,7 @@ La v2 amplía la lectura estratégica de composiciones completas con diagnóstic
 
 ## Características
 
-- Versión visible: `v3.13.3`
+- Versión visible: `v3.13.4`
 - El informe separa la recomposición de dos campeones de las alternativas individuales; elimina afirmaciones repetidas y mantiene evidencia consultable.
 - La identidad estratégica reconocida no equivale a un plan ejecutable: el diagnóstico verifica recursos necesarios y la recomendación corrige las carencias acreditadas.
 - Las correcciones de equipos completos exigen una brecha de cohesión o una herramienta explícitamente requerida por el plan que falte. No se fuerzan cambios por debilidades normales del arquetipo. Protección y bans siguen funcionando aunque no se recomienden sustituciones.
@@ -31,7 +31,7 @@ La v2 amplía la lectura estratégica de composiciones completas con diagnóstic
 
 - `index.html` y los CSS de la raíz: documento y estilos de la interfaz.
 - `src/ui/`: controlador de la aplicación y comportamiento de los selectores, la navegación, la vista previa y la versión.
-- `src/data/`: lectura de `Draft Pool.xlsx`; `role-editorial-26-21.js` añade una curación manual de 49 parejas con fuentes identificadas; `role-viability-26-21.js` combina la revisión con seis observaciones históricas y conserva el resto como «sin verificar», sin consultas de red. Las parejas no verificadas conservan explícitamente el estado «sin verificar», nunca reciben una clasificación inventada.
+- `src/data/`: lectura de `Draft Pool.xlsx`; `role-editorial-26-21.js` añade una curación offline de las 266 parejas del catálogo (cobertura editorial completa; no verificación estadística) con procedencia estadística, Wiki o criterio manual explícitos; roles situacionales no equivalen a recomendación normal ni a descarte; `role-viability-26-21.js` combina la clasificación con seis observaciones históricas, sin consultas de red. El estado «sin verificar» se reserva para campeones/posiciones externos al catálogo; las decisiones manuales nunca se atribuyen a fuentes estadísticas.
 - `src/domain/composition-logic.js`: validación y búsquedas puras usadas por la interfaz actual.
 - `src/domain/composition-engine.js`: evaluación determinista y pura de la composición con los atributos del workbook. Informa identidad principal/secundaria, condición de victoria, fortalezas, debilidades y cohesión; alimenta el análisis estratégico del informe visible.
 - `src/domain/diagnostic-engine.js`: diagnóstico de composiciones completas, con plan, coherencia, robustez, dependencias y problema principal.
@@ -81,9 +81,9 @@ El Excel determina únicamente las **posiciones que el usuario puede elegir manu
 - **Secundaria o experimental:** posición no admitida en propuestas automáticas normales, pero sí seleccionable manualmente cuando aparece en el Excel.
 - **Sin verificar:** se mantiene como alternativa **provisional** solo cuando faltan dos opciones revisadas para ese perfil. Los dos optimizadores consumen exclusivamente alternativas revisadas.
 
-La curación cubre **49 de 266 parejas** (7 principales editoriales, 37 compatibles, 4 secundarias y una experimental); quedan **217 sin verificar**. Se conservan en archivos locales los enlaces y la fecha de la comprobación, no datos descargados de terceros. El corte Wiki no se atribuye ficticiamente a un parche. Las cifras no garantizan disponibilidad de candidatos para todos los equipos, por lo que las pruebas revisan perfiles y diez composiciones de referencia. Se excluye Maokai TOP de sugerencias estándar y se permite SUPPORT; Diana puede justificar JUNGLA y MID sin imponer una preferencia artificial.
+La curación cubre **266 de 266 parejas** (12 principales editoriales basadas en evidencia cuantitativa, 104 habituales, 87 compatibles, 40 situacionales, 16 descartadas para recomendaciones automáticas, 6 secundarias y 1 experimental); quedan **0 sin clasificar dentro del Excel**. Es una **cobertura editorial**, no una verificación estadística universal. Se preservan fecha y procedencia de cada criterio sin descargar bases de terceros ni atribuir a Riot una clasificación personal. Las pruebas revisan el conjunto cerrado de parejas, perfiles y diez composiciones de referencia; se excluye Maokai TOP de sugerencias estándar y se permite SUPPORT. Diana puede justificar JUNGLA y MID sin una preferencia arbitraria.
 
-[Metodología, fuentes y límites](docs/quality/Issue-52-Editorial-Positions-2026-10-23.md). La evidencia estadística exhaustiva sigue siendo una limitación, sin APIs ni actualización automática en esta versión.
+[Primera tanda y fuentes](docs/quality/Issue-52-Editorial-Positions-2026-10-23.md) · [Cobertura editorial completa y criterios manuales](docs/quality/Issue-52-Champion-First-Curation-2026-10-23.md). La evidencia estadística exhaustiva sigue siendo una limitación, sin APIs ni actualización automática en esta versión.
 
 ## Integración de riesgos y contramedidas (v3.10.0)
 

@@ -11,8 +11,9 @@
 })(typeof window !== "undefined" ? window : globalThis, function (editorial) {
   "use strict";
 
-  // Only verified evidence is classified. Every other workbook champion/role
-  // pair receives "sin-verificar", NOT a guessed habitual/situational rating.
+  // Workbook champion/role pairs are now classified through sourced editorial
+  // observations or explicitly attributed user judgments, never silently
+  // upgraded into numerical facts. Unknown external pairs remain "sin-verificar".
   // Snapshot is offline and versioned; metadata is never queried at runtime.
   const PATCH = "26.21";
   const CHECKED_AT = "2026-10-22";
@@ -48,7 +49,7 @@
 
   const ORDER = Object.freeze({
     principal: 5, compatible: 4, habitual: 3, situacional: 2,
-    "sin-verificar": 1, secundaria: 0, experimental: 0,
+    "sin-verificar": 1, secundaria: 0, experimental: 0, descartada: 0,
   });
 
   function normalize(value) {
@@ -70,7 +71,9 @@
     const curated = reviewed.get(key);
     if (curated) return {
       ...curated, patch: PATCH, checkedAt: curated.reviewedAt,
-      provider: curated.status === "principal" ? "LeagueOfGraphs / League Wiki"
+      provider: curated.source?.includes("leagueofgraphs.com") ? "LeagueOfGraphs / League Wiki"
+        : curated.manualRoleReview ? (curated.source
+          ? "League Wiki / criterio manual del usuario" : "Criterio manual del usuario")
         : curated.status === "experimental" ? "METAsrc" : "League Wiki / revisión editorial",
       reviewed: true,
     };
@@ -93,11 +96,13 @@
   }
 
   function isReviewedRecommendation(record) {
-    return record?.status === "principal" || record?.status === "compatible";
+    return record?.status === "principal" || record?.status === "compatible"
+      || record?.status === "habitual";
   }
 
   function isExcluded(record) {
-    return record?.status === "secundaria" || record?.status === "experimental";
+    return record?.status === "secundaria" || record?.status === "experimental"
+      || record?.status === "descartada";
   }
 
   function candidatesForReview(candidatesByRole = {}) {

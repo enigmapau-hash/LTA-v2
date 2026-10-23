@@ -32,8 +32,9 @@ assert.equal(viability.PATCH, "26.21");
 assert.equal(pairs.length, 266, "Todas las parejas del workbook tienen una evaluación, aunque no haya evidencia externa");
 assert.deepEqual(Object.keys(catalog), Object.keys(sheetNames));
 assert.ok(pairs.every((item) => item.patch === "26.21"
-  && ["principal", "compatible", "secundaria", "habitual", "situacional", "experimental", "sin-verificar"].includes(item.status)));
-assert.ok(pairs.some((item) => item.status === "sin-verificar"), "No se inventan categorías para los datos sin fuente");
+  && ["principal", "compatible", "secundaria", "descartada", "habitual", "situacional", "experimental", "sin-verificar"].includes(item.status)));
+assert.ok(pairs.every((item) => item.status !== "sin-verificar"),
+  "El catálogo queda clasificado por fuentes fechadas o por criterio manual identificado");
 
 const sourceKeys = new Set(pairs.map((item) => `${item.champion.toLocaleLowerCase("es")}|${item.role}`));
 for (const item of viability.evidence) {
@@ -45,7 +46,8 @@ for (const item of viability.evidence) {
 assert.equal(viability.assess("Diana", "top").status, "experimental");
 assert.equal(viability.assess("Diana", "mid").status, "principal");
 assert.equal(viability.assess("Diana", "jungle").status, "principal");
-assert.equal(viability.assess("Viego", "jungle").status, "compatible");
+assert.equal(viability.assess("Viego", "jungle").status, "habitual",
+  "Viego JUNGLA está confirmado manualmente, sin afirmar que el respaldo sea estadístico");
 assert.equal(viability.assess("Smolder", "top").status, "secundaria");
 assert.equal(viability.assess("Smolder", "botline").status, "compatible");
 assert.equal(viability.assess("Unverified Champion", "top").status, "sin-verificar");

@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.13.4
+
+### Improved
+- Completada la clasificación editorial offline del catálogo: 266/266 parejas; las últimas 63 decisiones manuales son 47 habituales, 14 situacionales y 2 descartadas.
+- Mantiene procedencia humana separada de estadísticas, variantes de Shaco/Kayn/Varus diferenciadas, picks manuales y bans intactos.
+
+
 ## v3.13.3
 
 ### Improved

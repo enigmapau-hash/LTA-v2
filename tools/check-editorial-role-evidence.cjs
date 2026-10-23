@@ -12,11 +12,15 @@ assert.equal(Object.values(countByRole).reduce((n,c)=>n+c,0),266);
 const records=viability.candidatesForReview(catalog);
 const key=(item)=>item.champion.toLocaleLowerCase("es")+"|"+item.role;
 const workbookPairs=new Set(records.map(key));
-assert.equal(editorial.entries.length,49,"Revisión editorial limitada a 49 parejas, no al catálogo completo");
-assert.equal(new Set(editorial.entries.map(key)).size,49,"Sin duplicar pares");
+assert.equal(editorial.entries.length,266,"Cobertura completa del catálogo con cuatro rondas manuales; conservar fuente y estados");
+assert.equal(new Set(editorial.entries.map(key)).size,266,"Sin duplicar pares");
 for(const item of editorial.entries){
   assert.ok(workbookPairs.has(key(item)),item.champion+" "+item.role+" debe figurar en Draft Pool.xlsx");
-  assert.match(item.source,/^https:\/\//);
+  if(item.manualRoleReview && !item.source) {
+    assert.ok(["habitual","situacional","descartada"].includes(item.status));
+    assert.equal(item.sourcePatch,null);
+    assert.equal(item.manualProvenance,"Declaración del usuario de LTA, no estadística");
+  } else assert.match(item.source,/^https:\/\//);
   assert.equal(item.reviewedAt,"2026-10-23");
   if(item.status==="principal") {
     assert.equal(item.sourcePatch,"16.21");
@@ -34,10 +38,17 @@ for(const item of editorial.entries){
       assert.ok(partner, "No promover multirrol sin las dos posiciones corroboradas");
       assert.equal(partner.roleSharePct, item.runnerUpSharePct);
     }
+  } else if (item.sourcePatch) {
+    assert.match(item.source,/leagueofgraphs.com/,"La cuota editorial tiene una fuente cuantitativa");
+    assert.ok(Number.isFinite(item.roleSharePct),"Cada observación estadística incluye porcentaje");
+    if(item.status==="habitual") assert.ok(item.roleSharePct>=15 && item.roleSharePct<60,
+      "Habitual documentado: 15-60%, sin llamarlo principal");
+    if(item.status==="secundaria") assert.ok(item.roleSharePct<15,
+      "Secundaria estadística: cuota inferior al 15%");
   }else assert.equal(item.sourcePatch,null,"No asignar parche de la estadística a una posición Wiki");
 }
-const counts=Object.fromEntries(["principal","compatible","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
-assert.deepEqual(counts,{principal:7,compatible:37,secundaria:4,experimental:1,"sin-verificar":217});
+const counts=Object.fromEntries(["principal","compatible","habitual","situacional","descartada","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
+assert.deepEqual(counts,{principal:12,compatible:87,habitual:104,situacional:40,descartada:16,secundaria:6,experimental:1,"sin-verificar":0});
 assert.equal(viability.assess("Diana","mid").provider,"LeagueOfGraphs / League Wiki",
   "Los porcentajes editoriales proceden de LeagueOfGraphs, no de OP.GG");
 assert.equal(viability.assess("Aurora","top").provider,"League Wiki / revisión editorial");
@@ -52,6 +63,173 @@ for(const [champion,role,status] of [
 ]){
  assert.equal(viability.assess(champion,role).status,status,champion+" "+role);
 }
+// Campeones tratados como una sola unidad para la revisión, no como 217 consultas.
+const {analyze: analyzeByChampion,canon}=require("./audit-editorial-by-champion.cjs");
+const byChampion=analyzeByChampion(catalog);
+assert.equal(byChampion.pairs,266);
+assert.equal(byChampion.reviewed,266);
+assert.equal(byChampion.pending,0);
+assert.ok(byChampion.champions < byChampion.distinctCatalogNames,
+  "Las builds de Kayn/Varus/Shaco comparten campeón; no necesariamente rol verificado");
+assert.equal(canon("Kayn (Azul)"),canon("Kayn (Rojo)"));
+assert.equal(canon("Varus (On-Hit)"),canon("Varus (Letalidad)"));
+// Descartar 'principal' por cuota no equivale a descartar viabilidad ni draft manual.
+for(const [champion,role,expected] of [
+  ["Brand","support","principal"],["Brand","jungle","secundaria"],["Brand","mid","habitual"],
+  ["Lux","mid","habitual"],
+  ["Jax","top","principal"],
+  ["Senna","support","principal"],["Swain","support","principal"],
+  ["Swain","botline","habitual"],["Ashe","botline","principal"],["Ashe","support","compatible"],
+  ["Pantheon","top","habitual"],["Pantheon","support","habitual"],
+  ["Yasuo","mid","habitual"],["Yasuo","top","compatible"],["Yasuo","botline","compatible"],
+  ["Poppy","support","habitual"],["Xerath","mid","habitual"],["Xerath","support","habitual"],
+]) assert.equal(viability.assess(champion,role).status,expected,champion+" "+role);
+assert.equal(editorial.externalDominance.length,1,"La fuente dominante fuera del Excel no cuenta como pareja revisada");
+assert.ok(!workbookPairs.has("lux|support"));
+assert.ok(byChampion.groups.find(x=>x.id==="lux").nonPrincipalByExclusion.includes("mid"),
+  "Lux MID no es principal en este corte, pero sigue siendo elegible como habitual");
+assert.ok(!byChampion.groups.find(x=>x.id==="pantheon").nonPrincipalByExclusion.length,
+  "No forzar principal de Pantheon por ser TOP o SUPPORT");
+assert.ok(viability.isReviewedRecommendation(viability.assess("Poppy","support")),
+  "Una posición habitual documentada también se puede recomendar");
+
+// Fuente de estas posiciones: confirmaciones humanas (no porcentajes externos).
+const manuallyConfirmed=[["Maokai","support","principal"],["Poppy","top","habitual"],["Poppy","support","habitual"],["Gragas","top","habitual"],["Gragas","mid","habitual"],["Galio","mid","habitual"],["Cho'Gath","jungle","habitual"],["Cho'Gath","top","habitual"],["Garen","top","habitual"],["Dr. Mundo","jungle","habitual"],["Dr. Mundo","top","habitual"],["Nautilus","support","habitual"],["Viego","jungle","habitual"],["Fiddlesticks","jungle","habitual"],["Brand","support","principal"],["Yorick","top","habitual"]];
+assert.equal(manuallyConfirmed.length,16);
+for(const [champion,role,status] of manuallyConfirmed) {
+  const actual=viability.assess(champion,role);
+  assert.equal(actual.status,status,champion+" "+role);
+  assert.equal(actual.manualRoleReview,"habitual");
+  assert.equal(actual.manualProvenance,"Declaración del usuario de LTA, no estadística");
+}
+for(const [champion,role] of [["Poppy","top"],["Gragas","top"],["Gragas","mid"],["Cho'Gath","jungle"],["Dr. Mundo","jungle"],["Yorick","top"]]) {
+  const record=viability.assess(champion,role);
+  assert.equal(record.source,null,"No inventar fuente externa");
+  assert.equal(record.sourcePatch,null,"Una declaración humana no acredita parche");
+  assert.equal(record.provider,"Criterio manual del usuario");
+  assert.ok(viability.isReviewedRecommendation(record));
+}
+
+assert.equal(viability.assess("Galio","mid").provider,"League Wiki / criterio manual del usuario");
+assert.equal(viability.assess("Maokai","support").provider,"LeagueOfGraphs / League Wiki",
+  "No rebajar evidencia numérica a mera declaración manual");
+
+// Segunda ronda del usuario: situacional NO equivale a descartada.
+const userSituational=[["Galio","top"],["Galio","support"],
+  ["Garen","jungle"],["Garen","mid"],["Fiddlesticks","support"],["Brand","botline"]];
+const userDiscarded=[["Dr. Mundo","mid"],["Nautilus","jungle"],
+  ["Viego","top"],["Yorick","jungle"]];
+assert.equal(userSituational.length,6);
+assert.equal(userDiscarded.length,4);
+assert.ok(!workbookPairs.has("maokai|jungle"),"No incorporar Maokai JUNGLA al catálogo sin estar en Excel");
+assert.deepEqual(editorial.manualOutsideCatalog.map(x=>[x.champion,x.role,x.status]),
+  [["Maokai","jungle","situacional"]]);
+assert.equal(viability.assess("Maokai","jungle").status,"sin-verificar",
+  "El usuario puede considerarlo situacional fuera del catálogo sin activar recomendaciones");
+for(const [champion,role] of userSituational) {
+  const record=viability.assess(champion,role);
+  assert.equal(record.status,"situacional");
+  assert.equal(record.manualRoleReview,"situacional");
+  assert.equal(record.provider,"Criterio manual del usuario");
+  assert.equal(record.source,null);
+  assert.equal(record.sourcePatch,null);
+  assert.ok(!viability.isExcluded(record),"Situacional no es prohibido");
+  assert.ok(!viability.isReviewedRecommendation(record),
+    "Situacional no se propone en cambios normales sin justificación contextual");
+}
+for(const [champion,role] of userDiscarded) {
+  const record=viability.assess(champion,role);
+  assert.equal(record.status,"descartada");
+  assert.equal(record.manualRoleReview,"descartada");
+  assert.equal(record.source,null);
+  assert.equal(record.sourcePatch,null);
+  assert.equal(record.provider,"Criterio manual del usuario");
+  assert.ok(viability.isExcluded(record),"Descartada queda fuera de picks automáticos");
+  assert.ok(!viability.isReviewedRecommendation(record));
+}
+// Dictamen de usuario (tanda de 30 campeones + Ekko JUNGLA, 23/10/2026).
+// Estos juicios no atribuyen porcentajes ni un parche a la frecuencia de uso.
+const thirdRound={"habitual":"Annie:mid;Akshan:mid;Cassiopeia:mid;Hwei:mid;Heimerdinger:top,mid;Karma:support;Karthus:jungle;Morgana:support;Neeko:mid;Tristana:botline;Aurelion Sol:mid;Ekko:mid,jungle;Naafiri:mid;Ryze:top,mid;Veigar:mid;Viktor:mid;Ziggs:mid,botline;Zoe:mid;Yone:top;Twitch:botline;Teemo:top;Warwick:jungle;Zac:jungle;Sylas:mid,jungle;Talon:mid,jungle;Zyra:support;Trundle:top,jungle;Kled:top","situacional":"Annie:support;Cassiopeia:top,botline;Karma:top;Karthus:botline;Morgana:jungle,mid;Neeko:support;Tristana:mid;Aurelion Sol:botline;Irelia:mid;Naafiri:top;Veigar:botline,support;Viktor:botline;Yone:botline;Teemo:jungle;Warwick:top;Zac:top;Zyra:jungle","descartada":"Akshan:botline;Hwei:botline;Heimerdinger:support;Karma:mid;Lucian:top,mid;Ziggs:top;Zoe:support;Twitch:support;Kled:mid"};
+const submissions=Object.entries(thirdRound).flatMap(([status,text]) =>
+  text.split(";").flatMap(fragment => {
+    const [champion,roles]=fragment.split(":");
+    return roles.split(",").map(role=>({champion,role,status}));
+  }));
+assert.equal(submissions.length,65,"64 posiciones del formulario + Ekko JUNGLA adicional");
+assert.equal(new Set(submissions.map(item=>item.champion+"|"+item.role)).size,65);
+for(const item of submissions){
+  assert.ok(workbookPairs.has(key(item)),item.champion+" "+item.role+" debe pertenecer a Draft Pool.xlsx");
+  const record=viability.assess(item.champion,item.role);
+  assert.equal(record.status,item.status,item.champion+" "+item.role);
+  assert.equal(record.manualRoleReview,item.status,"Etiqueta manual explícita");
+  assert.equal(record.manualProvenance,"Declaración del usuario de LTA, no estadística");
+  assert.ok(!record.sourcePatch,"No asignar parche a testimonios manuales sin estadística");
+  if(item.status==="descartada"){
+    assert.ok(viability.isExcluded(record));
+    assert.ok(!viability.isReviewedRecommendation(record));
+  } else if(item.status==="situacional"){
+    assert.ok(!viability.isExcluded(record));
+    assert.ok(!viability.isReviewedRecommendation(record),"Sin auto-sustituciones situacionales normales");
+  } else {
+    assert.ok(viability.isReviewedRecommendation(record),"Habitual puede alimentar optimizadores");
+  }
+}
+const ekkoJungle=viability.assess("Ekko","jungle");
+assert.equal(ekkoJungle.status,"habitual");
+assert.match(ekkoJungle.source,/wiki.leagueoflegends.com/,
+  "La evidencia Wiki existente continúa siendo compatibilidad, no estadística de predominio");
+assert.equal(ekkoJungle.provider,"League Wiki / criterio manual del usuario");
+assert.equal(viability.assess("Ekko","mid").status,"habitual","Ekko multirrol manual");
+for(const [champion,role] of [["Dr. Mundo","mid"],["Nautilus","jungle"],["Viego","top"],["Yorick","jungle"]])
+  assert.ok(viability.isExcluded(viability.assess(champion,role)),
+    "Los descartes manuales de la ronda anterior permanecen");
+
+// Ronda final de 63 clasificaciones personales: se prueban todas individualmente.
+const lastBatch={"habitual":"Shaco (AD)|jungle;Shaco (AP)|jungle;Kayn (Azul)|jungle;Kayn (Rojo)|jungle;Sett|top;Udyr|jungle;Varus (Letalidad)|botline;Varus (On-Hit)|botline;Vayne|botline;Vel'Koz|mid;Vel'Koz|support;Vladimir|top;Vladimir|mid;Darius|jungle;Gwen|jungle;Volibear|jungle;Wukong|top;Ambessa|top;Bard|support;Fizz|mid;Gangplank|top;Kalista|botline;Kennen|top;Kha'Zix|jungle;Kog'Maw|botline;Lissandra|mid;Malzahar|mid;Master Yi|jungle;Nasus|top;Nidalee|jungle;Nunu & Willump|jungle;Olaf|top;Quinn|top;Rek'Sai|jungle;Renata Glasc|support;Rengar|jungle;Rumble|top;Singed|top;Sona|support;Soraka|support;Tahm Kench|support;Taric|support;Tryndamere|top;Urgot|top;Vex|mid;Yunara|botline;Zilean|support","situacional":"Shaco|support;Udyr|top;Vayne|top;Swain|top;Smolder|mid;Akali|top;Camille|support;Miss Fortune|support;Shen|jungle;Sion|jungle;Syndra|botline;Taliyah|botline;Zed|jungle;Mel|mid","descartada":"Sett|support;Seraphine|mid"};
+const lastItems=Object.entries(lastBatch).flatMap(([status,raw]) =>
+  raw.split(";").map(pair=>{
+    const [champion,role]=pair.split("|");
+    return {champion,role,status};
+  }));
+assert.equal(lastItems.length,63);
+assert.equal(new Set(lastItems.map(key)).size,63,"No duplicar juicios de la última tanda");
+assert.deepEqual(Object.fromEntries(["habitual","situacional","descartada"].map(status=>[
+  status,lastItems.filter(item=>item.status===status).length
+])),{habitual:47,situacional:14,descartada:2});
+for(const item of lastItems){
+  assert.ok(workbookPairs.has(key(item)),"La posición debe aparecer en el Excel: "+key(item));
+  const row=viability.assess(item.champion,item.role);
+  assert.equal(row.status,item.status,"Clasificación manual "+key(item));
+  assert.equal(row.manualRoleReview,item.status,"Declaración distinta de estadísticas: "+key(item));
+  assert.equal(row.manualProvenance,"Declaración del usuario de LTA, no estadística");
+  assert.equal(row.source,null,"No inventar referencia Wiki o estadística: "+key(item));
+  assert.equal(row.sourcePatch,null,"Una opinión editorial no acredita parche: "+key(item));
+  assert.equal(row.provider,"Criterio manual del usuario");
+  if(item.status==="habitual"){
+    assert.ok(viability.isReviewedRecommendation(row));
+    assert.ok(!viability.isExcluded(row));
+  } else if(item.status==="situacional"){
+    assert.ok(!viability.isExcluded(row),"Situacional no es ban: "+key(item));
+    assert.ok(!viability.isReviewedRecommendation(row),
+      "Situacional no entra en sustituciones normales: "+key(item));
+  } else {
+    assert.ok(viability.isExcluded(row),"Descartada debe salir de recomendaciones automáticas: "+key(item));
+    assert.ok(!viability.isReviewedRecommendation(row));
+  }
+}
+assert.equal(records.filter(item=>item.status==="sin-verificar").length,0,
+  "Todo el Draft Pool.xlsx clasificado, sin alterar opciones manuales ni bans");
+assert.equal(byChampion.withPending,0);
+for(const [champion,role] of [["Shaco (AD)","jungle"],["Shaco (AP)","jungle"],
+  ["Kayn (Azul)","jungle"],["Kayn (Rojo)","jungle"],
+  ["Varus (Letalidad)","botline"],["Varus (On-Hit)","botline"]])
+  assert.equal(viability.assess(champion,role).status,"habitual",
+    "Las variantes conservan su clasificación propia, sin atribuirla por proximidad");
+for(const [champion,role] of [["Sett","support"],["Seraphine","mid"]])
+  assert.ok(viability.isExcluded(viability.assess(champion,role)));
+assert.equal(viability.assess("Unverified Champion","top").status,"sin-verificar",
+  "Un campeón ajeno al catálogo continúa siendo desconocido");
+
 const reviewedCatalog=Object.fromEntries(Object.entries(catalog).map(([role,cs])=>[
  role,cs.filter(c=>viability.isReviewedRecommendation(viability.assess(c.champion,role)))
 ]));
@@ -79,6 +257,23 @@ assert.ok(mapped.profiles[0].candidates.every(c=>c.viabilityStatus!=="secundaria
 assert.ok(!mapped.profiles[0].alternativesByRole.top.some(c=>c.champion==="Maokai"),"No proponer Maokai TOP como sustitución");
 assert.ok(mapped.profiles[0].alternativesByRole.support.some(c=>c.champion==="Maokai"),"Maokai SUPPORT sí se admite");
 assert.deepEqual(mapCandidates(mock),mapped,"Determinismo sin runtime network");
+const situationMock=mapCandidates({...mock, candidatesByRole:{
+  support:[{champion:"Fiddlesticks",identity:"Front to Back",strengths:"Frontline · Tanque",
+    function:"Tanque",tempo:"Mid"},
+    {champion:"Poppy",identity:"Front to Back",strengths:"Frontline · Tanque",
+      function:"Tanque",tempo:"Mid"}],
+  jungle:[{champion:"Nautilus",identity:"Front to Back",strengths:"Frontline · Tanque",
+    function:"Tanque",tempo:"Mid"}]
+}});
+assert.ok(situationMock.profiles.every(profile => profile.candidates.every(candidate =>
+  !(candidate.champion==="Nautilus" && candidate.role==="jungle"))),
+  "Nautilus JUNGLA descartado nunca debe reaparecer como alternativa automática");
+assert.ok(situationMock.profiles.every(profile => Object.values(profile.alternativesByRole)
+  .flat().every(candidate => candidate.viabilityStatus!=="situacional"
+    && candidate.viabilityStatus!=="descartada")),
+  "El optimizador no debe usar roles situacionales ni descartados como correcciones normales");
+
+
 // The reported user composition must never resurrect Maokai TOP via a
 // secondary profile, the evaluator or role-specific optimizer alternatives.
 const {diagnoseComposition}=require("../src/domain/diagnostic-engine.js");

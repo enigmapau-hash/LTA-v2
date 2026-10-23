@@ -146,7 +146,7 @@
   [
     "Yasuo",
     "mid",
-    "compatible"
+    "habitual"
   ],
   [
     "Orianna",
@@ -259,11 +259,401 @@
     "experimental"
   ]
 ]);
+  // Ampliación por campeón, curación editorial puntual del 23/10/2026.
+  // Riot Wiki = compatibilidad; LeagueOfGraphs = distribución, sin importar tablas.
+  const ADDITIONAL_PAIRS = Object.freeze([
+  [
+    "Brand",
+    "support",
+    "principal"
+  ],
+  
+  [
+    "Jax",
+    "top",
+    "principal"
+  ],
+  [
+    "Senna",
+    "support",
+    "principal"
+  ],
+  [
+    "Swain",
+    "support",
+    "principal"
+  ],
+  [
+    "Ashe",
+    "botline",
+    "principal"
+  ],
+  [
+    "Poppy",
+    "support",
+    "habitual"
+  ],
+  [
+    "Pantheon",
+    "top",
+    "habitual"
+  ],
+  [
+    "Pantheon",
+    "support",
+    "habitual"
+  ],
+  [
+    "Xerath",
+    "mid",
+    "habitual"
+  ],
+  [
+    "Xerath",
+    "support",
+    "habitual"
+  ],
+  [
+    "Swain",
+    "botline",
+    "habitual"
+  ],
+  [
+    "Brand",
+    "mid",
+    "habitual"
+  ],
+  
+  [
+    "Lux",
+    "mid",
+    "habitual"
+  ],
+  [
+    "Brand",
+    "jungle",
+    "secundaria"
+  ],
+  [
+    "Pantheon",
+    "mid",
+    "secundaria"
+  ],
+  [
+    "Yasuo",
+    "top",
+    "compatible"
+  ],
+  [
+    "Yasuo",
+    "botline",
+    "compatible"
+  ],
+  [
+    "Bel'Veth",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Briar",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Ekko",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Fiddlesticks",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Graves",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Hecarim",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Ivern",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Kindred",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Lee Sin",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Lillia",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Nocturne",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Rammus",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Skarner",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Vi",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Shyvana",
+    "jungle",
+    "compatible"
+  ],
+  [
+    "Cho'Gath",
+    "top",
+    "compatible"
+  ],
+  [
+    "Darius",
+    "top",
+    "compatible"
+  ],
+  [
+    "Dr. Mundo",
+    "top",
+    "compatible"
+  ],
+  [
+    "Gnar",
+    "top",
+    "compatible"
+  ],
+  [
+    "Illaoi",
+    "top",
+    "compatible"
+  ],
+  [
+    "Irelia",
+    "top",
+    "compatible"
+  ],
+  [
+    "Kayle",
+    "top",
+    "compatible"
+  ],
+  [
+    "Mordekaiser",
+    "top",
+    "compatible"
+  ],
+  [
+    "Renekton",
+    "top",
+    "compatible"
+  ],
+  [
+    "Riven",
+    "top",
+    "compatible"
+  ],
+  [
+    "Sion",
+    "top",
+    "compatible"
+  ],
+  [
+    "Volibear",
+    "top",
+    "compatible"
+  ],
+  [
+    "Aphelios",
+    "botline",
+    "compatible"
+  ],
+  [
+    "Caitlyn",
+    "botline",
+    "compatible"
+  ],
+  [
+    "Corki",
+    "botline",
+    "compatible"
+  ],
+  [
+    "Draven",
+    "botline",
+    "compatible"
+  ],
+  [
+    "Lucian",
+    "botline",
+    "compatible"
+  ],
+  [
+    "Nilah",
+    "botline",
+    "compatible"
+  ],
+  [
+    "Samira",
+    "botline",
+    "compatible"
+  ],
+  [
+    "Sivir",
+    "botline",
+    "compatible"
+  ],
+  [
+    "Xayah",
+    "botline",
+    "compatible"
+  ],
+  [
+    "Zeri",
+    "botline",
+    "compatible"
+  ],
+  [
+    "Alistar",
+    "support",
+    "compatible"
+  ],
+  [
+    "Blitzcrank",
+    "support",
+    "compatible"
+  ],
+  [
+    "Leona",
+    "support",
+    "compatible"
+  ],
+  [
+    "Nami",
+    "support",
+    "compatible"
+  ],
+  [
+    "Pyke",
+    "support",
+    "compatible"
+  ],
+  [
+    "Rakan",
+    "support",
+    "compatible"
+  ],
+  [
+    "Thresh",
+    "support",
+    "compatible"
+  ],
+  [
+    "Yuumi",
+    "support",
+    "compatible"
+  ],
+  [
+    "Ashe",
+    "support",
+    "compatible"
+  ],
+  [
+    "Akali",
+    "mid",
+    "compatible"
+  ],
+  [
+    "Anivia",
+    "mid",
+    "compatible"
+  ],
+  [
+    "Azir",
+    "mid",
+    "compatible"
+  ],
+  [
+    "Kassadin",
+    "mid",
+    "compatible"
+  ],
+  [
+    "Katarina",
+    "mid",
+    "compatible"
+  ],
+  [
+    "LeBlanc",
+    "mid",
+    "compatible"
+  ],
+  [
+    "Qiyana",
+    "mid",
+    "compatible"
+  ],
+  [
+    "Syndra",
+    "mid",
+    "compatible"
+  ],
+  [
+    "Yone",
+    "mid",
+    "compatible"
+  ],
+  [
+    "Zed",
+    "mid",
+    "compatible"
+  ],
+  [
+    "Swain",
+    "mid",
+    "compatible"
+  ]
+]);
+
+  // Declaraciones humanas recibidas el 23/10/2026, cuatro tandas completas. NO son hechos
+  // estadísticos ni autorizan a declarar los demás roles inviables.
+  const MANUAL_HABITUAL = Object.freeze([["Maokai","support"],["Poppy","top"],["Poppy","support"],["Gragas","top"],["Gragas","mid"],["Galio","mid"],["Cho'Gath","jungle"],["Cho'Gath","top"],["Garen","top"],["Dr. Mundo","jungle"],["Dr. Mundo","top"],["Nautilus","support"],["Viego","jungle"],["Fiddlesticks","jungle"],["Brand","support"],["Yorick","top"],["Annie","mid"],["Akshan","mid"],["Cassiopeia","mid"],["Hwei","mid"],["Heimerdinger","top"],["Heimerdinger","mid"],["Karma","support"],["Karthus","jungle"],["Morgana","support"],["Neeko","mid"],["Tristana","botline"],["Aurelion Sol","mid"],["Ekko","mid"],["Ekko","jungle"],["Naafiri","mid"],["Ryze","top"],["Ryze","mid"],["Veigar","mid"],["Viktor","mid"],["Ziggs","mid"],["Ziggs","botline"],["Zoe","mid"],["Yone","top"],["Twitch","botline"],["Teemo","top"],["Warwick","jungle"],["Zac","jungle"],["Sylas","mid"],["Sylas","jungle"],["Talon","mid"],["Talon","jungle"],["Zyra","support"],["Trundle","top"],["Trundle","jungle"],["Kled","top"],["Shaco (AD)","jungle"],["Shaco (AP)","jungle"],["Kayn (Azul)","jungle"],["Kayn (Rojo)","jungle"],["Sett","top"],["Udyr","jungle"],["Varus (Letalidad)","botline"],["Varus (On-Hit)","botline"],["Vayne","botline"],["Vel'Koz","mid"],["Vel'Koz","support"],["Vladimir","top"],["Vladimir","mid"],["Darius","jungle"],["Gwen","jungle"],["Volibear","jungle"],["Wukong","top"],["Ambessa","top"],["Bard","support"],["Fizz","mid"],["Gangplank","top"],["Kalista","botline"],["Kennen","top"],["Kha'Zix","jungle"],["Kog'Maw","botline"],["Lissandra","mid"],["Malzahar","mid"],["Master Yi","jungle"],["Nasus","top"],["Nidalee","jungle"],["Nunu & Willump","jungle"],["Olaf","top"],["Quinn","top"],["Rek'Sai","jungle"],["Renata Glasc","support"],["Rengar","jungle"],["Rumble","top"],["Singed","top"],["Sona","support"],["Soraka","support"],["Tahm Kench","support"],["Taric","support"],["Tryndamere","top"],["Urgot","top"],["Vex","mid"],["Yunara","botline"],["Zilean","support"]]);
+  const MANUAL_KEYS = new Set(MANUAL_HABITUAL.map(([champion, role]) => champion + "|" + role));
+  // Segundo dictamen del usuario (23/10/2026): situacional no es descartado;
+  // descartada indica que NO se debe recomendar automáticamente, pero la
+  // elección manual en el draft permanece intacta.
+  const MANUAL_SITUATIONAL = Object.freeze([["Galio","top"],["Galio","support"],["Garen","jungle"],["Garen","mid"],["Fiddlesticks","support"],["Brand","botline"],["Annie","support"],["Cassiopeia","top"],["Cassiopeia","botline"],["Karma","top"],["Karthus","botline"],["Morgana","jungle"],["Morgana","mid"],["Neeko","support"],["Tristana","mid"],["Aurelion Sol","botline"],["Irelia","mid"],["Naafiri","top"],["Veigar","botline"],["Veigar","support"],["Viktor","botline"],["Yone","botline"],["Teemo","jungle"],["Warwick","top"],["Zac","top"],["Zyra","jungle"],["Shaco","support"],["Udyr","top"],["Vayne","top"],["Swain","top"],["Smolder","mid"],["Akali","top"],["Camille","support"],["Miss Fortune","support"],["Shen","jungle"],["Sion","jungle"],["Syndra","botline"],["Taliyah","botline"],["Zed","jungle"],["Mel","mid"]]);
+  const MANUAL_DISCARDED = Object.freeze([["Dr. Mundo","mid"],["Nautilus","jungle"],["Viego","top"],["Yorick","jungle"],["Akshan","botline"],["Hwei","botline"],["Heimerdinger","support"],["Karma","mid"],["Lucian","top"],["Lucian","mid"],["Ziggs","top"],["Zoe","support"],["Twitch","support"],["Kled","mid"],["Sett","support"],["Seraphine","mid"]]);
+  const MANUAL_SITUATIONAL_KEYS = new Set(MANUAL_SITUATIONAL.map(([champion, role]) => champion + "|" + role));
+  const MANUAL_DISCARDED_KEYS = new Set(MANUAL_DISCARDED.map(([champion, role]) => champion + "|" + role));
+
+
   // Seven manually transcribed positional facts (NOT a third-party dataset).
   // Source: LeagueOfGraphs, patch 16.21; all regions, Platinum+,
   // normal and ranked, last two days as observed on 2026-10-23.
   // Share is among matches WITH THIS CHAMPION, not the pick rate in the lane.
-  const PRIMARY_SHARE = Object.freeze({
+  const STATISTICAL_SHARE = Object.freeze({
     "Aatrox|top": [84.3, "jungle", 11.9],
     "K'Sante|top": [93.6, "mid", 3.2],
     "Maokai|support": [65.3, "jungle", 19.2],
@@ -271,32 +661,98 @@
     "Diana|mid": [48.5, "jungle", 47.7],
     "Aurora|mid": [79.5, "top", 16.3],
     "Seraphine|support": [92.0, "botline", 5.8],
+    "Brand|support": [62.2,"mid",16.2],
+    "Lux|support": [61,"mid",32.1],
+    "Jax|top": [80.4,"jungle",16.1],
+    "Senna|support": [90.8,"botline",7.8],
+    "Swain|support": [61,"botline",16],
+    "Ashe|botline": [82.5,"support",14.4],
+    "Poppy|support": [57.6],
+    "Pantheon|top": [42.6],
+    "Pantheon|support": [36.7],
+    "Yasuo|mid": [59.8],
+    "Xerath|mid": [50.9],
+    "Xerath|support": [40.5],
+    "Swain|botline": [16],
+    "Brand|mid": [16.2],
+    "Jax|jungle": [16.1],
+    "Lux|mid": [32.1],
+    "Brand|jungle": [5.3],
+    "Pantheon|mid": [11.1],
   });
   const PRIMARY_SOURCE = "https://www.leagueofgraphs.com/en/champions/stats/";
-  const entries = PAIRS.map(([champion,role,status]) => {
-    const primary = status === "principal";
+  // Posición predominante externa al Excel: sirve para descartar predominio
+  // de Lux MID, NO para aumentar artificialmente la cobertura del catálogo.
+  const externalDominance = Object.freeze([
+    Object.freeze({ champion: "Lux", role: "support", roleSharePct: 61.0,
+      sourcePatch: "16.21", reviewedAt: REVIEWED_AT,
+      source: PRIMARY_SOURCE + "lux" }),
+  ]);
+  const established = [...PAIRS, ...ADDITIONAL_PAIRS];
+  const establishedKeys = new Set(established.map(([champion, role]) => champion + "|" + role));
+  const manualOnlyPairs = MANUAL_HABITUAL.filter(([champion, role]) =>
+    !establishedKeys.has(champion + "|" + role))
+    .map(([champion, role]) => [champion, role, "habitual"]);
+  const situationalOnlyPairs = MANUAL_SITUATIONAL.filter(([champion, role]) =>
+    !establishedKeys.has(champion + "|" + role) && !MANUAL_KEYS.has(champion + "|" + role))
+    .map(([champion, role]) => [champion, role, "situacional"]);
+  const discardedOnlyPairs = MANUAL_DISCARDED.filter(([champion, role]) =>
+    !establishedKeys.has(champion + "|" + role) && !MANUAL_KEYS.has(champion + "|" + role))
+    .map(([champion, role]) => [champion, role, "descartada"]);
+  const entries = [...established, ...manualOnlyPairs, ...situationalOnlyPairs, ...discardedOnlyPairs].map(([champion,role,initialStatus]) => {
+    const key = champion + "|" + role;
+    const manualHabitual = MANUAL_KEYS.has(key);
+    const manualSituational = MANUAL_SITUATIONAL_KEYS.has(key);
+    const manualDiscarded = MANUAL_DISCARDED_KEYS.has(key);
+    const manualRoleReview = manualHabitual ? "habitual"
+      : manualSituational ? "situacional" : manualDiscarded ? "descartada" : null;
+    const manualOnly = !establishedKeys.has(key);
+    // Nunca rebajar un principal cuantitativo por ser también habitual manual.
+    const status = initialStatus === "compatible" && manualRoleReview ? manualRoleReview : initialStatus;
     const experimental = status === "experimental";
-    const roleShare = PRIMARY_SHARE[champion + "|" + role] || null;
+    const roleShare = STATISTICAL_SHARE[key] || null;
     return Object.freeze({
       champion, role, status, reviewedAt: REVIEWED_AT,
-      source: primary
+      ...(manualRoleReview ? {
+        manualRoleReview,
+        manualReviewedAt: REVIEWED_AT,
+        manualProvenance: "Declaración del usuario de LTA, no estadística",
+      } : {}),
+      source: manualOnly ? null : roleShare
         ? PRIMARY_SOURCE + champion.toLowerCase().replace(/[^a-z0-9]/g,"")
         : experimental
           ? "https://www.metasrc.com/lol/champions/diana/top/stats"
           : WIKI,
-      corroboration: primary ? WIKI : null,
+      corroboration: roleShare ? WIKI : null,
       ...(roleShare ? {
-        roleSharePct: roleShare[0], runnerUpRole: roleShare[1],
-        runnerUpSharePct: roleShare[2],
+        roleSharePct: roleShare[0],
+        ...(roleShare.length > 1 ? { runnerUpRole: roleShare[1], runnerUpSharePct: roleShare[2] } : {}),
       } : {}),
-      sourcePatch: primary ? "16.21" : null,
-      evidenceType: primary ? "Cuota del rol entre partidas con el campeón; muestra de dos días, clasificación editorial"
+      sourcePatch: roleShare ? "16.21" : null,
+      evidenceType: roleShare
+        ? "Distribución puntual de partidas del campeón; estado editorial: " + status
+        : manualOnly && manualSituational ? "Situacional según criterio manual; requiere justificación contextual, sin estadística externa"
+        : manualOnly && manualDiscarded ? "Descartada para recomendaciones automáticas por criterio manual, no prohibida en picks manuales"
+        : manualOnly ? "Habitual declarada por el usuario; sin validación estadística ni externa"
+        : !manualOnly && manualRoleReview && status !== "principal"
+          ? "Posición registrada en League Wiki; clasificación " + status + " por criterio manual del usuario"
         : status === "compatible" ? "Posición reconocida por Riot según listado de League Wiki"
         : experimental ? "Muestra anterior pequeña, no apta para recomendación normal"
         : "Solo 3P en League Wiki; no etiquetar principal",
-      scope: primary ? "Todas las regiones, Platino+, normales y clasificatorias, ventana de dos días (consulta 23/10/2026)"
+      scope: roleShare ? "Todas las regiones, Platino+, normales y clasificatorias, ventana de dos días (consulta 23/10/2026)"
+        : manualOnly ? "Declaración humana, sin cuota estadística, cola, región o parche"
         : "Listado descriptivo; no certifica cuota ni parche",
     });
   });
-  return Object.freeze({ REVIEWED_AT, entries: Object.freeze(entries) });
+  // El usuario considera Maokai JUNGLA situacional, pero NO aparece en el
+  // Draft Pool.xlsx. Conservar este juicio solo como nota externa, sin
+  // agregar una pareja al catálogo ni hacerla automáticamente sugerible.
+  const manualOutsideCatalog = Object.freeze([
+    Object.freeze({ champion: "Maokai", role: "jungle", status: "situacional",
+      manualRoleReview: "situacional", manualReviewedAt: REVIEWED_AT,
+      manualProvenance: "Declaración del usuario de LTA, no estadística",
+      source: null, sourcePatch: null, note: "Fuera del Draft Pool.xlsx" }),
+  ]);
+  return Object.freeze({ REVIEWED_AT, entries: Object.freeze(entries),
+    externalDominance, manualOutsideCatalog });
 });

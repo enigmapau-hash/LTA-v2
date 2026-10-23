@@ -140,3 +140,23 @@ jobs:
 
       - name: Check release metadata synchronization
         run: npm run version:check
+
+  fast-role-regressions:
+    name: Fast editorial roles and engine regressions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Verify offline editorial positions by champion
+        run: node tools/check-editorial-role-evidence.cjs
+      - name: List unresolved catalog positions for next manual batch
+        run: node tools/audit-editorial-by-champion.cjs
+      - name: Verify candidate mapper
+        run: node tools/check-championship-candidate-mapper.cjs
+      - name: Verify evaluator and both strategic optimizers
+        run: |
+          node tools/check-candidate-evaluator.cjs
+          node tools/check-strategic-composition-optimizer.cjs
+          node tools/check-strategic-team-recomposer.cjs
