@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.13.5",
+    version: "v3.13.6",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-23",
-    summary: ["Bans por campeón real: variantes de Shaco, Kayn y Varus unificadas, sin recomendar bans contra picks aliados."],
+    summary: ["Correcciones contextuales: explica las abstenciones y contrasta el coste real de cada sustitución sobre el plan del equipo."],
     pending: [],
   };
 
