@@ -643,7 +643,7 @@
   // Segundo dictamen del usuario (23/10/2026): situacional no es descartado;
   // descartada indica que NO se debe recomendar automáticamente, pero la
   // elección manual en el draft permanece intacta.
-  const MANUAL_SITUATIONAL = Object.freeze([["Maokai","jungle"],["Galio","top"],["Galio","support"],["Garen","jungle"],["Garen","mid"],["Fiddlesticks","support"],["Brand","botline"]]);
+  const MANUAL_SITUATIONAL = Object.freeze([["Galio","top"],["Galio","support"],["Garen","jungle"],["Garen","mid"],["Fiddlesticks","support"],["Brand","botline"]]);
   const MANUAL_DISCARDED = Object.freeze([["Dr. Mundo","mid"],["Nautilus","jungle"],["Viego","top"],["Yorick","jungle"]]);
   const MANUAL_SITUATIONAL_KEYS = new Set(MANUAL_SITUATIONAL.map(([champion, role]) => champion + "|" + role));
   const MANUAL_DISCARDED_KEYS = new Set(MANUAL_DISCARDED.map(([champion, role]) => champion + "|" + role));
@@ -744,5 +744,15 @@
         : "Listado descriptivo; no certifica cuota ni parche",
     });
   });
-  return Object.freeze({ REVIEWED_AT, entries: Object.freeze(entries), externalDominance });
+  // El usuario considera Maokai JUNGLA situacional, pero NO aparece en el
+  // Draft Pool.xlsx. Conservar este juicio solo como nota externa, sin
+  // agregar una pareja al catálogo ni hacerla automáticamente sugerible.
+  const manualOutsideCatalog = Object.freeze([
+    Object.freeze({ champion: "Maokai", role: "jungle", status: "situacional",
+      manualRoleReview: "situacional", manualReviewedAt: REVIEWED_AT,
+      manualProvenance: "Declaración del usuario de LTA, no estadística",
+      source: null, sourcePatch: null, note: "Fuera del Draft Pool.xlsx" }),
+  ]);
+  return Object.freeze({ REVIEWED_AT, entries: Object.freeze(entries),
+    externalDominance, manualOutsideCatalog });
 });
