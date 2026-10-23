@@ -2,19 +2,42 @@
 
 ## Qué cambia
 
-Se han revisado **74 parejas adicionales**, sobre las 49 del corte anterior: **123/266** parejas del catálogo ahora tienen evidencia editorial y **143/266** continúan sin verificar. Este avance NO es una certificación estadística de todos los campeones.
+Se han revisado **74 parejas adicionales**, sobre las 49 del corte anterior: **129/266** parejas del catálogo ahora tienen evidencia editorial y **137/266** continúan sin verificar. Este avance NO es una certificación estadística de todos los campeones.
 
 | Estado | Antes | Propuesto |
 | --- | ---: | ---: |
 | Principal, criterio editorial | 7 | 12 |
-| Habitual con frecuencia documentada | 0 | 9 |
-| Compatible por posición Riot (League Wiki) | 37 | 95 |
+| Habitual (9 con cuota estadística y 13 solo/además confirmadas manualmente) | 0 | 22 |
+| Compatible por posición Riot (League Wiki) | 37 | 88 |
 | Secundaria / no normal | 4 | 6 |
 | Experimental | 1 | 1 |
-| Sin verificar | 217 | 143 |
+| Sin verificar | 217 | 137 |
 | **Total** | **266** | **266** |
 
-Las 74 nuevas parejas no incluyen Lux SUPPORT ni Jax JUNGLA, ausentes del Excel. Su predominio cuantitativo se conserva como **referencia externa**, pero nunca suma cobertura ni añade el campeón a esa posición.\n\nLa única reclasificación de la primera tanda es **Yasuo MID**: compatible → habitual, apoyada por una distribución concreta. Se incorporan más posiciones del cliente Riot *manualmente seleccionadas*, sin importar la tabla comunitaria ni construir un scraper. La inclusión en `Draft Pool.xlsx` **no** basta por sí sola como prueba; cada pareja nueva tiene referencia y fecha.
+Las 74 posiciones respaldadas por fuentes no incluyen Lux SUPPORT ni Jax JUNGLA, ausentes del Excel. Su predominio cuantitativo se conserva como **referencia externa**, pero nunca suma cobertura ni añade el campeón a esa posición.\n\nLa única reclasificación de la primera tanda es **Yasuo MID**: compatible → habitual, apoyada por una distribución concreta. Se incorporan más posiciones del cliente Riot *manualmente seleccionadas*, sin importar la tabla comunitaria ni construir un scraper. La inclusión en `Draft Pool.xlsx` **no** basta por sí sola como prueba; cada pareja nueva tiene referencia y fecha.
+
+## Tanda manual aprobada por el usuario (23/10/2026)
+
+El usuario confirmó como **habituales**, no como *principales estadísticamente verificados*, estas **16 parejas**:
+
+- Maokai SUPPORT
+- Poppy TOP, SUPPORT
+- Gragas TOP, MID
+- Galio MID
+- Cho'Gath JUNGLA, TOP
+- Garen TOP
+- Dr. Mundo JUNGLA, TOP
+- Nautilus SUPPORT
+- Viego JUNGLA
+- Fiddlesticks JUNGLA
+- Brand SUPPORT
+- Yorick TOP
+
+De esas 16, **Maokai SUPPORT y Brand SUPPORT** conservan la clasificación estadística `principal` y **Poppy SUPPORT** conserva `habitual` cuantitativo. Las otras **13** se registran como `habitual` por criterio humano: **7** eran compatibles en League Wiki y **6** estaban sin verificar (Poppy TOP; Gragas TOP/MID; Cho'Gath JUNGLA; Dr. Mundo JUNGLA; Yorick TOP).
+
+Todas las parejas declaradas manualmente incluyen `manualRoleReview`, fecha y procedencia. Las seis incorporadas sin respaldo externo mantienen **`source: null`**, **`sourcePatch: null`** y etiqueta explícita *Criterio manual del usuario*, sin atribuciones estadísticas o de Riot inventadas. Los 7 roles antes compatibles mantienen el enlace Wiki como evidencia **de compatibilidad**, no de frecuencia. Así, la revisión editorial manual mejora la disponibilidad de alternativas sin hacer pasar una opinión humana por estadísticas actuales.
+
+**No deducir descarte** de las posiciones omitidas: Maokai JUNGLA, Galio TOP/SUPPORT, Garen JUNGLA/MID, Nautilus JUNGLA, Viego TOP, Fiddlesticks SUPPORT, Brand BOTLINE y Yorick JUNGLA siguen `sin-verificar`. Queda pendiente decidir si son situacionales o no recomendables, en otra ronda específica.
 
 ## Descarte correcto (sin exclusión indebida)
 
