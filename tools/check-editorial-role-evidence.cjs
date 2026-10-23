@@ -61,6 +61,47 @@ assert.ok(mapped.profiles[0].candidates.every(c=>c.viabilityStatus!=="secundaria
 assert.ok(!mapped.profiles[0].alternativesByRole.top.some(c=>c.champion==="Maokai"),"No proponer Maokai TOP como sustitución");
 assert.ok(mapped.profiles[0].alternativesByRole.support.some(c=>c.champion==="Maokai"),"Maokai SUPPORT sí se admite");
 assert.deepEqual(mapCandidates(mock),mapped,"Determinismo sin runtime network");
+// The reported user composition must never resurrect Maokai TOP via a
+// secondary profile, the evaluator or role-specific optimizer alternatives.
+const {diagnoseComposition}=require("../src/domain/diagnostic-engine.js");
+const {proposeCorrections}=require("../src/domain/correction-engine.js");
+const {optimizeComposition}=require("../src/domain/composition-optimizer.js");
+const {recommendProfiles}=require("../src/domain/strategic-recommendation-engine.js");
+const userSelection={top:"Aurora",jungle:"Elise",mid:"Corki",botline:"Miss Fortune",support:"Lulu"};
+const userPicks=Object.entries(userSelection).map(([role,champion])=>{
+  const entry=catalog[role].find(item=>item.champion===champion);
+  assert.ok(entry,"El caso del usuario está presente en Draft Pool: "+champion+" "+role);
+  return {...entry,role};
+});
+const userDiagnosis=diagnoseComposition(userPicks);
+const userCorrection=proposeCorrections({picks:userPicks,diagnosis:userDiagnosis,candidatesByRole:catalog});
+const userOptimizer=optimizeComposition({diagnosis:userDiagnosis,correction:userCorrection});
+const userRecommendations=recommendProfiles({diagnosis:userDiagnosis,optimizer:userOptimizer});
+const userMapped=mapCandidates({diagnosis:userDiagnosis,optimizer:userOptimizer,
+ recommendations:userRecommendations,candidatesByRole:catalog,
+ selectedChampions:userPicks.map(p=>p.champion),currentPicks:userPicks});
+if(userMapped.status==="mapped")for(const profile of userMapped.profiles){
+  for(const item of profile.candidates){
+    assert.ok(!Object.values(userSelection).includes(item.champion),"Nunca recomendar un campeón seleccionado");
+    assert.ok(!(item.champion==="Maokai" && item.role==="top"),"Maokai TOP no reaparece en candidatos");
+  }
+  for(const [role,alternatives] of Object.entries(profile.alternativesByRole)){
+    for(const item of alternatives){
+      assert.ok(viability.isReviewedRecommendation(viability.assess(item.champion,role)),
+        "La optimización solo recibe posiciones revisadas: "+item.champion+" "+role);
+    }
+  }
+}
+const provisional=mapCandidates({...mock,candidatesByRole:{top:[
+ {champion:"Unverified A",identity:"Front to Back",strengths:"Frontline · Tanque",function:"Tanque",tempo:"Mid"},
+ {champion:"Unverified B",identity:"Front to Back",strengths:"Frontline · Tanque",function:"Tanque",tempo:"Mid"}
+]}});
+assert.equal(provisional.status,"mapped");
+assert.ok(provisional.profiles[0].candidates.every(item=>item.viabilityStatus==="sin-verificar"),
+  "La salida degradada se identifica como provisional");
+assert.ok(provisional.profiles[0].alternativesByRole.top.length===0,
+  "Nunca convertir candidatos provisionales en sustituciones automáticas");
+
 console.log(JSON.stringify({catalogPairs:records.length,counts,byRole:countByRole,
  profiles:filtered.map((p,i)=>({id:p.id,reviewed:p.candidateCount,original:full[i].candidateCount})),
  cases:beforeCases.map(c=>({id:c.id,alternatives:c.mentions.length})),status:"ok"},null,2));
