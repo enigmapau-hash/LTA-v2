@@ -640,6 +640,14 @@
   // estadísticos ni autorizan a declarar los demás roles inviables.
   const MANUAL_HABITUAL = Object.freeze([["Maokai","support"],["Poppy","top"],["Poppy","support"],["Gragas","top"],["Gragas","mid"],["Galio","mid"],["Cho'Gath","jungle"],["Cho'Gath","top"],["Garen","top"],["Dr. Mundo","jungle"],["Dr. Mundo","top"],["Nautilus","support"],["Viego","jungle"],["Fiddlesticks","jungle"],["Brand","support"],["Yorick","top"]]);
   const MANUAL_KEYS = new Set(MANUAL_HABITUAL.map(([champion, role]) => champion + "|" + role));
+  // Segundo dictamen del usuario (23/10/2026): situacional no es descartado;
+  // descartada indica que NO se debe recomendar automáticamente, pero la
+  // elección manual en el draft permanece intacta.
+  const MANUAL_SITUATIONAL = Object.freeze([["Maokai","jungle"],["Galio","top"],["Galio","support"],["Garen","jungle"],["Garen","mid"],["Fiddlesticks","support"],["Brand","botline"]]);
+  const MANUAL_DISCARDED = Object.freeze([["Dr. Mundo","mid"],["Nautilus","jungle"],["Viego","top"],["Yorick","jungle"]]);
+  const MANUAL_SITUATIONAL_KEYS = new Set(MANUAL_SITUATIONAL.map(([champion, role]) => champion + "|" + role));
+  const MANUAL_DISCARDED_KEYS = new Set(MANUAL_DISCARDED.map(([champion, role]) => champion + "|" + role));
+
 
   // Seven manually transcribed positional facts (NOT a third-party dataset).
   // Source: LeagueOfGraphs, patch 16.21; all regions, Platinum+,
@@ -685,9 +693,19 @@
   const manualOnlyPairs = MANUAL_HABITUAL.filter(([champion, role]) =>
     !establishedKeys.has(champion + "|" + role))
     .map(([champion, role]) => [champion, role, "habitual"]);
-  const entries = [...established, ...manualOnlyPairs].map(([champion,role,initialStatus]) => {
+  const situationalOnlyPairs = MANUAL_SITUATIONAL.filter(([champion, role]) =>
+    !establishedKeys.has(champion + "|" + role) && !MANUAL_KEYS.has(champion + "|" + role))
+    .map(([champion, role]) => [champion, role, "situacional"]);
+  const discardedOnlyPairs = MANUAL_DISCARDED.filter(([champion, role]) =>
+    !establishedKeys.has(champion + "|" + role) && !MANUAL_KEYS.has(champion + "|" + role))
+    .map(([champion, role]) => [champion, role, "descartada"]);
+  const entries = [...established, ...manualOnlyPairs, ...situationalOnlyPairs, ...discardedOnlyPairs].map(([champion,role,initialStatus]) => {
     const key = champion + "|" + role;
     const manualHabitual = MANUAL_KEYS.has(key);
+    const manualSituational = MANUAL_SITUATIONAL_KEYS.has(key);
+    const manualDiscarded = MANUAL_DISCARDED_KEYS.has(key);
+    const manualRoleReview = manualHabitual ? "habitual"
+      : manualSituational ? "situacional" : manualDiscarded ? "descartada" : null;
     const manualOnly = !establishedKeys.has(key);
     // Nunca rebajar un principal cuantitativo por ser también habitual manual.
     const status = initialStatus === "compatible" && manualHabitual ? "habitual" : initialStatus;
@@ -695,8 +713,8 @@
     const roleShare = STATISTICAL_SHARE[key] || null;
     return Object.freeze({
       champion, role, status, reviewedAt: REVIEWED_AT,
-      ...(manualHabitual ? {
-        manualRoleReview: "habitual",
+      ...(manualRoleReview ? {
+        manualRoleReview,
         manualReviewedAt: REVIEWED_AT,
         manualProvenance: "Declaración del usuario de LTA, no estadística",
       } : {}),
@@ -713,6 +731,8 @@
       sourcePatch: roleShare ? "16.21" : null,
       evidenceType: roleShare
         ? "Distribución puntual de partidas del campeón; estado editorial: " + status
+        : manualOnly && manualSituational ? "Situacional según criterio manual; requiere justificación contextual, sin estadística externa"
+        : manualOnly && manualDiscarded ? "Descartada para recomendaciones automáticas por criterio manual, no prohibida en picks manuales"
         : manualOnly ? "Habitual declarada por el usuario; sin validación estadística ni externa"
         : manualHabitual && status === "habitual"
           ? "Compatible en League Wiki; habitual según criterio manual del usuario"
