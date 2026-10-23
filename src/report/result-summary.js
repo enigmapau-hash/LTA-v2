@@ -84,8 +84,10 @@
   function renderCandidate(candidate, index) {
     const viability = window.LTARoleViability?.assess(candidate.champion, candidate.role);
     const roleStatus = ({ principal: "Principal · criterio editorial", compatible: "Compatible (cliente Riot)", habitual: "Habitual documentado", situacional: "Situacional", secundaria: "Secundaria", experimental: "Experimental", "sin-verificar": "Sin verificar · provisional" })[viability?.status] || "Sin verificar · provisional";
+    const otherPrincipalRoles = Object.keys(ROLE_LABELS).filter(role => role !== candidate.role
+      && window.LTARoleViability?.assess(candidate.champion, role)?.status === "principal");
     const role = ROLE_LABELS[candidate.role]
-      ? `<small class="result-summary__candidate-role">Posición: ${escapeHtml(ROLE_LABELS[candidate.role])} · ${escapeHtml(roleStatus)} · ${escapeHtml(viability?.sourcePatch ? "parche " + viability.sourcePatch : "revisión " + (viability?.checkedAt || "pendiente"))}${candidate.otherPrincipalRoles?.length ? " · También principal: " + escapeHtml(candidate.otherPrincipalRoles.map(role=>ROLE_LABELS[role]||role).join(", ")) : ""}</small>` : "";
+      ? `<small class="result-summary__candidate-role">Posición: ${escapeHtml(ROLE_LABELS[candidate.role])} · ${escapeHtml(roleStatus)} · ${escapeHtml(viability?.sourcePatch ? "parche " + viability.sourcePatch : "revisión " + (viability?.checkedAt || "pendiente"))}${otherPrincipalRoles.length ? " · También principal: " + escapeHtml(otherPrincipalRoles.map(role=>ROLE_LABELS[role]||role).join(", ")) : ""}</small>` : "";
     const signals = (candidate.justification?.evidence || []).slice(0, 2).map(displaySignal);
     const usefulReason = signals.length
       ? `Señales registradas: ${signals.join(" y ")}.`
@@ -98,7 +100,7 @@
       ? `<small class="result-summary__limitation"><b>Límite:</b> ${escapeHtml(candidate.limitations.join(" · "))}</small>` : "";
     const body = `<small class="result-summary__candidate-reason">${escapeHtml(usefulReason)}</small>${evidence}${limitation}`;
     const title = `<strong>${escapeHtml(candidate.champion)}</strong>`;
-    if (index === 0) return `<li class="result-summary__candidate-primary"><div class="result-summary__candidate-head">${title}<span class="result-summary__priority-label">${["principal","compatible","habitual"].includes(candidate.viabilityStatus) ? "Primera alternativa" : "Alternativa provisional · rol sin verificar"}</span></div>${role}${body}</li>`;
+    if (index === 0) return `<li class="result-summary__candidate-primary"><div class="result-summary__candidate-head">${title}<span class="result-summary__priority-label">${["principal","compatible","habitual"].includes(viability?.status) ? "Primera alternativa" : "Alternativa provisional · rol sin verificar"}</span></div>${role}${body}</li>`;
     return `<li class="result-summary__candidate-secondary"><details class="result-summary__candidate-more"><summary><span class="result-summary__candidate-name">${title}${role}</span><span class="result-summary__disclosure-label">Ver motivos</span></summary><div class="result-summary__candidate-more-body">${body}</div></details></li>`;
   }
 
