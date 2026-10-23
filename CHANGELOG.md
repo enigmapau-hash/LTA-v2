@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.13.1
+
+### Fixed
+- Distingue plan reconocido de herramientas necesarias; recupera correcciones útiles sin cambiar los rankings del draft parcial.
+- Etiquetas menos concluyentes para candidatos con rol sin evidencia estadística vigente.
+
 ## v3.13.0
 
 ### Changed
