@@ -3,7 +3,7 @@
 ## v3.13.4
 
 ### Improved
-- Revisión editorial por campeón de 123 posiciones con clasificación principal, habitual, compatible y secundaria; descarte de predominio no equivale a prohibir elecciones manuales.
+- Revisión editorial por campeón de 129 parejas, incluyendo 16 confirmaciones manuales (6 pendientes resueltas) con clasificación principal, habitual, compatible y secundaria; descarte de predominio no equivale a prohibir elecciones manuales.
 
 
 ## v3.13.3
