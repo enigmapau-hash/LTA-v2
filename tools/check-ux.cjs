@@ -54,9 +54,8 @@ async function main(){
   if (recompositionText.includes("Equipo propuesto:")) {
     assert.ok(recompositionText.split("(antes ").length-1<=2,"nunca se presentan cambios masivos para corregir una necesidad");
   }
-  assert.ok(await strategy.locator(".result-summary__candidate-role").count()>0,"los candidatos indican la posición que respalda el catálogo");
-  assert.ok((await strategy.locator(".result-summary__candidate-role").allInnerTexts()).every(text=>text.includes("(26.21)")),
-    "Cada candidato indica el parche de la evidencia de rol");
+  assert.equal(await strategy.locator(".result-summary__candidate-role").count(),0,
+    "Una composición coherente no recibe sustituciones por falta de presión lateral");
   assert.deepEqual(await page.evaluate(() => ({
     top: window.LTARoleViability.assess("Diana", "top").status,
     jungle: window.LTARoleViability.assess("Diana", "jungle").status,
@@ -66,51 +65,24 @@ async function main(){
   assert.equal((await strategy.locator("h3").first().innerText()).trim(),"Cómo jugarla");
   assert.deepEqual(await strategy.locator("[data-report-section]").evaluateAll(nodes=>nodes.map(node=>node.dataset.reportSection)),["diagnosis","correction","protection"],"el informe ordena diagnóstico, recomendación y protección");
   assert.doesNotMatch(await strategy.innerText(),/confianza (?:alta|media|baja)|\b\d+%/i,"el informe adapta el tono sin mostrar niveles o porcentajes");
-  for(const heading of ["Diagnóstico","Recomendación estratégica","Protección estratégica"]){assert.equal(await strategy.getByRole("heading",{name:heading,exact:true}).count(),1,"el informe muestra "+heading);}
+  for(const heading of ["Diagnóstico","Corrección","Protección estratégica"]){assert.equal(await strategy.getByRole("heading",{name:heading,exact:true}).count(),1,"el informe muestra "+heading);}
   for(const heading of ["Win condition","Sinergia interna","Debilidades","Recomendaciones","Picks","Bans","Plan de partida","Fortalezas","Riesgos"]){assert.equal(await strategy.getByRole("heading",{name:heading,exact:true}).count(),0,"el informe no repite el bloque "+heading);}
   assert.equal(await strategy.locator(".result-summary__strategy-card").count(),3,"la recomendación ocupa el bloque de mejora existente y evita añadir una cuarta tarjeta");
-  const riskGuidance = strategy.locator('[data-report-section="protection"] .result-summary__risk-guidance');
-  assert.equal(await riskGuidance.count(), 1, "El equipo de referencia expone el riesgo detectado dentro de Protección");
-  assert.match(await riskGuidance.innerText(), /Riesgo propio:/, "El riesgo propio llega al DOM");
-  assert.match(await riskGuidance.innerText(), /Cómo cubrirlo:/, "La contramedida calculada llega al DOM");
-  assert.match(await strategy.innerText(),/Plan probable: Front to Back/i);assert.match(await strategy.innerText(),/Cómo ganar: Proteger al ADC y forzar teamfights\./i);assert.match(await strategy.innerText(),/Oportunidad de mejora: presión lateral/i);assert.match(await strategy.innerText(),/Para qué sirve:/i);assert.match(await strategy.innerText(),/Split Push/i);
-  assert.equal(await strategy.locator(".result-summary__recommendation-list").count(),1,"la mejora conserva una única lista acotada de candidatos; los bans pueden aparecer en protección");
-  assert.ok(await strategy.locator(".result-summary__recommendation-list > li").count()<=4,"la recomendación muestra como máximo cuatro candidatos");
-  const secondCandidate = strategy.locator(".result-summary__candidate-more").first();
-  assert.ok(await secondCandidate.count() >= 1, "Las alternativas secundarias se muestran en formato compacto");
-  assert.equal(await secondCandidate.evaluate(node=>node.open), false, "Las alternativas secundarias empiezan plegadas");
-  await secondCandidate.locator(":scope > summary").press("Enter");
-  assert.equal(await secondCandidate.evaluate(node=>node.open), true, "Alternativas secundarias accesibles por teclado");
-  await secondCandidate.locator(":scope > summary").press("Enter");
-  assert.equal(await secondCandidate.evaluate(node=>node.open), false, "La alternativa secundaria se puede volver a plegar");
+  assert.equal(await strategy.locator(".result-summary__risk-guidance").count(),0,
+    "No se inventan riesgos procedentes de una recomendación inexistente");
+  assert.match(await strategy.innerText(),/Plan probable: Front to Back/i);
+  assert.match(await strategy.innerText(),/Cómo ganar: Proteger al ADC y forzar teamfights\./i);
+  assert.match(await strategy.locator('[data-report-section="correction"]').innerText(),/Sin cambio prioritario justificado/i);
+  assert.equal(await strategy.locator(".result-summary__recommendation-list").count(),0);
+  assert.equal(await strategy.locator(".result-summary__ban-integration li").count(),3,
+    "Sin sustituciones, se conservan tres bans distintos");
+  assert.match(await strategy.innerText(),/Split Push/i);
   const firstBan = strategy.locator(".result-summary__ban-detail").first();
-  assert.equal(await firstBan.evaluate(node=>node.open), false, "Los bans arrancan resumidos");
+  assert.equal(await firstBan.evaluate(node=>node.open), false);
   await firstBan.locator(":scope > summary").press("Enter");
-  assert.equal(await firstBan.evaluate(node=>node.open), true, "Los detalles de un ban se abren por teclado");
-  assert.ok((await firstBan.innerText()).length > 40, "El análisis de un ban sigue disponible");
+  assert.equal(await firstBan.evaluate(node=>node.open), true, "El ban puede examinarse por teclado");
   await firstBan.locator(":scope > summary").press("Enter");
   assert.equal(await firstBan.evaluate(node=>node.open), false);
-  const justifications = strategy.locator(".result-summary__candidate-justification");
-  await page.locator("h1").click();
-  await justifications.first().waitFor({state:"visible"});
-  assert.equal(await justifications.count(), await strategy.locator(".result-summary__recommendation-list > li").count(), "Cada candidato respaldado ofrece una justificación");
-  assert.match(await strategy.locator(".result-summary__detected-need").innerText(), /Límite del estilo, no carencia demostrada: Poca presión lateral/);
-  // A blur-triggered table redraw can queue a result-summary rebuild in rAF.
-  // Let the pending render settle before exercising the keyboard control.
-  await page.evaluate(() => new Promise(resolve =>
-    requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  const justificationToggle = justifications.first().locator("summary");
-  await justificationToggle.press("Enter");
-  assert.equal(await justifications.first().evaluate(node=>node.open), true, "La explicación se abre por teclado");
-  assert.notEqual(await justificationToggle.evaluate(node=>getComputedStyle(node).outlineStyle), "none", "Foco visible en la explicación");
-  assert.match(await justifications.first().innerText(), /Señales del catálogo:/s);
-  assert.doesNotMatch(await justifications.first().innerText(), /acorde con el perfil/, "Sin redundancias de etiquetas");
-  assert.doesNotMatch(await justifications.first().innerText(), /Contribuye a corregir/, "Una limitación del arquetipo no acredita una corrección real");
-  for (const details of await justifications.all()) await details.evaluate(node=>{node.open=true;});
-  for (const width of widths) {
-    await page.setViewportSize({width,height:900});
-    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth), true, "Explicaciones abiertas sin desbordamiento @"+width);
-  }
   assert.equal(await page.locator(".result-summary__header").evaluate(n=>getComputedStyle(n).display),"none","el estado de validación se omite en composiciones completas");
   assert.equal(await page.locator(".result-summary.is-ready").evaluate(n=>getComputedStyle(n).paddingTop),"0px","el informe completo evita un marco exterior redundante");
   assert.equal(await strategy.evaluate(n=>getComputedStyle(n).borderTopWidth),"1px","la tarjeta estratégica mantiene su contorno visible");
@@ -130,7 +102,7 @@ async function main(){
   const splitPushPicks={top:"Fiora",jungle:"Viego",mid:"Twisted Fate",adc:"Ezreal",support:"Braum"};
   for(const [role,champion] of Object.entries(splitPushPicks))await page.locator("#"+role).fill(champion);
   await page.waitForFunction(expected=>expected.every(champion=>Array.from(document.querySelectorAll(".composition-table .champion-name")).some(node=>node.textContent.trim()===champion))&&document.querySelector('[data-report-section="diagnosis"] .result-summary__answer')?.textContent.includes("Split Push"),Object.values(splitPushPicks));
-  const splitStrategy=await strategy.innerText();assert.match(splitStrategy,/Lectura provisional: Plan principal: Split Push/i);assert.match(splitStrategy,/Oportunidad de mejora: Pick y control del mapa/i);assert.match(splitStrategy,/Perfil sugerido: Pick/i);assert.match(splitStrategy,/Protección provisional frente a Teamfight/i);
+  const splitStrategy=await strategy.innerText();assert.match(splitStrategy,/Lectura provisional: Plan principal: Split Push/i);assert.doesNotMatch(splitStrategy,/Oportunidad de mejora: Pick y control del mapa/i);assert.match(splitStrategy,/Protección provisional frente a Teamfight/i);
   const screenshotPicks={top:"Fiora",jungle:"Evelynn",mid:"Galio",adc:"Kai'Sa",support:"Milio"};
   for(const [role,champion] of Object.entries(screenshotPicks))await page.locator("#"+role).fill(champion);
   await page.waitForFunction(expected=>[...document.querySelectorAll(".composition-table .champion-name")].map(node=>node.textContent.trim()).join("|")===expected.join("|"),Object.values(screenshotPicks));
@@ -142,6 +114,28 @@ async function main(){
   const incoherentPicks={top:"Fiora",jungle:"Elise",mid:"Xerath",adc:"Draven",support:"Lulu"};
   for(const [role,champion] of Object.entries(incoherentPicks))await page.locator("#"+role).fill(champion);
   await page.waitForFunction(expected=>[...document.querySelectorAll(".composition-table .champion-name")].map(node=>node.textContent.trim()).join("|")===expected.join("|")&&document.querySelector(".result-summary__ban-integration li"),Object.values(incoherentPicks));
+  const candidateRoles = strategy.locator(".result-summary__candidate-role");
+  assert.ok(await candidateRoles.count()>0, "Una brecha de cohesión mantiene alternativas explicables");
+  assert.ok((await candidateRoles.allInnerTexts()).every(label=>label.includes("(26.21)")));
+  const alternative = strategy.locator(".result-summary__candidate-more").first();
+  assert.ok(await alternative.count()>0);
+  assert.equal(await alternative.evaluate(node=>node.open),false);
+  await alternative.locator(":scope > summary").press("Enter");
+  assert.equal(await alternative.evaluate(node=>node.open),true, "Las alternativas se abren por teclado");
+  const justifications = strategy.locator(".result-summary__candidate-justification");
+  assert.equal(await justifications.count(), await strategy.locator(".result-summary__recommendation-list > li").count());
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const firstJustification=justifications.first();
+  await firstJustification.locator("summary").press("Enter");
+  assert.equal(await firstJustification.evaluate(node=>node.open),true,"La evidencia de candidato es accesible");
+  assert.match(await firstJustification.innerText(),/Señales del catálogo:/);
+  assert.notEqual(await firstJustification.locator("summary").evaluate(node=>getComputedStyle(node).outlineStyle),"none");
+  for (const width of widths) {
+    await page.setViewportSize({width,height:900});
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),
+      "Detalles de recomendación sin desbordamiento a "+width+" px");
+  }
+  await page.setViewportSize({width:1280,height:900});
   const banItems=await strategy.locator(".result-summary__ban-integration li").allInnerTexts();
   assert.equal(banItems.length,3,"el informe integra tres bans distintos para un equipo completo");
   const banChampions=await strategy.locator(".result-summary__ban-integration li strong").allInnerTexts();

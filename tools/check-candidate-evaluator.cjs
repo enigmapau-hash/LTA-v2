@@ -90,21 +90,16 @@ function verify(evaluation) {
   }), result, "La evaluación debe ser determinista");
 }
 
-const frontToBack = evaluate(composition({
-  top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu",
-}));
+const frontToBack = evaluate(composition({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" }));
 assert.equal(frontToBack.diagnosis.plan.primaryIdentity, "Front to Back");
-verify(frontToBack);
-const scaling = frontToBack.result.profiles.find((profile) => profile.id === "scaling");
-assert.ok(scaling?.candidates.some((candidate) => /Front to Back/i.test(candidate.reason)));
-assert.ok(scaling.candidates.every((candidate) => candidate.strengths.length));
-
-const dive = evaluate(composition({
-  top: "Camille", jungle: "Vi", mid: "Ahri", botline: "Kai'Sa", support: "Rakan",
-}));
+assert.deepEqual(frontToBack.result, { status: "no-priority", profiles: [] });
+const dive = evaluate(composition({ top: "Camille", jungle: "Vi", mid: "Ahri", botline: "Kai'Sa", support: "Rakan" }));
 assert.equal(dive.diagnosis.winCondition.primary.identity, "Dive");
-verify(dive);
-assert.ok(dive.result.profiles.some((profile) => profile.candidates.some((candidate) => /Dive/i.test(candidate.reason))));
+assert.equal(dive.result.status, "no-priority");
+const pokeWithoutPeel = evaluate(composition({ top: "Jayce", jungle: "Nidalee", mid: "Xerath", botline: "Ezreal", support: "Vel'Koz" }));
+assert.equal(pokeWithoutPeel.diagnosis.plan.primaryIdentity, "Poke");
+verify(pokeWithoutPeel);
+assert.ok(pokeWithoutPeel.result.profiles.some(profile => profile.id === "peel"));
 
 const incoherent = evaluate([
   pick("top", "Fiora"),

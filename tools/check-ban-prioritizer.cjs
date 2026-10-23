@@ -56,7 +56,7 @@ function analyze(selection) {
   };
   const strategicRisks = assessStrategicRisks(riskInputs);
   const strategicCounterplay = adviseCounterplay({ strategicRisks });
-  const strategicBans = prioritizeBans({ strategicRisks, strategicCounterplay, protection, mappedCandidates, championCatalog: candidatesByRole });
+  const strategicBans = prioritizeBans({ strategicRisks, strategicCounterplay, protection, mappedCandidates, currentPicks: picks, championCatalog: candidatesByRole });
   const report = buildStrategicReport({ diagnosis, correction, protection, strategicRisks, strategicCounterplay, strategicBans });
   return { diagnosis, correction, protection, mappedCandidates, riskInputs, strategicRisks, strategicCounterplay, strategicBans, report };
 }
@@ -75,6 +75,7 @@ for (const [name, selection, expectedCoherence] of references) {
     strategicCounterplay: result.strategicCounterplay,
     protection: result.protection,
     mappedCandidates: result.mappedCandidates,
+    currentPicks: Object.entries(selection).map(([role, champion]) => ({ role, champion })),
     championCatalog: candidatesByRole,
   }), result.strategicBans, `La priorización para composición ${name} es determinista`);
   assert.equal(result.strategicBans.status, "prioritized", `Cinco picks válidos generan bans en ${name}`);
@@ -83,7 +84,7 @@ for (const [name, selection, expectedCoherence] of references) {
   if (result.strategicBans.status === "prioritized") {
     assert.ok(result.strategicBans.bans.length <= 3);
     assert.deepEqual(result.strategicBans.bans.map((ban) => ban.priority), result.strategicBans.bans.map((_, index) => index + 1));
-    const ownChampions = new Set(result.mappedCandidates.composition.picks.map((item) => item.champion.toLocaleLowerCase("es")));
+    const ownChampions = new Set(Object.values(selection).map((name) => name.toLocaleLowerCase("es")));
     assert.ok(result.strategicBans.bans.every((ban) => !ownChampions.has(ban.champion.toLocaleLowerCase("es"))));
     assert.equal(new Set(result.strategicBans.bans.map((ban) => ban.champion.toLocaleLowerCase("es"))).size, result.strategicBans.bans.length);
     assert.ok(result.strategicBans.bans.every((ban) => ban.threatStyle && ["alta", "media", "baja"].includes(ban.severity)
@@ -111,6 +112,7 @@ for (const selection of expandedReferences) {
     strategicCounterplay: analyzed.strategicCounterplay,
     protection: analyzed.protection,
     mappedCandidates: analyzed.mappedCandidates,
+    currentPicks: Object.entries(selection).map(([role, champion]) => ({ role, champion })),
     championCatalog: candidatesByRole,
   }), bans, "Determinismo");
 }
@@ -155,11 +157,29 @@ const fallback = prioritizeBans({
 assert.equal(fallback.status, "prioritized", "La protección general cubre equipos completos aunque no existan riesgos específicos");
 assert.equal(fallback.bans.length, 3, "Tres estilos de amenaza cuando el catálogo permite tres");
 assert.equal(new Set(fallback.bans.map((ban) => ban.threatType)).size, 3);
+const fallbackWithoutRecommendation = prioritizeBans({
+  strategicRisks: { status: "no-priority", risks: [] },
+  strategicCounterplay: { status: "not-assessable", threats: [] },
+  protection: { status: "no-supported-threat", threats: [] },
+  mappedCandidates: { status: "no-priority", profiles: [] },
+  currentPicks: completeMapped.composition.picks,
+  championCatalog: banCatalog,
+});
+assert.deepEqual(fallbackWithoutRecommendation.bans, fallback.bans,
+  "La ausencia deliberada de reemplazos no altera los bans de Protección");
+assert.deepEqual(prioritizeBans({
+  protection: { status: "assessed", threats: [] },
+  mappedCandidates: { status: "no-priority" },
+  currentPicks: completeMapped.composition.picks.slice(0, 4),
+  championCatalog: banCatalog,
+}), { status: "not-assessable", bans: [] }, "El fallback no acepta cuatro picks como equipo completo");
+
 assert.deepEqual(prioritizeBans({ strategicRisks: rankedRisks, strategicCounterplay: rankedCounterplay, mappedCandidates: completeMapped, championCatalog: {} }), { status: "no-candidates", bans: [] });
 assert.deepEqual(prioritizeBans({ strategicRisks: rankedRisks, strategicCounterplay: rankedCounterplay, mappedCandidates: completeMapped, championCatalog: { top: [{ champion: "Ornn", strengths: "frontline" }] } }), { status: "no-matching-candidates", bans: [] }, "No recomienda integrantes del propio equipo ni candidatos sin señal de amenaza");
 
-const incompleteRun = analyze({ top: "Olaf", jungle: "Zyra", mid: "Heimerdinger", botline: "Lucian", support: "Tahm Kench" });
+const incompleteRun = analyze({ top: "Fiora", jungle: "Elise", mid: "Xerath", botline: "Draven", support: "Lulu" });
 const incompleteMapped = structuredClone(incompleteRun.mappedCandidates);
+assert.equal(incompleteMapped.composition?.status, "complete", "La brecha real permite comprobar la ruta incompleta");
 incompleteMapped.composition = { status: "incomplete", picks: incompleteMapped.composition.picks.slice(0, 4) };
 const incompleteRisks = assessStrategicRisks({ ...incompleteRun.riskInputs, mappedCandidates: incompleteMapped });
 const incompleteCounterplay = adviseCounterplay({ strategicRisks: incompleteRisks });

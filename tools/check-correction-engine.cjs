@@ -83,33 +83,41 @@ function verifyCandidates(result, selected) {
 
 const clearDiagnosis = diagnoseComposition(dive);
 const clearCorrection = proposeCorrections({ picks: dive, diagnosis: clearDiagnosis, candidatesByRole });
-assert.equal(clearCorrection.status, "proposed");
-assert.equal(clearCorrection.limitingFactor, "Pierde valor si falla la iniciación");
-assert.equal(clearCorrection.improvements[0].profile.id, "engage");
-verifyCandidates(clearCorrection, new Set(dive.map((item) => item.champion)));
+assert.equal(clearDiagnosis.primaryProblem.type, "identity-risk");
+assert.equal(clearCorrection.status, "no-supported-correction", "Dive: falla de inicio es un riesgo, no ausencia de recurso");
+assert.deepEqual(clearCorrection.improvements, []);
 
 const hybridDiagnosis = diagnoseComposition(frontToBack);
 assert.equal(hybridDiagnosis.coherence.status, "hybrid");
 const hybridCorrection = proposeCorrections({ picks: frontToBack, diagnosis: hybridDiagnosis, candidatesByRole });
-assert.equal(hybridCorrection.improvements[0].profile.id, "side-lane");
-assert.equal(hybridCorrection.improvements[0].limitingFactor, "Poca presión lateral");
-verifyCandidates(hybridCorrection, new Set(frontToBack.map((item) => item.champion)));
+assert.equal(hybridCorrection.status, "no-supported-correction", "Front to Back no necesita presión lateral por defecto");
+assert.equal(hybridCorrection.limitingFactor, null);
+
+const poke = composition({ top: "Jayce", jungle: "Nidalee", mid: "Xerath", botline: "Ezreal", support: "Vel'Koz" });
+const protectedPoke = composition({ top: "Jayce", jungle: "Nidalee", mid: "Xerath", botline: "Ezreal", support: "Karma" });
+const { assessPlanNeeds } = require("../src/domain/composition-engine.js");
+assert.deepEqual(assessPlanNeeds({ picks: poke, identity: "Poke" }), [{ id: "peel", label: "protección para los carries" }]);
+assert.deepEqual(assessPlanNeeds({ picks: protectedPoke, identity: "Poke" }), []);
+const pokeDiagnosis = diagnoseComposition(poke);
+assert.equal(pokeDiagnosis.plan.primaryIdentity, "Poke");
+const pokeCorrection = proposeCorrections({ picks: poke, diagnosis: pokeDiagnosis, candidatesByRole });
+assert.equal(pokeCorrection.status, "proposed", "Poke sin Peel merece apoyo");
+assert.equal(pokeCorrection.improvements[0].profile.id, "peel");
+verifyCandidates(pokeCorrection, new Set(poke.map((item) => item.champion)));
+const protectedDiagnosis = diagnoseComposition(protectedPoke);
+assert.equal(proposeCorrections({ picks: protectedPoke, diagnosis: protectedDiagnosis, candidatesByRole }).status,
+  "no-supported-correction", "Con Peel acreditado no se fuerza reemplazo");
 
 const incoherentDiagnosis = diagnoseComposition(incoherent);
 const incoherentCorrection = proposeCorrections({ picks: incoherent, diagnosis: incoherentDiagnosis, candidatesByRole });
 assert.equal(incoherentCorrection.limitingFactor, "iniciación compartida");
 assert.equal(incoherentCorrection.improvements[0].profile.id, "engage");
-assert.ok(incoherentCorrection.improvements.some((item) => item.profile.id === "frontline"));
 verifyCandidates(incoherentCorrection, new Set(incoherent.map((item) => item.champion)));
 
-const repeated = proposeCorrections({ picks: dive, diagnosis: clearDiagnosis, candidatesByRole });
-assert.deepEqual(repeated, clearCorrection, "La corrección debe ser determinista y estable");
-
-const noCandidates = proposeCorrections({ picks: dive, diagnosis: clearDiagnosis, candidatesByRole: {} });
-assert.equal(noCandidates.status, "no-supported-correction");
-assert.equal(noCandidates.improvements.length, 0);
+assert.deepEqual(proposeCorrections({ picks: poke, diagnosis: pokeDiagnosis, candidatesByRole }), pokeCorrection);
+assert.equal(proposeCorrections({ picks: poke, diagnosis: pokeDiagnosis, candidatesByRole: {} }).status, "no-supported-correction");
 
 const incomplete = proposeCorrections({ picks: dive.slice(0, 4), diagnosis: { status: "not-assessable" }, candidatesByRole });
 assert.equal(incomplete.status, "not-assessable");
 
-console.log("Correction Engine validado: plan claro, híbrido, incoherente, perfiles, candidatos y determinismo.");
+console.log("Correction Engine: abstención en planes coherentes, Peel requerido y brechas de cohesión, determinismo.");

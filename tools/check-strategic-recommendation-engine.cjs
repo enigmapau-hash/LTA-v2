@@ -73,39 +73,18 @@ function verify(result, expectedProfiles) {
 
 const clear = composition({ top: "Camille", jungle: "Vi", mid: "Ahri", botline: "Kai'Sa", support: "Rakan" });
 const clearInputs = evaluate(clear);
-assert.equal(clearInputs.optimizer.priority.need.id, "engage");
 const clearRecommendations = recommendProfiles(clearInputs);
-verify(clearRecommendations, ["engage", "pick"]);
-assert.match(clearRecommendations.profiles[0].reason, /respuesta más directa.*Dive/);
-
+assert.deepEqual(clearRecommendations, { status: "no-priority", profiles: [] });
 const hybrid = composition({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" });
 const hybridInputs = evaluate(hybrid);
-assert.equal(hybridInputs.diagnosis.coherence.status, "hybrid");
-const hybridRecommendations = recommendProfiles(hybridInputs);
-verify(hybridRecommendations, ["sideLane", "scaling"]);
-assert.match(hybridRecommendations.profiles[0].reason, /Front to Back/);
-
-const incoherent = [
-  pick("top", "Fiora"),
-  pick("jungle", "Elise"),
-  pick("mid", "Xerath"),
-  pick("botline", "Draven"),
-  pick("support", "Lulu"),
-];
+assert.deepEqual(recommendProfiles(hybridInputs), { status: "no-priority", profiles: [] });
+const poke = composition({ top: "Jayce", jungle: "Nidalee", mid: "Xerath", botline: "Ezreal", support: "Vel'Koz" });
+const pokeInputs = evaluate(poke);
+const pokeRecommendations = recommendProfiles(pokeInputs);
+verify(pokeRecommendations, ["peel", "disengage"]);
+const incoherent = [pick("top", "Fiora"), pick("jungle", "Elise"), pick("mid", "Xerath"), pick("botline", "Draven"), pick("support", "Lulu")];
 const incoherentInputs = evaluate(incoherent);
-assert.equal(incoherentInputs.diagnosis.coherence.status, "incoherent");
-const incoherentRecommendations = recommendProfiles(incoherentInputs);
-verify(incoherentRecommendations, ["engage", "followUp"]);
-assert.doesNotMatch(incoherentRecommendations.profiles[0].reason, /para el plan/);
-
-const teamfight = composition({ top: "Malphite", jungle: "Wukong", mid: "Yasuo", botline: "Miss Fortune", support: "Rell" });
-const teamfightInputs = evaluate(teamfight);
-assert.equal(teamfightInputs.optimizer.priority.need.id, clearInputs.optimizer.priority.need.id,
-  "Dive y Teamfight comparten la misma necesidad estructural en esta fixture");
-const teamfightRecommendations = recommendProfiles(teamfightInputs);
-verify(teamfightRecommendations, ["engage", "followUp"]);
-assert.notDeepEqual(teamfightRecommendations.profiles.map((item) => item.id), clearRecommendations.profiles.map((item) => item.id),
-  "La identidad Teamfight debe contextualizar la alternativa frente a Dive aunque compartan necesidad");
+verify(recommendProfiles(incoherentInputs), ["engage", "followUp"]);
 
 const unavailableDiagnosis = recommendProfiles({
   diagnosis: { status: "not-assessed" },
@@ -117,15 +96,7 @@ assert.deepEqual(recommendProfiles({
   optimizer: { status: "no-priority", priority: null },
 }), { status: "no-priority", profiles: [] });
 
-assert.deepEqual(recommendProfiles(clearInputs), clearRecommendations, "Los perfiles deben ser deterministas");
-const withSecondaryIdentity = recommendProfiles({
-  ...clearInputs,
-  diagnosis: { ...clearInputs.diagnosis, plan: { ...clearInputs.diagnosis.plan, secondaryIdentity: "Poke" } },
-});
-assert.deepEqual(withSecondaryIdentity.profiles, clearRecommendations.profiles,
-  "Una identidad secundaria solo aporta desempate y no desplaza la respuesta principal de Dive");
-assert.equal(withSecondaryIdentity.plan.secondaryIdentity, "Poke", "La identidad ya calculada se transporta para su consumo posterior");
-
+assert.deepEqual(recommendProfiles(pokeInputs), pokeRecommendations, "La necesidad demostrada es determinista");
 const needIds = ["engage", "frontline", "sustained-damage", "side-lane", "peel", "pick", "early-pressure", "scaling"];
 for (const id of needIds) {
   const result = recommendProfiles({

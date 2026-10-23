@@ -231,9 +231,11 @@ async function main() {
       [...document.querySelectorAll(".composition-table .champion-name")]
         .map((node) => node.textContent.trim()).join("|") === expected.join("|"), Object.values(offlinePicks));
     await page.locator(".result-summary__strategy").waitFor({ state: "visible" });
-    assert.ok(await page.locator(".result-summary__candidate-role").count() > 0,
-      "El análisis completo con un pick experimental manual sigue recomendando offline.");
-    const engagePicks = { top: "Malphite", jungle: "Wukong", mid: "Yasuo", adc: "Miss Fortune", support: "Rell" };
+    assert.equal(await page.locator(".result-summary__candidate-role").count(),0,
+      "El draft manual experimental es válido sin forzar una sustitución");
+    assert.equal(await page.locator(".result-summary__ban-integration li").count(),3,
+      "Los bans siguen disponibles offline al abstenerse");
+    const engagePicks = { top: "Fiora", jungle: "Elise", mid: "Xerath", adc: "Draven", support: "Lulu" };
     for (const [role, champion] of Object.entries(engagePicks)) {
       await page.locator("#" + role).fill(champion);
     }
@@ -242,18 +244,15 @@ async function main() {
         .map((node) => node.textContent.trim()).join("|") === expected.join("|"), Object.values(engagePicks));
     const recommendation = page.locator(".result-summary__recommendation-list");
     await recommendation.waitFor({ state: "visible" });
-    assert.match(await recommendation.textContent(), /Diana/,
-      "El informe completo conserva Diana como candidata en una posición respaldada.");
-    assert.doesNotMatch(await recommendation.textContent(), /Anivia/,
-      "El informe offline no confunde anti-engage con iniciación.");
-    const recommendedPairs = await recommendation.locator(":scope > li").evaluateAll((entries) =>
-      entries.map((entry) => ({
+    assert.ok(await recommendation.locator(":scope > li").count()>=2,
+      "La brecha de cohesión explícita conserva candidatos razonados offline");
+    const recommendedPairs = await recommendation.locator(":scope > li").evaluateAll(entries =>
+      entries.map(entry => ({
         champion: entry.querySelector("strong")?.textContent?.trim(),
         role: entry.querySelector(".result-summary__candidate-role")?.textContent?.trim(),
-      }))
-    );
-    assert.ok(recommendedPairs.every((pair) => pair.champion !== "Diana" || !pair.role?.includes("TOP")),
-      "El informe offline no recomienda Diana TOP experimental.");
+      })));
+    assert.ok(recommendedPairs.every(pair => !/Experimental/i.test(pair.role)),
+      "Nunca se proponen roles experimentales");
     // Leaving the edited picker can redraw the unchanged table. The report must
     // still be present before opening its explanations.
     await page.locator("h1").click();
@@ -267,9 +266,9 @@ async function main() {
     for (const explanation of await explanations.all()) await explanation.locator("summary").click();
     assert.match(await recommendation.innerText(), /Señales del catálogo:/, "La evidencia real llega al informe offline");
     assert.doesNotMatch(await recommendation.innerText(), /acorde con el perfil/, "Sin repetir el nombre del perfil");
-    assert.doesNotMatch(await recommendation.innerText(), /Contribuye a corregir/, "No afirma una carencia no demostrada");
-    assert.match(await recommendation.innerText(), /Conexiones con el equipo:/, "Relaciona compañeros actuales con sus atributos offline");
-    assert.match(await page.locator(".result-summary__detected-need").innerText(), /Límite del estilo, no carencia demostrada:/);
+    assert.match(await recommendation.innerText(), /Contribuye a corregir/, "Solo una brecha explícita justifica la corrección");
+    assert.equal(await recommendation.locator(".result-summary__beneficiaries").count(),0, "No inventa conexiones con aliados cuando faltan señales comunes");
+    assert.match(await page.locator(".result-summary__detected-need").innerText(), /Carencia detectada:/);
     assert.deepEqual(pageErrors, [], "La app no debe lanzar errores JavaScript durante la carga o el uso offline.");
 
     console.log("PWA validada: instalación, actualización desde v12, caché de SheetJS y viabilidad 26.21, selección experimental manual y recomendaciones completas offline.");

@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.12.1",
+    version: "v3.13.0",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-22",
-    summary: ["Explicaciones más claras: evidencia y conexiones entre campeones condensadas, sin frases repetidas ni cambios de decisiones."],
+    summary: ["La app solo recomienda cambiar campeones ante requisitos del plan sin cubrir o brechas de cohesión comprobadas; puede abstenerse sin perder Protección."],
     pending: [],
   };
 

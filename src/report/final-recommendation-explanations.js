@@ -91,9 +91,10 @@
     const diagnosticFactors = [...(input.diagnosis.primaryProblem?.evidence || []), ...(input.diagnosis.coherence?.gaps || [])];
     const improvement = input.correction?.status === "proposed" && input.correction.improvements?.find((item) =>
       item.profile?.id === input.optimizer.priority?.need?.id && same(item.limitingFactor, factor));
-    const evidencedFactor = improvement && diagnosticFactors.some((item) => same(item, factor));
-    // An archetype's inherent tradeoff is not a demonstrated missing capability.
-    const structuralGap = input.diagnosis.primaryProblem?.type === "cohesion-gap";
+    const requiredCapability = improvement?.evidenceType === "required-plan-capability";
+    const evidencedFactor = improvement && (requiredCapability || diagnosticFactors.some((item) => same(item, factor)));
+    // A verified, explicitly required capability differs from a generic style weakness.
+    const structuralGap = input.diagnosis.primaryProblem?.type === "cohesion-gap" || requiredCapability;
     const detectedNeed = evidencedFactor && structuralGap ? factor : "";
     const optionalLimitation = evidencedFactor && !structuralGap
       && input.diagnosis.primaryProblem?.type === "identity-risk" ? factor : "";

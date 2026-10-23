@@ -72,38 +72,34 @@ function verifyPriorities(result) {
 
 const clear = analyze({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" });
 assert.equal(clear.diagnosis.plan.primaryIdentity, "Front to Back");
-verifyPriorities(clear.strategicRisks);
-
+assert.deepEqual(clear.strategicRisks, { status: "no-priority", risks: [] });
 const hybrid = analyze({ top: "Camille", jungle: "Vi", mid: "Ahri", botline: "Kai'Sa", support: "Rakan" });
 assert.equal(hybrid.diagnosis.coherence.status, "hybrid");
-verifyPriorities(hybrid.strategicRisks);
-
+assert.deepEqual(hybrid.strategicRisks, { status: "no-priority", risks: [] });
 const incoherent = analyze({ top: "Fiora", jungle: "Elise", mid: "Xerath", botline: "Draven", support: "Lulu" });
 assert.equal(incoherent.diagnosis.coherence.status, "incoherent");
 verifyPriorities(incoherent.strategicRisks);
 if (incoherent.inputs.teamRecomposition.status === "recomposed"
   && incoherent.inputs.teamRecomposition.proposal.identity.status === "unconfirmed") {
-  assert.ok(incoherent.strategicRisks.risks.some((risk) => risk.type === "identity-unconfirmed" && risk.severity === "alta"),
-    "Solo una recomposición realmente propuesta y sin identidad confirmada genera este riesgo");
+  assert.ok(incoherent.strategicRisks.risks.some(risk => risk.type === "identity-unconfirmed" && risk.severity === "alta"));
 } else {
-  assert.ok(!incoherent.strategicRisks.risks.some((risk) => risk.type === "identity-unconfirmed"),
-    "No se inventa un riesgo de una recomposición que no se propone");
+  assert.ok(!incoherent.strategicRisks.risks.some(risk => risk.type === "identity-unconfirmed"));
 }
-
-const primaryProfileId = clear.inputs.recommendations.profiles[0].id;
-const uncoveredInput = structuredClone(clear.inputs);
+const primaryProfileId = incoherent.inputs.recommendations.profiles[0].id;
+const uncoveredInput = structuredClone(incoherent.inputs);
+uncoveredInput.teamRecomposition = { status: "no-priority" }; // isolate uncovered-profile risk from the unrelated identity risk
 for (const pick of uncoveredInput.mappedCandidates.composition.picks) pick.fitByProfile[primaryProfileId] = { signals: [], matchedFields: [] };
 const uncovered = assessStrategicRisks(uncoveredInput);
 assert.equal(uncovered.risks[0].type, "priority-uncovered");
 assert.equal(uncovered.risks[0].severity, "alta");
 
-const dependentInput = structuredClone(clear.inputs);
+const dependentInput = structuredClone(uncoveredInput);
 for (const pick of dependentInput.mappedCandidates.composition.picks) pick.fitByProfile[primaryProfileId] = { signals: [], matchedFields: [] };
 dependentInput.mappedCandidates.composition.picks[1].fitByProfile[primaryProfileId] = { signals: ["engage"], matchedFields: ["strengths"] };
 const dependent = assessStrategicRisks(dependentInput);
 assert.equal(dependent.risks[0].type, "single-point-dependency");
 assert.equal(dependent.risks[0].severity, "media");
-assert.match(dependent.risks[0].explanation, /Sejuani/);
+assert.match(dependent.risks[0].explanation, /Elise/);
 
 const bothRisksInput = structuredClone(uncoveredInput);
 bothRisksInput.teamRecomposition = { status: "recomposed", proposal: { identity: { status: "unconfirmed" } } };
@@ -113,7 +109,7 @@ assert.deepEqual(prioritized.risks.map((risk) => risk.priority), [1, 2], "El ord
 assert.deepEqual(assessStrategicRisks(structuredClone(bothRisksInput)), prioritized, "La priorización no cambia entre ejecuciones");
 
 for (const count of [1, 4]) {
-  const incomplete = structuredClone(clear.inputs);
+  const incomplete = structuredClone(incoherent.inputs);
   incomplete.mappedCandidates.composition = { status: "incomplete", picks: incomplete.mappedCandidates.composition.picks.slice(0, count) };
   assert.deepEqual(assessStrategicRisks(incomplete), { status: "pending", risks: [] }, `Con ${count} picks el análisis queda pendiente`);
 }
@@ -121,7 +117,8 @@ assert.deepEqual(assessStrategicRisks({ optimizer: { status: "no-priority" } }),
 
 assert.deepEqual(clear.report.sections.map((section) => section.id), ["diagnosis", "correction", "protection"],
   "La integración interna no añade bloques visibles al informe");
-assert.deepEqual(clear.report.strategicRisks, clear.strategicRisks, "El informe conserva los riesgos como metadato interno");
+assert.equal(clear.report.strategicRisks, undefined, "La abstención no inventa riesgos de una prioridad inexistente");
+assert.deepEqual(incoherent.report.strategicRisks, incoherent.strategicRisks, "Los riesgos reales se conservan como metadato interno");
 assert.ok(!clear.report.sections.some((section) => section.risks), "Los riesgos no se muestran como una lista nueva");
 
 console.log("Strategic Risk Analyzer validado: planes claros, híbridos e incoherentes, equipos incompletos, severidad, priorización, determinismo e integración interna.");

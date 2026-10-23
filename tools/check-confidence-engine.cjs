@@ -79,8 +79,8 @@ const contradictoryPlan = composition({
 });
 
 const cases = [
-  { name: "plan claro", picks: clearPlan, expected: ["alta", "alta", "alta"] },
-  { name: "plan híbrido", picks: hybridPlan, expected: ["media", "media", "media"] },
+  { name: "plan claro", picks: clearPlan, expected: ["alta", "baja", "alta"] },
+  { name: "plan híbrido", picks: hybridPlan, expected: ["media", "baja", "media"] },
   { name: "plan incoherente", picks: incoherentPlan, expected: ["baja", "baja", "baja"] },
   { name: "planes contradictorios", picks: contradictoryPlan, expected: ["baja", "baja", "baja"] },
 ];
@@ -136,7 +136,7 @@ const partialCoherenceConfidence = assessConfidence({
 });
 assert.deepEqual(
   Object.values(partialCoherenceConfidence.conclusions).map((item) => item.level),
-  ["media", "media", "media"],
+  ["media", "baja", "media"],
   "Una condición secundaria complementaria limita la confianza alta y modula el tono del informe"
 );
 

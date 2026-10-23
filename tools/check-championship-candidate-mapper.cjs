@@ -91,30 +91,25 @@ function verify(result) {
 const clear = composition({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" });
 const clearEvaluation = evaluate(clear);
 assert.equal(clearEvaluation.diagnosis.plan.primaryIdentity, "Front to Back");
-verify(clearEvaluation.result);
-assert.equal(clearEvaluation.result.composition.status, "complete");
-assert.equal(clearEvaluation.result.composition.picks.length, 5);
-assert.ok(clearEvaluation.result.profiles.every((profile) => Object.values(profile.alternativesByRole).every((items) => items.length <= 3)),
-  "El mapeo conserva una reserva breve de alternativas por rol para optimizar el equipo completo");
-assert.ok(clearEvaluation.result.profiles.flatMap((profile) => profile.candidates)
-  .every((candidate) => !clear.some((pick) => pick.champion === candidate.champion)), "No se recomiendan campeones ya elegidos");
-assert.ok(clearEvaluation.result.profiles.every((profile) => clearEvaluation.recommendations.profiles.some((recommended) => recommended.id === profile.id)));
-
+assert.deepEqual(clearEvaluation.result, { status: "no-priority", profiles: [] },
+  "Un plan claro sin brecha explícita no fuerza candidatos");
 const hybrid = composition({ top: "Camille", jungle: "Vi", mid: "Ahri", botline: "Kai'Sa", support: "Rakan" });
 const hybridEvaluation = evaluate(hybrid);
 assert.equal(hybridEvaluation.diagnosis.coherence.status, "hybrid");
-verify(hybridEvaluation.result);
+assert.equal(hybridEvaluation.result.status, "no-priority");
 
-const incoherent = [
-  pick("top", "Fiora"),
-  pick("jungle", "Elise"),
-  pick("mid", "Xerath"),
-  pick("botline", "Draven"),
-  pick("support", "Lulu"),
-];
+const incoherent = [pick("top", "Fiora"), pick("jungle", "Elise"), pick("mid", "Xerath"), pick("botline", "Draven"), pick("support", "Lulu")];
 const incoherentEvaluation = evaluate(incoherent);
 assert.equal(incoherentEvaluation.diagnosis.coherence.status, "incoherent");
 verify(incoherentEvaluation.result);
+assert.equal(incoherentEvaluation.result.composition.status, "complete");
+assert.equal(incoherentEvaluation.result.composition.picks.length, 5);
+assert.ok(incoherentEvaluation.result.profiles.every(profile =>
+  Object.values(profile.alternativesByRole).every(items => items.length <= 3)));
+assert.ok(incoherentEvaluation.result.profiles.flatMap(profile => profile.candidates)
+  .every(candidate => !incoherent.some(pick => pick.champion === candidate.champion)));
+assert.ok(incoherentEvaluation.result.profiles.every(profile =>
+  incoherentEvaluation.recommendations.profiles.some(recommended => recommended.id === profile.id)));
 
 for (const evaluation of [clearEvaluation, hybridEvaluation, incoherentEvaluation]) {
   const repeated = mapCandidates({
@@ -220,10 +215,10 @@ assert.ok(selectedAlpha.profiles.flatMap((profile) => profile.candidates).every(
   "La exclusión de picks ignora mayúsculas y minúsculas");
 
 assert.deepEqual(mapCandidates({ optimizer: { status: "no-priority" } }), { status: "no-priority", profiles: [] });
-assert.deepEqual(mapCandidates({ optimizer: clearEvaluation.optimizer, recommendations: { status: "none" } }), { status: "no-profiles", profiles: [] });
-assert.deepEqual(mapCandidates({ optimizer: clearEvaluation.optimizer, recommendations: clearEvaluation.recommendations, candidatesByRole: {} }), { status: "no-candidates", profiles: [] });
+assert.deepEqual(mapCandidates({ optimizer: incoherentEvaluation.optimizer, recommendations: { status: "none" } }), { status: "no-profiles", profiles: [] });
+assert.deepEqual(mapCandidates({ optimizer: incoherentEvaluation.optimizer, recommendations: incoherentEvaluation.recommendations, candidatesByRole: {} }), { status: "no-candidates", profiles: [] });
 assert.deepEqual(mapCandidates({
-  optimizer: clearEvaluation.optimizer,
+  optimizer: incoherentEvaluation.optimizer,
   recommendations: { status: "recommended", profiles: [{ id: "unknown", label: "Desconocido", priority: 1, reason: "", improves: "" }] },
   candidatesByRole,
 }), { status: "no-matching-candidates", profiles: [] });

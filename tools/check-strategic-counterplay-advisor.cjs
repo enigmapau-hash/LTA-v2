@@ -78,7 +78,7 @@ for (const [name, selection, expectedCoherence] of [
 ]) {
   const result = analyze(selection);
   assert.equal(result.diagnosis.coherence.status, expectedCoherence, `La referencia ${name} debe conservar su clasificación`);
-  assert.equal(result.strategicCounterplay.status, result.strategicRisks.risks.length ? "advised" : "no-supported-threat");
+  assert.equal(result.strategicCounterplay.status, result.strategicRisks.status === "no-priority" ? "not-assessable" : result.strategicRisks.risks.length ? "advised" : "no-supported-threat");
   if (result.strategicCounterplay.status === "advised") assertAdvisedShape(result.strategicCounterplay);
   assert.deepEqual(adviseCounterplay({ strategicRisks: result.strategicRisks }), result.strategicCounterplay, `La recomendación ${name} debe ser determinista`);
 }
@@ -104,7 +104,7 @@ assert.deepEqual(adviseCounterplay({ strategicRisks: { status: "pending", risks:
 assert.deepEqual(adviseCounterplay({ strategicRisks: { status: "not-assessable", risks: [] } }), { status: "not-assessable", threats: [] });
 assert.deepEqual(adviseCounterplay({ strategicRisks: { status: "assessed", risks: [{ type: "unknown", severity: "alta", threatens: "algo" }] } }), { status: "no-supported-threat", threats: [] });
 
-const completeForPartialState = analyze({ top: "Olaf", jungle: "Zyra", mid: "Heimerdinger", botline: "Lucian", support: "Tahm Kench" });
+const completeForPartialState = analyze({ top: "Fiora", jungle: "Elise", mid: "Xerath", botline: "Draven", support: "Lulu" });
 const incompleteInputs = structuredClone(completeForPartialState.riskInputs);
 incompleteInputs.mappedCandidates.composition = {
   status: "incomplete",

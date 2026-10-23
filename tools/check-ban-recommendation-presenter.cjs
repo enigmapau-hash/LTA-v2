@@ -58,7 +58,7 @@ function analyze(selection) {
   };
   const strategicRisks = assessStrategicRisks(riskInputs);
   const strategicCounterplay = adviseCounterplay({ strategicRisks });
-  const strategicBans = prioritizeBans({ strategicRisks, strategicCounterplay, protection, mappedCandidates, championCatalog: candidatesByRole });
+  const strategicBans = prioritizeBans({ strategicRisks, strategicCounterplay, protection, mappedCandidates, currentPicks: picks, championCatalog: candidatesByRole });
   const banPresentation = presentBanRecommendations({ banPrioritizer: strategicBans });
   const reportInput = { diagnosis, correction, protection, strategicRisks, strategicCounterplay, strategicBans };
   const report = buildStrategicReport({ ...reportInput, strategicBanPresentation: banPresentation });
@@ -110,8 +110,9 @@ assert.deepEqual(presentBanRecommendations({ banPrioritizer: { status: "not-asse
 assert.deepEqual(presentBanRecommendations({ banPrioritizer: { status: "no-supported-threat", bans: [] } }), { status: "not-assessable", bans: [] });
 assert.deepEqual(presentBanRecommendations({ banPrioritizer: { status: "prioritized", bans: [] } }), { status: "no-bans", bans: [] });
 
-const completeBase = analyze({ top: "Olaf", jungle: "Zyra", mid: "Heimerdinger", botline: "Lucian", support: "Tahm Kench" });
+const completeBase = analyze({ top: "Fiora", jungle: "Elise", mid: "Xerath", botline: "Draven", support: "Lulu" });
 const incompleteMapped = structuredClone(completeBase.mappedCandidates);
+assert.equal(incompleteMapped.composition?.status, "complete", "La brecha de cohesión permite comprobar el flujo incompleto");
 incompleteMapped.composition = { status: "incomplete", picks: incompleteMapped.composition.picks.slice(0, 4) };
 const incompleteRisks = assessStrategicRisks({ ...completeBase.riskInputs, mappedCandidates: incompleteMapped });
 const incompleteCounterplay = adviseCounterplay({ strategicRisks: incompleteRisks });

@@ -1,11 +1,14 @@
 (function (root, factory) {
-  const engine = factory();
+  const compositionEngine = typeof module === "object" && module.exports
+    ? require("./composition-engine.js")
+    : root.LTACompositionEngine;
+  const engine = factory(compositionEngine);
   if (typeof module === "object" && module.exports) {
     module.exports = engine;
   } else {
     root.LTACorrectionEngine = Object.freeze(engine);
   }
-})(typeof window !== "undefined" ? window : globalThis, function () {
+})(typeof window !== "undefined" ? window : globalThis, function (compositionEngine) {
   "use strict";
 
   const ROLE_ORDER = ["top", "jungle", "mid", "botline", "support"];
@@ -68,7 +71,7 @@
     { terms: ["frontline"], profile: "frontline" },
     { terms: ["daño sostenido", "dano sostenido"], profile: "sustained-damage" },
     { terms: ["presión lateral", "presion lateral", "side lane"], profile: "side-lane" },
-    { terms: ["engages directos", "engage directo"], profile: "peel" },
+    { terms: ["engages directos", "engage directo", "protección para los carries", "proteccion para los carries"], profile: "peel" },
     { terms: ["teamfights prolongadas", "teamfight prolongada"], profile: "pick" },
     { terms: ["early vulnerable", "early débil", "early debil"], profile: "early-pressure" },
     { terms: ["partida se alarga", "pierde valor si la partida"], profile: "scaling" },
@@ -155,7 +158,15 @@
       };
     }
 
-    const factors = diagnosticFactors(diagnosis);
+    const problemType = diagnosis.primaryProblem?.type;
+    const clearPlan = diagnosis.plan?.clear && diagnosis.plan?.primaryIdentity;
+    const missingRequirements = clearPlan && problemType === "identity-risk"
+      ? compositionEngine.assessPlanNeeds({ picks, identity: diagnosis.plan.primaryIdentity })
+      : [];
+    // Inherent archetype tradeoffs cannot themselves justify a replacement.
+    const factors = clearPlan
+      ? missingRequirements.map((need) => need.label)
+      : problemType === "cohesion-gap" ? diagnosticFactors(diagnosis) : [];
     const selectedChampions = new Set(picks.map((pick) => normalize(pick?.champion)).filter(Boolean));
     const improvements = [];
     const seenProfiles = new Set();
@@ -173,8 +184,9 @@
       improvements.push({
         profile: { id: profile.id, label: profile.label },
         limitingFactor: label,
+        evidenceType: clearPlan ? "required-plan-capability" : "cohesion-gap",
         priority: improvements.length === 0 ? "principal" : "alternativa",
-        explanation: `El diagnóstico señala «${label}». Reforzar ${profile.label.toLowerCase()} puede atender esa carencia sin imponer una identidad distinta.`,
+        explanation: `Falta respaldo para «${label}». ${profile.label} puede cubrir esa necesidad; debe verificarse el plan resultante de cualquier cambio.`,
         candidates,
       });
       if (improvements.length >= MAX_PROFILES) break;
@@ -184,8 +196,12 @@
       status: improvements.length ? "proposed" : "no-supported-correction",
       limitingFactor,
       explanation: improvements.length
-        ? `La prioridad se deriva de la primera carencia señalada por el diagnóstico${improvements.length > 1 ? "; se incluye una alternativa basada en la siguiente señal disponible" : ""}.`
-        : "Los atributos y las señales del diagnóstico no permiten sostener una corrección concreta con los candidatos disponibles.",
+        ? "La prioridad procede de una herramienta exigida por el plan que falta o de una brecha de cohesión explícita."
+        : clearPlan && !missingRequirements.length
+          ? "No hay una sustitución prioritaria demostrada: las limitaciones propias del estilo no obligan a cambiar campeones."
+          : problemType === "strategic-contradiction"
+            ? "Los planes estratégicos entran en conflicto; no se ha demostrado qué cambio individual resolvería la contradicción."
+            : "Las señales disponibles no justifican una corrección concreta.",
       improvements,
     };
   }

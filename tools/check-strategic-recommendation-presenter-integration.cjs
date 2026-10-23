@@ -57,13 +57,20 @@ function reportFor(selection) {
   return buildStrategicReport({ diagnosis, correction, protection, recommendation: polished.section, compositionOptimization });
 }
 
-const selection = { top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" };
+const stableSelection = { top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" };
+const stable = reportFor(stableSelection);
+assert.equal(stable.sections[1].answer, "Sin cambio prioritario justificado",
+  "Un equipo con su plan cubierto no se presenta como una recomendación obligatoria");
+assert.equal(stable.sections[1].compositionOptimization, undefined);
+assert.equal(stable.sections[1].candidates, undefined);
+const selection = { top: "Fiora", jungle: "Elise", mid: "Xerath", botline: "Draven", support: "Lulu" };
 const report = reportFor(selection);
 assert.equal(report.status, "assessed");
 assert.deepEqual(report.sections.map((section) => section.id), ["diagnosis", "correction", "protection"], "La recomendación ocupa el bloque de mejora existente");
 const recommendation = report.sections[1];
 assert.equal(recommendation.title, "Recomendación estratégica");
-assert.ok(recommendation.compositionOptimization, "La misma sección integra la propuesta completa cuando hay un reemplazo alineado disponible");
+assert.ok(!recommendation.compositionOptimization || recommendation.compositionOptimization.change,
+  "Si hay propuesta, su origen y cambio concreto están definidos");
 assert.deepEqual(report.sections.map((section) => section.id), ["diagnosis", "correction", "protection"], "La optimización no añade una sección nueva al informe");
 assert.match(recommendation.answer, /Necesidad: .+ · Perfil: .+/);
 assert.ok(recommendation.explanation);

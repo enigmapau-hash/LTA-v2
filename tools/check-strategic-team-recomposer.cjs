@@ -61,7 +61,7 @@ function analyze(selection) {
 function verifyProposal(result) {
   const outcome = result.teamRecomposition;
   if (outcome.status !== "recomposed") {
-    assert.equal(outcome.status, "no-validated-improvement", "Si no hay mejora verificada, LTA se abstiene");
+    assert.ok(["no-priority","no-validated-improvement"].includes(outcome.status), "Sin necesidad o sin mejora verificada, LTA se abstiene");
     assert.equal(result.report.sections[1].teamRecomposition, undefined);
     return;
   }
@@ -127,9 +127,9 @@ assert.equal(multiPieceProposal.status, "recomposed");
 assert.equal(multiPieceProposal.proposal.pieces.filter((item) => item.action === "replace").length, 2,
   "El optimizador sintético mejora dos posiciones y conserva las tres restantes");
 
-const incomplete = { ...clear.strategicInputs, mappedCandidates: { ...clear.strategicInputs.mappedCandidates, composition: { status: "incomplete", picks: clear.picks.slice(0, 4) } } };
+const incomplete = { ...incoherent.strategicInputs, mappedCandidates: { ...incoherent.strategicInputs.mappedCandidates, composition: { status: "incomplete", picks: incoherent.picks.slice(0, 4) } } };
 assert.equal(recomposeStrategicTeam(incomplete).status, "pending", "Una selección de cuatro campeones queda pendiente");
-assert.equal(recomposeStrategicTeam({ ...incomplete, mappedCandidates: { ...incomplete.mappedCandidates, composition: { status: "incomplete", picks: clear.picks.slice(0, 1) } } }).status, "pending",
+assert.equal(recomposeStrategicTeam({ ...incomplete, mappedCandidates: { ...incomplete.mappedCandidates, composition: { status: "incomplete", picks: incoherent.picks.slice(0, 1) } } }).status, "pending",
   "Una selección parcial no se trata como equipo completo");
 assert.equal(recomposeStrategicTeam({ optimizer: { status: "no-priority" } }).status, "no-priority");
 

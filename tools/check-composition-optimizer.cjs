@@ -72,52 +72,21 @@ function verifyPriority(result, expectedNeed, expectedProblem) {
 
 const clear = composition({ top: "Camille", jungle: "Vi", mid: "Ahri", botline: "Kai'Sa", support: "Rakan" });
 const clearInputs = evaluate(clear);
-const clearOptimizer = optimizeComposition(clearInputs);
-verifyPriority(clearOptimizer, "engage", "Pierde valor si falla la iniciación");
-
+assert.deepEqual(optimizeComposition(clearInputs), { status: "no-priority", priority: null });
 const hybrid = composition({ top: "Ornn", jungle: "Sejuani", mid: "Orianna", botline: "Jinx", support: "Lulu" });
 const hybridInputs = evaluate(hybrid);
 assert.equal(hybridInputs.diagnosis.coherence.status, "hybrid");
-verifyPriority(
-  optimizeComposition(hybridInputs),
-  "side-lane",
-  "Poca presión lateral"
-);
+assert.deepEqual(optimizeComposition(hybridInputs), { status: "no-priority", priority: null });
 
-const incoherent = [
-  pick("top", "Fiora"),
-  pick("jungle", "Elise"),
-  pick("mid", "Xerath"),
-  pick("botline", "Draven"),
-  pick("support", "Lulu"),
-];
+const poke = composition({ top: "Jayce", jungle: "Nidalee", mid: "Xerath", botline: "Ezreal", support: "Vel'Koz" });
+const pokeInputs = evaluate(poke);
+const pokeOptimizer = optimizeComposition(pokeInputs);
+verifyPriority(pokeOptimizer, "peel", "protección para los carries");
+
+const incoherent = [pick("top", "Fiora"), pick("jungle", "Elise"), pick("mid", "Xerath"), pick("botline", "Draven"), pick("support", "Lulu")];
 const incoherentInputs = evaluate(incoherent);
-assert.equal(incoherentInputs.diagnosis.coherence.status, "incoherent");
-verifyPriority(
-  optimizeComposition(incoherentInputs),
-  "engage",
-  "iniciación compartida"
-);
-
-const noCorrection = optimizeComposition({
-  diagnosis: clearInputs.diagnosis,
-  correction: { status: "no-supported-correction", limitingFactor: "Falta respaldo" },
-  protection: { status: "assessed", mostDangerousStyle: "Poke" },
-});
-assert.deepEqual(noCorrection, { status: "no-priority", priority: null });
-assert.deepEqual(
-  optimizeComposition({ diagnosis: { status: "not-assessable" }, correction: clearInputs.correction }),
-  { status: "not-assessable", priority: null }
-);
-
-assert.deepEqual(optimizeComposition(clearInputs), clearOptimizer, "La prioridad debe ser determinista");
-assert.deepEqual(
-  optimizeComposition({ ...clearInputs, correction: { ...clearInputs.correction, improvements: [
-    clearInputs.correction.improvements.find((item) => item.priority === "alternativa"),
-    clearInputs.correction.improvements.find((item) => item.priority === "principal"),
-  ] } }),
-  clearOptimizer,
-  "La mejora marcada como principal debe prevalecer aunque cambie el orden de las alternativas"
-);
+verifyPriority(optimizeComposition(incoherentInputs), "engage", "iniciación compartida");
+assert.deepEqual(optimizeComposition({ diagnosis: { status: "not-assessable" }, correction: pokeInputs.correction }), { status: "not-assessable", priority: null });
+assert.deepEqual(optimizeComposition(pokeInputs), pokeOptimizer, "Resultado determinista");
 
 console.log("Composition Optimizer validado: planes claros, híbridos, incoherentes, prioridad única y determinismo.");
