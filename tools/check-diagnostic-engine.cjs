@@ -104,6 +104,9 @@ assert.ok(clearPlan.primaryProblem.explanation);
 assert.ok(clearPlan.explanation.some((item) => /problema estructural principal/i.test(item)));
 
 const stablePlan = diagnoseComposition(frontToBack);
+assert.equal(stablePlan.execution.status, "requirements-covered",
+  "Con frente y protección acreditados no se fuerza una sustitución");
+assert.deepEqual(stablePlan.execution.missing, []);
 assert.equal(stablePlan.robustness.status, "stable");
 assert.equal(stablePlan.robustness.identityChanges.length, 0);
 assert.equal(stablePlan.stability.status, "stable");
