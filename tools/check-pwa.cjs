@@ -251,8 +251,21 @@ async function main() {
         champion: entry.querySelector("strong")?.textContent?.trim(),
         role: entry.querySelector(".result-summary__candidate-role")?.textContent?.trim(),
       })));
-    assert.ok(recommendedPairs.every(pair => !/Experimental/i.test(pair.role)),
-      "Nunca se proponen roles experimentales");
+    assert.ok(recommendedPairs.every(pair => !/Experimental|Secundaria/i.test(pair.role)),
+      "Nunca se proponen roles secundarios ni experimentales");
+    const roleLabelsAccurate = await recommendation.locator(":scope > li").evaluateAll(entries => {
+      const roleKeys = { TOP:"top", JUNGLA:"jungle", MID:"mid", BOTLINE:"botline", SUPPORT:"support" };
+      return entries.every(entry => {
+        const champion=entry.querySelector("strong")?.textContent?.trim();
+        const label=entry.querySelector(".result-summary__candidate-role")?.textContent?.trim()||"";
+        const code=label.match(/Posición: (TOP|JUNGLA|MID|BOTLINE|SUPPORT)/)?.[1];
+        const state=window.LTARoleViability.assess(champion,roleKeys[code]).status;
+        if (state === "principal") return label.includes("Principal · criterio editorial");
+        if (state === "compatible") return label.includes("Compatible (cliente Riot)");
+        return state === "sin-verificar" && label.includes("Sin verificar · provisional");
+      });
+    });
+    assert.ok(roleLabelsAccurate,"El estado editorial real está visible incluso tras polisher/presenter");
     // Leaving the edited picker can redraw the unchanged table. The report must
     // still be present before opening its explanations.
     await page.locator("h1").click();
