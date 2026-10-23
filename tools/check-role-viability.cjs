@@ -32,7 +32,7 @@ assert.equal(viability.PATCH, "26.21");
 assert.equal(pairs.length, 266, "Todas las parejas del workbook tienen una evaluación, aunque no haya evidencia externa");
 assert.deepEqual(Object.keys(catalog), Object.keys(sheetNames));
 assert.ok(pairs.every((item) => item.patch === "26.21"
-  && ["principal", "compatible", "secundaria", "habitual", "situacional", "experimental", "sin-verificar"].includes(item.status)));
+  && ["principal", "compatible", "secundaria", "descartada", "habitual", "situacional", "experimental", "sin-verificar"].includes(item.status)));
 assert.ok(pairs.some((item) => item.status === "sin-verificar"), "No se inventan categorías para los datos sin fuente");
 
 const sourceKeys = new Set(pairs.map((item) => `${item.champion.toLocaleLowerCase("es")}|${item.role}`));
