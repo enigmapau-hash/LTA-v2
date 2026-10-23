@@ -92,7 +92,10 @@ async function main(){
     null, { timeout: 3000 });
   assert.equal(await firstBan.evaluate(node=>node.open), false);
   assert.equal(await page.locator(".result-summary__header").evaluate(n=>getComputedStyle(n).display),"none","el estado de validación se omite en composiciones completas");
-  assert.equal(await page.locator(".result-summary.is-ready").evaluate(n=>getComputedStyle(n).paddingTop),"0px","el informe completo evita un marco exterior redundante");
+  await page.waitForFunction(() => {
+    const n = document.querySelector(".result-summary.is-ready");
+    return n?.isConnected && getComputedStyle(n).paddingTop === "0px";
+  }, null, { timeout: 5000 }); // Assert the live node during a queued report redraw.
   await page.waitForFunction(() => { const node = document.querySelector(".result-summary__strategy"); return node?.isConnected && getComputedStyle(node).borderTopWidth === "1px"; }, null, { timeout: 5000 }); // A concurrent report render can detach a previously resolved locator.
   assert.equal(await page.locator(".result-summary__global").count(),0,"no aparece el resumen global redundante");
   assert.equal(await page.locator(".result-summary__roles").count(),0,"no se genera una segunda lista de campeones redundante");
