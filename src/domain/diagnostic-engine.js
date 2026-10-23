@@ -182,6 +182,14 @@
     const robustness = buildRobustness(primaryIdentity, stability, planSupport);
     const gaps = [...(analysis.cohesion?.gaps || [])];
     const weaknesses = [...(analysis.weaknesses || [])];
+    // Identity affinity alone does not prove the team can execute that plan.
+    const missingCapabilities = coherent
+      ? compositionEngine.assessPlanNeeds({ picks, identity: primaryIdentity })
+      : [];
+    const execution = coherent
+      ? { status: missingCapabilities.length ? "missing-required-capabilities" : "requirements-covered",
+        missing: missingCapabilities }
+      : { status: "not-assessable", missing: [] };
     const primaryProblem = coherent
       ? {
         type: "identity-risk",
@@ -217,6 +225,7 @@
       issues: [],
       plan: { clear: coherent, primaryIdentity, secondaryIdentity },
       coherence,
+      execution,
       robustness,
       dependencies,
       primaryProblem,

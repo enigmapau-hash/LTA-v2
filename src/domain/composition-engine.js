@@ -15,6 +15,7 @@
       winCondition: "Proteger al ADC y forzar teamfights.",
       strengths: ["Frontline", "Peel", "DPS sostenido"],
       weaknesses: ["Poca presión lateral"],
+      executionNeeds: ["frontline", "peel", "sustained-damage"],
       // La etiqueta no acredita por sí sola una vía de protección del carry.
       secondaryEvidence: { fields: ["strengths"], terms: ["frontline", "peel", "anti-engage"] },
       signals: [
@@ -30,6 +31,7 @@
       winCondition: "Eliminar rápidamente la backline rival.",
       strengths: ["Acceso a la backline", "Engage", "Follow-up"],
       weaknesses: ["Pierde valor si falla la iniciación"],
+      executionNeeds: ["engage"],
       // Engage compartido no implica acceso a la backline.
       secondaryEvidence: { fields: ["strengths"], terms: ["backline", "acceso al carry", "flanqueo"] },
       signals: [
@@ -46,6 +48,7 @@
       winCondition: "Generar cazadas y convertir la ventaja numérica en objetivos.",
       strengths: ["Gran capacidad para generar cazadas"],
       weaknesses: ["Poco daño sostenido"],
+      executionNeeds: ["pick"],
       signals: [
         { fields: ["strengths"], terms: ["pick"], weight: 3 },
         { fields: ["strengths"], terms: ["ganks", "roams"], weight: 1 },
@@ -72,6 +75,7 @@
       winCondition: "Crear presión lateral y obligar al rival a responder separado.",
       strengths: ["Presión lateral", "Duelos", "Presión global"],
       weaknesses: ["Evitar teamfights prolongadas"],
+      executionNeeds: ["side-lane"],
       signals: [
         { fields: ["strengths"], terms: ["side lane"], weight: 3 },
         { fields: ["strengths"], terms: ["duelos"], weight: 2 },
@@ -86,6 +90,7 @@
       winCondition: "Iniciar una pelea coordinada y encadenar las definitivas.",
       strengths: ["Sinergia de definitivas", "Excelente iniciación"],
       weaknesses: ["Depende de encontrar una iniciación coordinada"],
+      executionNeeds: ["engage"],
       signals: [
         { fields: ["strengths"], terms: ["teamfight"], weight: 3 },
         { fields: ["strengths"], terms: ["engage"], weight: 2 },
@@ -114,6 +119,7 @@
       winCondition: "Aprovechar la presión inicial para acelerar la partida.",
       strengths: ["Presión en early", "Tempo", "Snowball"],
       weaknesses: ["Pierde valor si la partida se alarga"],
+      executionNeeds: ["early-pressure"],
       signals: [
         { fields: ["tempo"], terms: ["early"], weight: 3 },
         { fields: ["tempo"], terms: ["early/mid"], weight: 2 },
@@ -132,6 +138,7 @@
     { id: "peel", label: "protección para los carries", fields: ["strengths"], terms: ["peel"] },
     { id: "sustained-damage", label: "daño sostenido", fields: ["strengths", "function"], terms: ["dps", "hypercarry"] },
     { id: "side-lane", label: "presión lateral", fields: ["strengths"], terms: ["side lane"] },
+
   ];
 
   const GAME_PLANS = {
@@ -489,9 +496,13 @@
   function assessPlanNeeds(input = {}) {
     const picks = Array.isArray(input.picks) ? input.picks : [];
     const archetype = ARCHETYPES.find((item) => normalize(item.label) === normalize(input.identity));
-    if (!archetype || picks.length !== 5 || !archetype.draftNeeds?.length) return [];
-    return STRATEGIC_GAPS
-      .filter((gap) => archetype.draftNeeds.includes(gap.id))
+    const requirements = archetype?.executionNeeds || archetype?.draftNeeds || [];
+    if (!archetype || picks.length !== 5 || !requirements.length) return [];
+    const executionOnlyGaps = [
+      { id: "early-pressure", label: "presión temprana", fields: ["strengths", "tempo"], terms: ["early", "snowball", "tempo"] },
+    ];
+    return [...STRATEGIC_GAPS, ...executionOnlyGaps]
+      .filter((gap) => requirements.includes(gap.id))
       .filter((gap) => !picks.some((pick) => matchesExplicitSignal(pick, gap)))
       .map((gap) => ({ id: gap.id, label: gap.label }));
   }

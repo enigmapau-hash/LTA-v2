@@ -124,7 +124,16 @@
         if (!champion || selectedChampions.has(key)) continue;
 
         const matchingSignals = candidateSignals(candidate).filter((signal) =>
-          profile.matches.some((term) => normalize(signal).includes(normalize(term)))
+          profile.matches.some((term) => {
+            const sought = normalize(term);
+            const raw = normalize(signal);
+            // Anti-frontline describes damage against a front line, not
+            // front line of our own; likewise anti-engage is not initiation.
+            const evidence = sought.startsWith("anti ")
+              ? raw
+              : raw.replace(/\banti [a-z0-9]+\b/g, " ");
+            return evidence.includes(sought);
+          })
         );
         const uniqueSignals = [...new Map(matchingSignals.map((signal) => [normalize(signal), signal])).values()];
         if (!uniqueSignals.length) continue;
@@ -161,7 +170,9 @@
     const problemType = diagnosis.primaryProblem?.type;
     const clearPlan = diagnosis.plan?.clear && diagnosis.plan?.primaryIdentity;
     const missingRequirements = clearPlan && problemType === "identity-risk"
-      ? compositionEngine.assessPlanNeeds({ picks, identity: diagnosis.plan.primaryIdentity })
+      ? Array.isArray(diagnosis.execution?.missing)
+        ? diagnosis.execution.missing
+        : compositionEngine.assessPlanNeeds({ picks, identity: diagnosis.plan.primaryIdentity })
       : [];
     // Inherent archetype tradeoffs cannot themselves justify a replacement.
     const factors = clearPlan

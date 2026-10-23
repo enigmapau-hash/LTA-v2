@@ -85,7 +85,7 @@ async function main(){
   assert.equal(await firstBan.evaluate(node=>node.open), false);
   assert.equal(await page.locator(".result-summary__header").evaluate(n=>getComputedStyle(n).display),"none","el estado de validación se omite en composiciones completas");
   assert.equal(await page.locator(".result-summary.is-ready").evaluate(n=>getComputedStyle(n).paddingTop),"0px","el informe completo evita un marco exterior redundante");
-  assert.equal(await strategy.evaluate(n=>getComputedStyle(n).borderTopWidth),"1px","la tarjeta estratégica mantiene su contorno visible");
+  await page.waitForFunction(() => { const node = document.querySelector(".result-summary__strategy"); return node?.isConnected && getComputedStyle(node).borderTopWidth === "1px"; }, null, { timeout: 5000 }); // A concurrent report render can detach a previously resolved locator.
   assert.equal(await page.locator(".result-summary__global").count(),0,"no aparece el resumen global redundante");
   assert.equal(await page.locator(".result-summary__roles").count(),0,"no se genera una segunda lista de campeones redundante");
   assert.equal(await strategy.evaluate(n=>n.closest(".table-wrap")===null),true,"el informe estratégico debe quedar fuera del contenedor desplazable de la tabla");
@@ -117,10 +117,16 @@ async function main(){
   const candidateRoles = strategy.locator(".result-summary__candidate-role");
   assert.ok(await candidateRoles.count()>0, "Una brecha de cohesión mantiene alternativas explicables");
   assert.ok((await candidateRoles.allInnerTexts()).every(label=>label.includes("(26.21)")));
+  // The report is reconstructed on the next animation frame after changes
+  // to the five picks. Ensure the final DOM has settled before testing focus.
+  await page.evaluate(() => new Promise(resolve =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const alternative = strategy.locator(".result-summary__candidate-more").first();
   assert.ok(await alternative.count()>0);
   assert.equal(await alternative.evaluate(node=>node.open),false);
   await alternative.locator(":scope > summary").press("Enter");
+  await page.waitForFunction(() => document.querySelector(".result-summary__candidate-more")?.open === true,
+    null, { timeout: 3000 });
   assert.equal(await alternative.evaluate(node=>node.open),true, "Las alternativas se abren por teclado");
   const justifications = strategy.locator(".result-summary__candidate-justification");
   assert.equal(await justifications.count(), await strategy.locator(".result-summary__recommendation-list > li").count());

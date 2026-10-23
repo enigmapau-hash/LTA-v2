@@ -41,14 +41,28 @@ assert.equal(first.metrics.profileRoleKnowledgePairs, 64, "La auditoría registr
 // v3.13 deliberately stops maximizing the number of champion suggestions
 // in complete coherent teams. Assess abstention and support rather than a
 // historical number of mentions. The incomplete-draft audit below is unchanged.
-const coherentCases = first.cases.filter(item => item.identity && item.coherence !== "contradictory");
-assert.ok(coherentCases.every(item => item.recommendationStatus === "no-priority"),
-  "Los equipos completos con plan reconocido y sin requisitos pendientes se mantienen intactos");
+const { generateRepresentativeCompositions } = require("./recommendation-audit-fixtures.cjs");
+const { diagnoseComposition } = require("../src/domain/diagnostic-engine.js");
+const composed = generateRepresentativeCompositions(catalog);
+const casesById = new Map(composed.map(item => [item.id, item]));
+for (const item of first.cases) {
+  const diagnosis = diagnoseComposition(casesById.get(item.id).picks);
+  if (diagnosis.plan.clear && diagnosis.primaryProblem.type === "identity-risk") {
+    if (item.recommendationStatus === "recommended") {
+      assert.ok(diagnosis.execution.missing.length,
+        "Solo puede corregir un plan identificado si falta una capacidad exigida");
+    }
+    if (!diagnosis.execution.missing.length) {
+      assert.equal(item.recommendationStatus, "no-priority",
+        "No debe obligar a añadir una capacidad que ya está acreditada");
+    }
+  }
+}
 const incoherentCase = first.cases.find(item => item.id === "incoherent");
 assert.equal(incoherentCase.recommendationStatus, "recommended",
   "La falta explícita de cohesión sigue habilitando candidatos");
-assert.equal(first.metrics.recommendedCaseCount, 1, "Solo el caso con brecha acreditada obliga a corregir");
-assert.equal(first.cases.filter(item => item.recommendationStatus === "no-priority").length, 9);
+assert.ok(first.metrics.recommendedCaseCount >= 2, "El diagnóstico recupera recomendaciones por carencias explícitas además de la incoherencia");
+assert.ok(first.cases.filter(item => item.recommendationStatus === "no-priority").length >= 5, "La abstención continúa siendo correcta cuando no faltan requisitos");
 assert.ok(first.metrics.totalCandidateMentions > 0 && first.metrics.totalCandidateMentions <= 57,
   "Las menciones se reducen al conjunto con necesidad demostrada");
 assert.ok(first.metrics.uniqueRecommendedChampions >= 2
