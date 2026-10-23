@@ -48,7 +48,7 @@
 
   const ORDER = Object.freeze({
     principal: 5, compatible: 4, habitual: 3, situacional: 2,
-    "sin-verificar": 1, secundaria: 0, experimental: 0,
+    "sin-verificar": 1, secundaria: 0, experimental: 0, descartada: 0,
   });
 
   function normalize(value) {
@@ -100,7 +100,8 @@
   }
 
   function isExcluded(record) {
-    return record?.status === "secundaria" || record?.status === "experimental";
+    return record?.status === "secundaria" || record?.status === "experimental"
+      || record?.status === "descartada";
   }
 
   function candidatesForReview(candidatesByRole = {}) {
