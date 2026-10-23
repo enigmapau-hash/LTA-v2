@@ -117,10 +117,16 @@ async function main(){
   const candidateRoles = strategy.locator(".result-summary__candidate-role");
   assert.ok(await candidateRoles.count()>0, "Una brecha de cohesión mantiene alternativas explicables");
   assert.ok((await candidateRoles.allInnerTexts()).every(label=>label.includes("(26.21)")));
+  // The report is reconstructed on the next animation frame after changes
+  // to the five picks. Ensure the final DOM has settled before testing focus.
+  await page.evaluate(() => new Promise(resolve =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const alternative = strategy.locator(".result-summary__candidate-more").first();
   assert.ok(await alternative.count()>0);
   assert.equal(await alternative.evaluate(node=>node.open),false);
   await alternative.locator(":scope > summary").press("Enter");
+  await page.waitForFunction(() => document.querySelector(".result-summary__candidate-more")?.open === true,
+    null, { timeout: 3000 });
   assert.equal(await alternative.evaluate(node=>node.open),true, "Las alternativas se abren por teclado");
   const justifications = strategy.locator(".result-summary__candidate-justification");
   assert.equal(await justifications.count(), await strategy.locator(".result-summary__recommendation-list > li").count());
