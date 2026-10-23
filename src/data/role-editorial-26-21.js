@@ -5,8 +5,8 @@
 })(typeof window !== "undefined" ? window : globalThis, function () {
   "use strict";
   // Edición HUMANA de hechos posicionales, no una copia de estadísticas ni una cuota.
-  // Principal = juicio editorial corroborado con vista por campeón en OP.GG
-  // parche 16.21; no certifica un umbral de muestra ni porcentaje de juegos.
+  // Principal = juicio editorial corroborado con cuota de partidas del campeón
+  // por rol en LeagueOfGraphs parche 16.21, sin importar bases ni tablas.
   // Compatible = posición marcada Riot en League Wiki (no cuota estadística).
   // Secundaria = solo 3P en League Wiki. Experimental = evidencia previa escasa.
   // Wiki: https://wiki.leagueoflegends.com/en-us/List_of_champions_by_draft_position
@@ -259,23 +259,42 @@
     "experimental"
   ]
 ]);
+  // Seven manually transcribed positional facts (NOT a third-party dataset).
+  // Source: LeagueOfGraphs, patch 16.21; all regions, Platinum+,
+  // normal and ranked, last two days as observed on 2026-10-23.
+  // Share is among matches WITH THIS CHAMPION, not the pick rate in the lane.
+  const PRIMARY_SHARE = Object.freeze({
+    "Aatrox|top": [84.3, "jungle", 11.9],
+    "K'Sante|top": [93.6, "mid", 3.2],
+    "Maokai|support": [65.3, "jungle", 19.2],
+    "Diana|jungle": [47.7, "mid", 48.5],
+    "Diana|mid": [48.5, "jungle", 47.7],
+    "Aurora|mid": [79.5, "top", 16.3],
+    "Seraphine|support": [92.0, "botline", 5.8],
+  });
+  const PRIMARY_SOURCE = "https://www.leagueofgraphs.com/en/champions/stats/";
   const entries = PAIRS.map(([champion,role,status]) => {
     const primary = status === "principal";
     const experimental = status === "experimental";
+    const roleShare = PRIMARY_SHARE[champion + "|" + role] || null;
     return Object.freeze({
       champion, role, status, reviewedAt: REVIEWED_AT,
       source: primary
-        ? "https://op.gg/lol/champions/" + champion.toLowerCase().replace(/[^a-z0-9]/g,"") + "/build"
+        ? PRIMARY_SOURCE + champion.toLowerCase().replace(/[^a-z0-9]/g,"")
         : experimental
           ? "https://www.metasrc.com/lol/champions/diana/top/stats"
           : WIKI,
       corroboration: primary ? WIKI : null,
+      ...(roleShare ? {
+        roleSharePct: roleShare[0], runnerUpRole: roleShare[1],
+        runnerUpSharePct: roleShare[2],
+      } : {}),
       sourcePatch: primary ? "16.21" : null,
-      evidenceType: primary ? "Predominio editorial observado en la vista de campeón (OP.GG, sin cuota certificada)"
+      evidenceType: primary ? "Cuota del rol entre partidas con el campeón; muestra de dos días, clasificación editorial"
         : status === "compatible" ? "Posición reconocida por Riot según listado de League Wiki"
         : experimental ? "Muestra anterior pequeña, no apta para recomendación normal"
         : "Solo 3P en League Wiki; no etiquetar principal",
-      scope: primary ? "Global, Emerald+, Solo/Duo (consulta 23/10/2026)"
+      scope: primary ? "Todas las regiones, Platino+, normales y clasificatorias, ventana de dos días (consulta 23/10/2026)"
         : "Listado descriptivo; no certifica cuota ni parche",
     });
   });
