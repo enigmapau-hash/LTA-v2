@@ -12,11 +12,15 @@ assert.equal(Object.values(countByRole).reduce((n,c)=>n+c,0),266);
 const records=viability.candidatesForReview(catalog);
 const key=(item)=>item.champion.toLocaleLowerCase("es")+"|"+item.role;
 const workbookPairs=new Set(records.map(key));
-assert.equal(editorial.entries.length,123,"Segunda tanda editorial acotada a 125 parejas; no inventar clasificación total");
-assert.equal(new Set(editorial.entries.map(key)).size,123,"Sin duplicar pares");
+assert.equal(editorial.entries.length,129,"Curación revisada, incluyendo seis nuevas parejas manuales; no inventar clasificación total");
+assert.equal(new Set(editorial.entries.map(key)).size,129,"Sin duplicar pares");
 for(const item of editorial.entries){
   assert.ok(workbookPairs.has(key(item)),item.champion+" "+item.role+" debe figurar en Draft Pool.xlsx");
-  assert.match(item.source,/^https:\/\//);
+  if(item.manualRoleReview && !item.source) {
+    assert.equal(item.status,"habitual");
+    assert.equal(item.sourcePatch,null);
+    assert.equal(item.manualProvenance,"Declaración del usuario de LTA, no estadística");
+  } else assert.match(item.source,/^https:\/\//);
   assert.equal(item.reviewedAt,"2026-10-23");
   if(item.status==="principal") {
     assert.equal(item.sourcePatch,"16.21");
@@ -44,7 +48,7 @@ for(const item of editorial.entries){
   }else assert.equal(item.sourcePatch,null,"No asignar parche de la estadística a una posición Wiki");
 }
 const counts=Object.fromEntries(["principal","compatible","habitual","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
-assert.deepEqual(counts,{principal:12,compatible:95,habitual:9,secundaria:6,experimental:1,"sin-verificar":143});
+assert.deepEqual(counts,{principal:12,compatible:88,habitual:22,secundaria:6,experimental:1,"sin-verificar":137});
 assert.equal(viability.assess("Diana","mid").provider,"LeagueOfGraphs / League Wiki",
   "Los porcentajes editoriales proceden de LeagueOfGraphs, no de OP.GG");
 assert.equal(viability.assess("Aurora","top").provider,"League Wiki / revisión editorial");
@@ -63,8 +67,8 @@ for(const [champion,role,status] of [
 const {analyze: analyzeByChampion,canon}=require("./audit-editorial-by-champion.cjs");
 const byChampion=analyzeByChampion(catalog);
 assert.equal(byChampion.pairs,266);
-assert.equal(byChampion.reviewed,123);
-assert.equal(byChampion.pending,143);
+assert.equal(byChampion.reviewed,129);
+assert.equal(byChampion.pending,137);
 assert.ok(byChampion.champions < byChampion.distinctCatalogNames,
   "Las builds de Kayn/Varus/Shaco comparten campeón; no necesariamente rol verificado");
 assert.equal(canon("Kayn (Azul)"),canon("Kayn (Rojo)"));
