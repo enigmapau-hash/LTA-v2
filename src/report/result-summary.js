@@ -75,7 +75,7 @@
       : candidate.strengths.length ? `<small><b>Aporta:</b> ${escapeHtml(candidate.strengths.join(" · "))}</small>` : "";
     const body = `<small class="result-summary__candidate-reason">${escapeHtml(cleanSentence(candidate.reason))}</small>${justification}${candidate.limitations.length ? `<small class="result-summary__limitation"><b>Límite:</b> ${escapeHtml(candidate.limitations.join(" · "))}</small>` : ""}`;
     const title = `<strong>${escapeHtml(candidate.champion)}</strong>`;
-    if (index === 0) return `<li class="result-summary__candidate-primary"><div class="result-summary__candidate-head">${title}<span class="result-summary__priority-label">Primera alternativa</span></div>${role}${body}</li>`;
+    if (index === 0) return `<li class="result-summary__candidate-primary"><div class="result-summary__candidate-head">${title}<span class="result-summary__priority-label">${candidate.viabilityStatus === "habitual" ? "Primera alternativa" : "Alternativa · rol pendiente de verificar"}</span></div>${role}${body}</li>`;
     return `<li class="result-summary__candidate-secondary"><details class="result-summary__candidate-more"><summary><span class="result-summary__candidate-name">${title}${role}</span><span class="result-summary__disclosure-label">Ver motivos</span></summary><div class="result-summary__candidate-more-body">${body}</div></details></li>`;
   }
 
