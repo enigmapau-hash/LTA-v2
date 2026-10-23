@@ -157,11 +157,29 @@ const fallback = prioritizeBans({
 assert.equal(fallback.status, "prioritized", "La protección general cubre equipos completos aunque no existan riesgos específicos");
 assert.equal(fallback.bans.length, 3, "Tres estilos de amenaza cuando el catálogo permite tres");
 assert.equal(new Set(fallback.bans.map((ban) => ban.threatType)).size, 3);
+const fallbackWithoutRecommendation = prioritizeBans({
+  strategicRisks: { status: "no-priority", risks: [] },
+  strategicCounterplay: { status: "not-assessable", threats: [] },
+  protection: { status: "no-supported-threat", threats: [] },
+  mappedCandidates: { status: "no-priority", profiles: [] },
+  currentPicks: completeMapped.composition.picks,
+  championCatalog: banCatalog,
+});
+assert.deepEqual(fallbackWithoutRecommendation.bans, fallback.bans,
+  "La ausencia deliberada de reemplazos no altera los bans de Protección");
+assert.deepEqual(prioritizeBans({
+  protection: { status: "assessed", threats: [] },
+  mappedCandidates: { status: "no-priority" },
+  currentPicks: completeMapped.composition.picks.slice(0, 4),
+  championCatalog: banCatalog,
+}), { status: "not-assessable", bans: [] }, "El fallback no acepta cuatro picks como equipo completo");
+
 assert.deepEqual(prioritizeBans({ strategicRisks: rankedRisks, strategicCounterplay: rankedCounterplay, mappedCandidates: completeMapped, championCatalog: {} }), { status: "no-candidates", bans: [] });
 assert.deepEqual(prioritizeBans({ strategicRisks: rankedRisks, strategicCounterplay: rankedCounterplay, mappedCandidates: completeMapped, championCatalog: { top: [{ champion: "Ornn", strengths: "frontline" }] } }), { status: "no-matching-candidates", bans: [] }, "No recomienda integrantes del propio equipo ni candidatos sin señal de amenaza");
 
-const incompleteRun = analyze({ top: "Olaf", jungle: "Zyra", mid: "Heimerdinger", botline: "Lucian", support: "Tahm Kench" });
+const incompleteRun = analyze({ top: "Fiora", jungle: "Elise", mid: "Xerath", botline: "Draven", support: "Lulu" });
 const incompleteMapped = structuredClone(incompleteRun.mappedCandidates);
+assert.equal(incompleteMapped.composition?.status, "complete", "La brecha real permite comprobar la ruta incompleta");
 incompleteMapped.composition = { status: "incomplete", picks: incompleteMapped.composition.picks.slice(0, 4) };
 const incompleteRisks = assessStrategicRisks({ ...incompleteRun.riskInputs, mappedCandidates: incompleteMapped });
 const incompleteCounterplay = adviseCounterplay({ strategicRisks: incompleteRisks });
