@@ -1,11 +1,14 @@
 (function (root, factory) {
-  const engine = factory();
+  const diagnosticEngine = typeof module === "object" && module.exports
+    ? require("./diagnostic-engine.js")
+    : root.LTADiagnosticEngine;
+  const engine = factory(diagnosticEngine);
   if (typeof module === "object" && module.exports) {
     module.exports = engine;
   } else {
     root.LTACandidateEvaluator = Object.freeze(engine);
   }
-})(typeof window !== "undefined" ? window : globalThis, function () {
+})(typeof window !== "undefined" ? window : globalThis, function (diagnosticEngine) {
   "use strict";
 
   const IDENTITY_FAMILIES = Object.freeze({
@@ -38,7 +41,67 @@
       .some((identity) => identityRelation(candidateIdentity, identity));
   }
 
-  function candidateAssessment(candidate, profile, diagnosis) {
+  const REQUIREMENT_LABELS = Object.freeze({
+    frontline: "frontline", peel: "protección para los carries",
+    "sustained-damage": "daño sostenido", engage: "iniciación",
+    pick: "capacidad de pick", "side-lane": "presión lateral",
+    "early-pressure": "presión temprana",
+  });
+
+  function fieldText(value) {
+    return (Array.isArray(value) ? value.join(" · ") : String(value || "")).trim();
+  }
+
+  // Compare a proposed SAME-ROLE replacement against the actual five picks.
+  // Profile labels, role frequencies and generic strengths do not establish
+  // net improvement; absent attributes must not be interpreted as evidence.
+  function validateReplacement(candidate, diagnosis, composition) {
+    const originalPlan = String(diagnosis?.plan?.primaryIdentity || "").trim();
+    const missing = Array.isArray(diagnosis?.execution?.missing) ? diagnosis.execution.missing : [];
+    const picks = composition?.picks;
+    if (!originalPlan || !missing.length || composition?.status !== "complete"
+      || !Array.isArray(picks) || picks.length !== 5
+      || !candidate?.role || typeof diagnosticEngine?.diagnoseComposition !== "function") return null;
+    if (new Set(picks.map(item => normalize(item?.role))).size !== 5) return null;
+    if (!picks.some(item => normalize(item.role) === normalize(candidate.role))) return null;
+    const nextPicks = picks.map(pick => normalize(pick.role) === normalize(candidate.role)
+      ? {
+          role: pick.role, champion: candidate.champion,
+          identity: fieldText(candidate.identity), function: fieldText(candidate.function),
+          tempo: fieldText(candidate.tempo), strengths: fieldText(candidate.strengths),
+          weaknesses: fieldText(candidate.weaknesses),
+        }
+      : pick);
+    if (!nextPicks.every(pick => pick.champion && pick.identity && pick.function
+      && pick.tempo && pick.strengths && pick.weaknesses)) return null;
+    const revised = diagnosticEngine.diagnoseComposition(nextPicks);
+    if (revised.status !== "assessed") return null;
+    const oldIds = new Set(missing.map(item=>item.id).filter(Boolean));
+    const newIds = new Set((revised.execution?.missing || []).map(item=>item.id).filter(Boolean));
+    const resolved = [...oldIds].filter(id => !newIds.has(id));
+    const introduced = [...newIds].filter(id => !oldIds.has(id));
+    const preserved = revised.plan?.clear
+      && normalize(revised.plan.primaryIdentity) === normalize(originalPlan);
+    const status = !preserved ? "plan-changed"
+      : !resolved.length ? "does-not-fix"
+        : introduced.length ? "new-gap"
+          : "validated";
+    return {status, resolved, introduced, originalPlan,
+      revisedPlan: revised.plan?.primaryIdentity || null};
+  }
+
+  function replacementLimitation(check) {
+    if (check?.status === "plan-changed")
+      return "La sustitución no conserva el plan " + check.originalPlan + " según el nuevo diagnóstico.";
+    if (check?.status === "new-gap")
+      return "La sustitución cubre una carencia, pero introduce otra: "
+        + check.introduced.map(id => REQUIREMENT_LABELS[id] || id).join(", ") + ".";
+    if (check?.status === "does-not-fix")
+      return "La sustitución no acredita resolver la carencia prioritaria del equipo.";
+    return null;
+  }
+
+  function candidateAssessment(candidate, profile, diagnosis, composition) {
     const primaryIdentity = diagnosis?.plan?.primaryIdentity;
     const secondaryIdentity = diagnosis?.plan?.secondaryIdentity;
     const winCondition = diagnosis?.winCondition?.primary;
@@ -71,7 +134,10 @@
             : (contribution ? "Aporta " + contribution : "Sus atributos encajan con " + profile.label.toLocaleLowerCase("es"))
               + " y ayuda a " + improvement + (primaryIdentity ? " dentro del plan " + primaryIdentity : "") + ".";
 
+    const replacementCheck = validateReplacement(candidate, diagnosis, composition);
     const limitations = [...candidate.weaknesses];
+    const replacementWarning = replacementLimitation(replacementCheck);
+    if (replacementWarning) limitations.unshift(replacementWarning);
     if (contradictsPlan) {
       limitations.unshift("Puede acentuar la contradicción entre " + primaryIdentity + " y " + opposingIdentity + ".");
     }
@@ -81,6 +147,8 @@
 
     return {
       candidate,
+      replacementCheck,
+      replacementPriority: ({ validated: 4, "new-gap": 2, "does-not-fix": 1, "plan-changed": 0 })[replacementCheck?.status] ?? null,
       viabilityPriority: ({ principal: 5, compatible: 4, habitual: 3, situacional: 2, "sin-verificar": 1 })[candidate.viabilityStatus] || 1,
       contradictsPlan,
       supportsWinCondition,
@@ -97,10 +165,14 @@
     return { status, profiles: [] };
   }
 
-  function assessCandidates(candidates, profile, diagnosis) {
+  function assessCandidates(candidates, profile, diagnosis, composition) {
     return (Array.isArray(candidates) ? candidates : [])
-      .map((candidate) => candidateAssessment(candidate, profile, diagnosis))
+      .map((candidate) => candidateAssessment(candidate, profile, diagnosis, composition))
       .sort((a, b) => Number(a.contradictsPlan) - Number(b.contradictsPlan)
+        // Compare verified net improvement first when BOTH replacements can
+        // be assessed; otherwise preserve the existing editorial role order.
+        || (a.replacementPriority !== null && b.replacementPriority !== null
+          ? b.replacementPriority - a.replacementPriority : 0)
         || b.viabilityPriority - a.viabilityPriority
         || Number(b.supportsWinCondition) - Number(a.supportsWinCondition)
         || Number(b.supportsPrimary) - Number(a.supportsPrimary)
@@ -127,6 +199,7 @@
             ? "secondary-identity"
             : "unconfirmed",
       reason: item.reason,
+      ...(item.replacementCheck ? { replacementCheck: item.replacementCheck } : {}),
       strengths: [...item.candidate.strengths],
       limitations: item.limitations,
     };
@@ -144,9 +217,9 @@
       const mappedProfile = mappedById.get(recommendedProfile.id);
       if (!mappedProfile) continue;
 
-      const assessed = assessCandidates(mappedProfile.candidates, mappedProfile, input.diagnosis);
+      const assessed = assessCandidates(mappedProfile.candidates, mappedProfile, input.diagnosis, input.mappedCandidates.composition);
       const alternativesByRole = Object.fromEntries(Object.entries(mappedProfile.alternativesByRole || {}).map(([role, candidates]) => {
-        const evaluated = assessCandidates(candidates, mappedProfile, input.diagnosis);
+        const evaluated = assessCandidates(candidates, mappedProfile, input.diagnosis, input.mappedCandidates.composition);
         return [role, evaluated.map(presentAssessment)];
       }));
 
