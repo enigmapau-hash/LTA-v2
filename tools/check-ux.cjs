@@ -77,11 +77,19 @@ async function main(){
   assert.equal(await strategy.locator(".result-summary__ban-integration li").count(),3,
     "Sin sustituciones, se conservan tres bans distintos");
   assert.match(await strategy.innerText(),/Split Push/i);
+  // Selection changes schedule both composition analysis and report rendering.
+  // Wait until both animation frames settle before testing the native details control.
+  await page.evaluate(() => new Promise(resolve =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const firstBan = strategy.locator(".result-summary__ban-detail").first();
   assert.equal(await firstBan.evaluate(node=>node.open), false);
   await firstBan.locator(":scope > summary").press("Enter");
+  await page.waitForFunction(() => document.querySelector(".result-summary__ban-detail")?.open === true,
+    null, { timeout: 3000 });
   assert.equal(await firstBan.evaluate(node=>node.open), true, "El ban puede examinarse por teclado");
   await firstBan.locator(":scope > summary").press("Enter");
+  await page.waitForFunction(() => document.querySelector(".result-summary__ban-detail")?.open === false,
+    null, { timeout: 3000 });
   assert.equal(await firstBan.evaluate(node=>node.open), false);
   assert.equal(await page.locator(".result-summary__header").evaluate(n=>getComputedStyle(n).display),"none","el estado de validación se omite en composiciones completas");
   assert.equal(await page.locator(".result-summary.is-ready").evaluate(n=>getComputedStyle(n).paddingTop),"0px","el informe completo evita un marco exterior redundante");
