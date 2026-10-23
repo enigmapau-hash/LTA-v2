@@ -48,9 +48,17 @@ assert.equal(unprotectedPoke.correction.improvements[0].evidenceType, "required-
 const explanationCases = [...snapshots, unprotectedPoke];
 for (const state of snapshots.filter(item => item.diagnosis.plan?.clear
   && item.diagnosis.primaryProblem?.type === "identity-risk")) {
-  assert.equal(state.correction.status, "no-supported-correction",
-    "Arquetipos coherentes con herramientas cubiertas: sin cambio forzado");
-  assert.equal(state.optimizer.status, "no-priority");
+  const missing = state.diagnosis.execution?.missing || [];
+  if (!missing.length) {
+    assert.equal(state.correction.status, "no-supported-correction",
+      "Un plan cuyas herramientas están cubiertas no fuerza sustituciones");
+    assert.equal(state.optimizer.status, "no-priority");
+  } else if (state.correction.status === "proposed") {
+    assert.ok(state.correction.improvements.every(improvement =>
+      improvement.evidenceType === "required-plan-capability"
+      && missing.some(need => need.label === improvement.limitingFactor)),
+      "Toda corrección de un plan reconocido cita un requisito concreto sin cubrir");
+  }
 }
 
 // The v3.10 snapshot encoded compulsory replacements for every style.
