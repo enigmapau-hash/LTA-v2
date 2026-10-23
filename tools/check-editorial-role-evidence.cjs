@@ -12,8 +12,8 @@ assert.equal(Object.values(countByRole).reduce((n,c)=>n+c,0),266);
 const records=viability.candidatesForReview(catalog);
 const key=(item)=>item.champion.toLocaleLowerCase("es")+"|"+item.role;
 const workbookPairs=new Set(records.map(key));
-assert.equal(editorial.entries.length,139,"Curación revisada, incluyendo seis nuevas parejas manuales; no inventar clasificación total");
-assert.equal(new Set(editorial.entries.map(key)).size,139,"Sin duplicar pares");
+assert.equal(editorial.entries.length,203,"Curación editorial y tercera ronda de 65 dictámenes manuales; no inventar clasificación total");
+assert.equal(new Set(editorial.entries.map(key)).size,203,"Sin duplicar pares");
 for(const item of editorial.entries){
   assert.ok(workbookPairs.has(key(item)),item.champion+" "+item.role+" debe figurar en Draft Pool.xlsx");
   if(item.manualRoleReview && !item.source) {
@@ -48,7 +48,7 @@ for(const item of editorial.entries){
   }else assert.equal(item.sourcePatch,null,"No asignar parche de la estadística a una posición Wiki");
 }
 const counts=Object.fromEntries(["principal","compatible","habitual","situacional","descartada","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
-assert.deepEqual(counts,{principal:12,compatible:88,habitual:22,situacional:6,descartada:4,secundaria:6,experimental:1,"sin-verificar":127});
+assert.deepEqual(counts,{principal:12,compatible:87,habitual:57,situacional:26,descartada:14,secundaria:6,experimental:1,"sin-verificar":63});
 assert.equal(viability.assess("Diana","mid").provider,"LeagueOfGraphs / League Wiki",
   "Los porcentajes editoriales proceden de LeagueOfGraphs, no de OP.GG");
 assert.equal(viability.assess("Aurora","top").provider,"League Wiki / revisión editorial");
@@ -67,8 +67,8 @@ for(const [champion,role,status] of [
 const {analyze: analyzeByChampion,canon}=require("./audit-editorial-by-champion.cjs");
 const byChampion=analyzeByChampion(catalog);
 assert.equal(byChampion.pairs,266);
-assert.equal(byChampion.reviewed,139);
-assert.equal(byChampion.pending,127);
+assert.equal(byChampion.reviewed,203);
+assert.equal(byChampion.pending,63);
 assert.ok(byChampion.champions < byChampion.distinctCatalogNames,
   "Las builds de Kayn/Varus/Shaco comparten campeón; no necesariamente rol verificado");
 assert.equal(canon("Kayn (Azul)"),canon("Kayn (Rojo)"));
@@ -147,6 +147,43 @@ for(const [champion,role] of userDiscarded) {
   assert.ok(viability.isExcluded(record),"Descartada queda fuera de picks automáticos");
   assert.ok(!viability.isReviewedRecommendation(record));
 }
+// Dictamen de usuario (tanda de 30 campeones + Ekko JUNGLA, 23/10/2026).
+// Estos juicios no atribuyen porcentajes ni un parche a la frecuencia de uso.
+const thirdRound={"habitual":"Annie:mid;Akshan:mid;Cassiopeia:mid;Hwei:mid;Heimerdinger:top,mid;Karma:support;Karthus:jungle;Morgana:support;Neeko:mid;Tristana:botline;Aurelion Sol:mid;Ekko:mid,jungle;Naafiri:mid;Ryze:top,mid;Veigar:mid;Viktor:mid;Ziggs:mid,botline;Zoe:mid;Yone:top;Twitch:botline;Teemo:top;Warwick:jungle;Zac:jungle;Sylas:mid,jungle;Talon:mid,jungle;Zyra:support;Trundle:top,jungle;Kled:top","situacional":"Annie:support;Cassiopeia:top,botline;Karma:top;Karthus:botline;Morgana:jungle,mid;Neeko:support;Tristana:mid;Aurelion Sol:botline;Irelia:mid;Naafiri:top;Veigar:botline,support;Viktor:botline;Yone:botline;Teemo:jungle;Warwick:top;Zac:top;Zyra:jungle","descartada":"Akshan:botline;Hwei:botline;Heimerdinger:support;Karma:mid;Lucian:top,mid;Ziggs:top;Zoe:support;Twitch:support;Kled:mid"};
+const submissions=Object.entries(thirdRound).flatMap(([status,text]) =>
+  text.split(";").flatMap(fragment => {
+    const [champion,roles]=fragment.split(":");
+    return roles.split(",").map(role=>({champion,role,status}));
+  }));
+assert.equal(submissions.length,65,"64 posiciones del formulario + Ekko JUNGLA adicional");
+assert.equal(new Set(submissions.map(item=>item.champion+"|"+item.role)).size,65);
+for(const item of submissions){
+  assert.ok(workbookPairs.has(key(item)),item.champion+" "+item.role+" debe pertenecer a Draft Pool.xlsx");
+  const record=viability.assess(item.champion,item.role);
+  assert.equal(record.status,item.status,item.champion+" "+item.role);
+  assert.equal(record.manualRoleReview,item.status,"Etiqueta manual explícita");
+  assert.equal(record.manualProvenance,"Declaración del usuario de LTA, no estadística");
+  assert.ok(!record.sourcePatch,"No asignar parche a testimonios manuales sin estadística");
+  if(item.status==="descartada"){
+    assert.ok(viability.isExcluded(record));
+    assert.ok(!viability.isReviewedRecommendation(record));
+  } else if(item.status==="situacional"){
+    assert.ok(!viability.isExcluded(record));
+    assert.ok(!viability.isReviewedRecommendation(record),"Sin auto-sustituciones situacionales normales");
+  } else {
+    assert.ok(viability.isReviewedRecommendation(record),"Habitual puede alimentar optimizadores");
+  }
+}
+const ekkoJungle=viability.assess("Ekko","jungle");
+assert.equal(ekkoJungle.status,"habitual");
+assert.match(ekkoJungle.source,/wiki.leagueoflegends.com/,
+  "La evidencia Wiki existente continúa siendo compatibilidad, no estadística de predominio");
+assert.equal(ekkoJungle.provider,"League Wiki / criterio manual del usuario");
+assert.equal(viability.assess("Ekko","mid").status,"habitual","Ekko multirrol manual");
+for(const [champion,role] of [["Dr. Mundo","mid"],["Nautilus","jungle"],["Viego","top"],["Yorick","jungle"]])
+  assert.ok(viability.isExcluded(viability.assess(champion,role)),
+    "Los descartes manuales de la ronda anterior permanecen");
+
 const reviewedCatalog=Object.fromEntries(Object.entries(catalog).map(([role,cs])=>[
  role,cs.filter(c=>viability.isReviewedRecommendation(viability.assess(c.champion,role)))
 ]));
