@@ -12,7 +12,7 @@ La v2 amplía la lectura estratégica de composiciones completas con diagnóstic
 
 ## Características
 
-- Versión visible: `v3.13.3`
+- Versión visible: `v3.13.4`
 - El informe separa la recomposición de dos campeones de las alternativas individuales; elimina afirmaciones repetidas y mantiene evidencia consultable.
 - La identidad estratégica reconocida no equivale a un plan ejecutable: el diagnóstico verifica recursos necesarios y la recomendación corrige las carencias acreditadas.
 - Las correcciones de equipos completos exigen una brecha de cohesión o una herramienta explícitamente requerida por el plan que falte. No se fuerzan cambios por debilidades normales del arquetipo. Protección y bans siguen funcionando aunque no se recomienden sustituciones.
@@ -31,7 +31,7 @@ La v2 amplía la lectura estratégica de composiciones completas con diagnóstic
 
 - `index.html` y los CSS de la raíz: documento y estilos de la interfaz.
 - `src/ui/`: controlador de la aplicación y comportamiento de los selectores, la navegación, la vista previa y la versión.
-- `src/data/`: lectura de `Draft Pool.xlsx`; `role-editorial-26-21.js` añade una curación manual de 49 parejas con fuentes identificadas; `role-viability-26-21.js` combina la revisión con seis observaciones históricas y conserva el resto como «sin verificar», sin consultas de red. Las parejas no verificadas conservan explícitamente el estado «sin verificar», nunca reciben una clasificación inventada.
+- `src/data/`: lectura de `Draft Pool.xlsx`; `role-editorial-26-21.js` añade una curación manual de 125 parejas con fuentes identificadas; `role-viability-26-21.js` combina la revisión con seis observaciones históricas y conserva el resto como «sin verificar», sin consultas de red. Las parejas no verificadas conservan explícitamente el estado «sin verificar», nunca reciben una clasificación inventada.
 - `src/domain/composition-logic.js`: validación y búsquedas puras usadas por la interfaz actual.
 - `src/domain/composition-engine.js`: evaluación determinista y pura de la composición con los atributos del workbook. Informa identidad principal/secundaria, condición de victoria, fortalezas, debilidades y cohesión; alimenta el análisis estratégico del informe visible.
 - `src/domain/diagnostic-engine.js`: diagnóstico de composiciones completas, con plan, coherencia, robustez, dependencias y problema principal.
