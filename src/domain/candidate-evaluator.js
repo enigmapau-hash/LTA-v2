@@ -81,6 +81,7 @@
 
     return {
       candidate,
+      viabilityPriority: ({ principal: 5, compatible: 4, habitual: 3, situacional: 2, "sin-verificar": 1 })[candidate.viabilityStatus] || 1,
       contradictsPlan,
       supportsWinCondition,
       supportsPrimary,
@@ -100,6 +101,7 @@
     return (Array.isArray(candidates) ? candidates : [])
       .map((candidate) => candidateAssessment(candidate, profile, diagnosis))
       .sort((a, b) => Number(a.contradictsPlan) - Number(b.contradictsPlan)
+        || b.viabilityPriority - a.viabilityPriority
         || Number(b.supportsWinCondition) - Number(a.supportsWinCondition)
         || Number(b.supportsPrimary) - Number(a.supportsPrimary)
         || Number(b.supportsSecondary) - Number(a.supportsSecondary)
@@ -113,6 +115,9 @@
       champion: item.candidate.champion,
       ...(item.candidate.role ? { role: item.candidate.role } : {}),
       priority: index + 1,
+      ...(item.candidate.viabilityStatus ? { viabilityStatus: item.candidate.viabilityStatus } : {}),
+      ...(item.candidate.viabilityPatch ? { viabilityPatch: item.candidate.viabilityPatch } : {}),
+      ...(item.candidate.otherPrincipalRoles?.length ? { otherPrincipalRoles: item.candidate.otherPrincipalRoles } : {}),
       contradictsPlan: item.contradictsPlan,
       strategicFit: item.supportsPrimary
         ? "primary-identity"
