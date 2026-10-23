@@ -11,8 +11,9 @@
 })(typeof window !== "undefined" ? window : globalThis, function (editorial) {
   "use strict";
 
-  // Only verified evidence is classified. Every other workbook champion/role
-  // pair receives "sin-verificar", NOT a guessed habitual/situational rating.
+  // Workbook champion/role pairs are now classified through sourced editorial
+  // observations or explicitly attributed user judgments, never silently
+  // upgraded into numerical facts. Unknown external pairs remain "sin-verificar".
   // Snapshot is offline and versioned; metadata is never queried at runtime.
   const PATCH = "26.21";
   const CHECKED_AT = "2026-10-22";
