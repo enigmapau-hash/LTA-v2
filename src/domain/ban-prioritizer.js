@@ -96,7 +96,7 @@
 
   function canonicalBanChampion(value) {
     const champion = String(value || "").trim();
-    const variant = /^(.+?)\\s*\\(([^)]+)\\)$/.exec(champion);
+    const variant = /^(.+?)\s*\(([^)]+)\)$/.exec(champion);
     if (!variant) return champion;
     const base = variant[1].trim();
     const build = normalize(variant[2]);
