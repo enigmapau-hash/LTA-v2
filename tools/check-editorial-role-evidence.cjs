@@ -12,8 +12,8 @@ assert.equal(Object.values(countByRole).reduce((n,c)=>n+c,0),266);
 const records=viability.candidatesForReview(catalog);
 const key=(item)=>item.champion.toLocaleLowerCase("es")+"|"+item.role;
 const workbookPairs=new Set(records.map(key));
-assert.equal(editorial.entries.length,49,"Revisión editorial limitada a 49 parejas, no al catálogo completo");
-assert.equal(new Set(editorial.entries.map(key)).size,49,"Sin duplicar pares");
+assert.equal(editorial.entries.length,125,"Segunda tanda editorial acotada a 125 parejas; no inventar clasificación total");
+assert.equal(new Set(editorial.entries.map(key)).size,125,"Sin duplicar pares");
 for(const item of editorial.entries){
   assert.ok(workbookPairs.has(key(item)),item.champion+" "+item.role+" debe figurar en Draft Pool.xlsx");
   assert.match(item.source,/^https:\/\//);
@@ -34,10 +34,17 @@ for(const item of editorial.entries){
       assert.ok(partner, "No promover multirrol sin las dos posiciones corroboradas");
       assert.equal(partner.roleSharePct, item.runnerUpSharePct);
     }
+  } else if (item.sourcePatch) {
+    assert.match(item.source,/leagueofgraphs.com/,"La cuota editorial tiene una fuente cuantitativa");
+    assert.ok(Number.isFinite(item.roleSharePct),"Cada observación estadística incluye porcentaje");
+    if(item.status==="habitual") assert.ok(item.roleSharePct>=15 && item.roleSharePct<60,
+      "Habitual documentado: 15-60%, sin llamarlo principal");
+    if(item.status==="secundaria") assert.ok(item.roleSharePct<15,
+      "Secundaria estadística: cuota inferior al 15%");
   }else assert.equal(item.sourcePatch,null,"No asignar parche de la estadística a una posición Wiki");
 }
-const counts=Object.fromEntries(["principal","compatible","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
-assert.deepEqual(counts,{principal:7,compatible:37,secundaria:4,experimental:1,"sin-verificar":217});
+const counts=Object.fromEntries(["principal","compatible","habitual","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
+assert.deepEqual(counts,{principal:13,compatible:95,habitual:10,secundaria:6,experimental:1,"sin-verificar":141});
 assert.equal(viability.assess("Diana","mid").provider,"LeagueOfGraphs / League Wiki",
   "Los porcentajes editoriales proceden de LeagueOfGraphs, no de OP.GG");
 assert.equal(viability.assess("Aurora","top").provider,"League Wiki / revisión editorial");
@@ -52,6 +59,34 @@ for(const [champion,role,status] of [
 ]){
  assert.equal(viability.assess(champion,role).status,status,champion+" "+role);
 }
+// Campeones tratados como una sola unidad para la revisión, no como 217 consultas.
+const {analyze: analyzeByChampion,canon}=require("./audit-editorial-by-champion.cjs");
+const byChampion=analyzeByChampion(catalog);
+assert.equal(byChampion.pairs,266);
+assert.equal(byChampion.reviewed,125);
+assert.equal(byChampion.pending,141);
+assert.ok(byChampion.champions < byChampion.distinctCatalogNames,
+  "Las builds de Kayn/Varus/Shaco comparten campeón; no necesariamente rol verificado");
+assert.equal(canon("Kayn (Azul)"),canon("Kayn (Rojo)"));
+assert.equal(canon("Varus (On-Hit)"),canon("Varus (Letalidad)"));
+// Descartar 'principal' por cuota no equivale a descartar viabilidad ni draft manual.
+for(const [champion,role,expected] of [
+  ["Brand","support","principal"],["Brand","jungle","secundaria"],["Brand","mid","habitual"],
+  ["Lux","support","principal"],["Lux","mid","habitual"],
+  ["Jax","top","principal"],["Jax","jungle","habitual"],
+  ["Senna","support","principal"],["Swain","support","principal"],
+  ["Swain","botline","habitual"],["Ashe","botline","principal"],["Ashe","support","compatible"],
+  ["Pantheon","top","habitual"],["Pantheon","support","habitual"],
+  ["Yasuo","mid","habitual"],["Yasuo","top","compatible"],["Yasuo","botline","compatible"],
+  ["Poppy","support","habitual"],["Xerath","mid","habitual"],["Xerath","support","habitual"],
+]) assert.equal(viability.assess(champion,role).status,expected,champion+" "+role);
+assert.ok(byChampion.groups.find(x=>x.id==="lux").nonPrincipalByExclusion.includes("mid"),
+  "Lux MID no es principal en este corte, pero sigue siendo elegible como habitual");
+assert.ok(!byChampion.groups.find(x=>x.id==="pantheon").nonPrincipalByExclusion.length,
+  "No forzar principal de Pantheon por ser TOP o SUPPORT");
+assert.ok(viability.isReviewedRecommendation(viability.assess("Poppy","support")),
+  "Una posición habitual documentada también se puede recomendar");
+
 const reviewedCatalog=Object.fromEntries(Object.entries(catalog).map(([role,cs])=>[
  role,cs.filter(c=>viability.isReviewedRecommendation(viability.assess(c.champion,role)))
 ]));
