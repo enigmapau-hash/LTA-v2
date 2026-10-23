@@ -8,7 +8,7 @@
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-23",
-    summary: ["Clasificación offline de 139 parejas del catálogo: 16 confirmaciones habituales, 6 situacionales y 4 descartadas; Maokai JUNGLA anotado fuera del Excel."],
+    summary: ["Clasificación offline de 203 parejas del catálogo; 65 nuevas decisiones manuales, incluyendo Ekko MID/JUNGLA, con roles habituales, situacionales y descartados diferenciados."],
     pending: [],
   };
 
