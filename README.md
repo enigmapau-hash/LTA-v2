@@ -10,9 +10,13 @@ LTA v3 es la versión activa del analizador. Mantiene el análisis de composicio
 
 La v2 amplía la lectura estratégica de composiciones completas con diagnóstico, corrección prioritaria y protección explicable. En composiciones incompletas mantiene recomendaciones para los puestos vacíos. La evolución se documenta en la especificación funcional y la arquitectura de [`docs/`](docs/README.md).
 
+## Revisión de correcciones v3.13.6
+
+El motor explica si se abstiene porque las capacidades obligatorias están cubiertas o porque faltan evidencias/alternativas. Para cambios individuales del mismo rol con atributos completos contrasta, antes de priorizar, si la sustitución conserva el plan y si crea nuevas carencias; las alternativas condicionadas incluyen su coste. No se recomiendan sustituciones por cuota de frecuencia o por una debilidad genérica del arquetipo. [Auditoría con 12 composiciones](docs/quality/Issue-58-Correction-Decision-Review-2026-10-23.md).
+
 ## Características
 
-- Versión visible: `v3.13.5`
+- Versión visible: `v3.13.6`
 - El informe separa la recomposición de dos campeones de las alternativas individuales; elimina afirmaciones repetidas y mantiene evidencia consultable.
 - La identidad estratégica reconocida no equivale a un plan ejecutable: el diagnóstico verifica recursos necesarios y la recomendación corrige las carencias acreditadas.
 - Las correcciones de equipos completos exigen una brecha de cohesión o una herramienta explícitamente requerida por el plan que falte. No se fuerzan cambios por debilidades normales del arquetipo. Protección y bans siguen funcionando aunque no se recomienden sustituciones.
