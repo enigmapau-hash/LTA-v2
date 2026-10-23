@@ -12,8 +12,8 @@ assert.equal(Object.values(countByRole).reduce((n,c)=>n+c,0),266);
 const records=viability.candidatesForReview(catalog);
 const key=(item)=>item.champion.toLocaleLowerCase("es")+"|"+item.role;
 const workbookPairs=new Set(records.map(key));
-assert.equal(editorial.entries.length,125,"Segunda tanda editorial acotada a 125 parejas; no inventar clasificación total");
-assert.equal(new Set(editorial.entries.map(key)).size,125,"Sin duplicar pares");
+assert.equal(editorial.entries.length,124,"Segunda tanda editorial acotada a 125 parejas; no inventar clasificación total");
+assert.equal(new Set(editorial.entries.map(key)).size,124,"Sin duplicar pares");
 for(const item of editorial.entries){
   assert.ok(workbookPairs.has(key(item)),item.champion+" "+item.role+" debe figurar en Draft Pool.xlsx");
   assert.match(item.source,/^https:\/\//);
@@ -44,7 +44,7 @@ for(const item of editorial.entries){
   }else assert.equal(item.sourcePatch,null,"No asignar parche de la estadística a una posición Wiki");
 }
 const counts=Object.fromEntries(["principal","compatible","habitual","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
-assert.deepEqual(counts,{principal:13,compatible:95,habitual:10,secundaria:6,experimental:1,"sin-verificar":141});
+assert.deepEqual(counts,{principal:12,compatible:95,habitual:10,secundaria:6,experimental:1,"sin-verificar":142});
 assert.equal(viability.assess("Diana","mid").provider,"LeagueOfGraphs / League Wiki",
   "Los porcentajes editoriales proceden de LeagueOfGraphs, no de OP.GG");
 assert.equal(viability.assess("Aurora","top").provider,"League Wiki / revisión editorial");
@@ -63,8 +63,8 @@ for(const [champion,role,status] of [
 const {analyze: analyzeByChampion,canon}=require("./audit-editorial-by-champion.cjs");
 const byChampion=analyzeByChampion(catalog);
 assert.equal(byChampion.pairs,266);
-assert.equal(byChampion.reviewed,125);
-assert.equal(byChampion.pending,141);
+assert.equal(byChampion.reviewed,124);
+assert.equal(byChampion.pending,142);
 assert.ok(byChampion.champions < byChampion.distinctCatalogNames,
   "Las builds de Kayn/Varus/Shaco comparten campeón; no necesariamente rol verificado");
 assert.equal(canon("Kayn (Azul)"),canon("Kayn (Rojo)"));
@@ -72,7 +72,7 @@ assert.equal(canon("Varus (On-Hit)"),canon("Varus (Letalidad)"));
 // Descartar 'principal' por cuota no equivale a descartar viabilidad ni draft manual.
 for(const [champion,role,expected] of [
   ["Brand","support","principal"],["Brand","jungle","secundaria"],["Brand","mid","habitual"],
-  ["Lux","support","principal"],["Lux","mid","habitual"],
+  ["Lux","mid","habitual"],
   ["Jax","top","principal"],["Jax","jungle","habitual"],
   ["Senna","support","principal"],["Swain","support","principal"],
   ["Swain","botline","habitual"],["Ashe","botline","principal"],["Ashe","support","compatible"],
@@ -80,6 +80,8 @@ for(const [champion,role,expected] of [
   ["Yasuo","mid","habitual"],["Yasuo","top","compatible"],["Yasuo","botline","compatible"],
   ["Poppy","support","habitual"],["Xerath","mid","habitual"],["Xerath","support","habitual"],
 ]) assert.equal(viability.assess(champion,role).status,expected,champion+" "+role);
+assert.equal(editorial.externalDominance.length,1,"La fuente dominante fuera del Excel no cuenta como pareja revisada");
+assert.ok(!workbookPairs.has("lux|support"));
 assert.ok(byChampion.groups.find(x=>x.id==="lux").nonPrincipalByExclusion.includes("mid"),
   "Lux MID no es principal en este corte, pero sigue siendo elegible como habitual");
 assert.ok(!byChampion.groups.find(x=>x.id==="pantheon").nonPrincipalByExclusion.length,
