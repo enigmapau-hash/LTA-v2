@@ -261,14 +261,14 @@ async function main() {
       await alternative.locator(":scope > summary").click();
     }
     const explanations = recommendation.locator(".result-summary__candidate-justification");
-    assert.equal(await explanations.count(), await recommendation.locator(":scope > li").count(),
-      "Cada candidato final conserva su explicación respaldada offline.");
+    assert.ok(await explanations.count() <= await recommendation.locator(":scope > li").count(),
+      "Solo se muestran conexiones con evidencia concreta.");
     for (const explanation of await explanations.all()) await explanation.locator("summary").click();
-    assert.match(await recommendation.innerText(), /Señales del catálogo:/, "La evidencia real llega al informe offline");
+    assert.match(await recommendation.innerText(), /Señales registradas:/, "Los atributos documentados llegan al informe offline");
     assert.doesNotMatch(await recommendation.innerText(), /acorde con el perfil/, "Sin repetir el nombre del perfil");
-    assert.match(await recommendation.innerText(), /Contribuye a corregir/, "Solo una brecha explícita justifica la corrección");
+    assert.doesNotMatch(await recommendation.innerText(), /Contribuye a corregir/, "No se repite la misma carencia en cada tarjeta");
     assert.equal(await recommendation.locator(".result-summary__beneficiaries").count(),0, "No inventa conexiones con aliados cuando faltan señales comunes");
-    assert.match(await page.locator(".result-summary__detected-need").innerText(), /Carencia detectada:/);
+    assert.match(await page.locator('[data-report-section="correction"] .result-summary__answer').innerText(), /Necesidad prioritaria:/);
     assert.deepEqual(pageErrors, [], "La app no debe lanzar errores JavaScript durante la carga o el uso offline.");
 
     console.log("PWA validada: instalación, actualización desde v12, caché de SheetJS y viabilidad 26.21, selección experimental manual y recomendaciones completas offline.");

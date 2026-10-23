@@ -33,7 +33,11 @@
   }
 
   function renderHeadline(section) {
-    const answer = String(section.answer || "");
+    const rawAnswer = String(section.answer || "");
+    const answer = section.id === "diagnosis"
+      ? rawAnswer.replace(/^Lectura provisional:\s*Plan principal:/, "Plan probable:")
+        .replace(/^Lectura provisional:\s*/, "")
+      : rawAnswer;
     if (section.id === "diagnosis" && answer.includes(" · Cómo ganar: ")) {
       const [plan, condition] = answer.split(" · Cómo ganar: ");
       return `<div class="result-summary__plan"><p class="result-summary__answer">${escapeHtml(plan)}</p><p class="result-summary__win-condition"><strong>Cómo ganar:</strong> ${escapeHtml(condition)}</p></div>`;
@@ -66,17 +70,63 @@
     return String(value || "").replace(/\ba el\b/gi, "al");
   }
 
+  const SIGNAL_NAMES = Object.freeze({
+    frontline: "primera línea", tanque: "tanque", engage: "iniciación",
+    peel: "protección", "follow-up": "seguimiento", dps: "daño sostenido",
+    poke: "hostigamiento", pick: "cazadas", "side lane": "presión lateral",
+  });
+
+  function displaySignal(value) {
+    const original = String(value || "").trim();
+    return SIGNAL_NAMES[original.toLocaleLowerCase("es")] || original;
+  }
+
   function renderCandidate(candidate, index) {
-    const roleStatus = ({ habitual: "Habitual", situacional: "Situacional", experimental: "Experimental", "sin-verificar": "Rol sin verificar" })[window.LTARoleViability?.assess(candidate.champion, candidate.role)?.status] || "Rol sin verificar";
+    const viability = window.LTARoleViability?.assess(candidate.champion, candidate.role);
+    const roleStatus = ({ habitual: "Rol habitual documentado", situacional: "Rol situacional", experimental: "Rol experimental", "sin-verificar": "Rol sin verificar" })[viability?.status] || "Rol sin verificar";
     const role = ROLE_LABELS[candidate.role]
       ? `<small class="result-summary__candidate-role">Posición: ${escapeHtml(ROLE_LABELS[candidate.role])} · ${escapeHtml(roleStatus)} (26.21)</small>` : "";
-    const justification = candidate.justification
-      ? `<details class="result-summary__candidate-justification"><summary>Ver señales y sinergias de ${escapeHtml(candidate.champion)}</summary><small>${escapeHtml(candidate.justification.contribution)}</small>${candidate.justification.effect ? `<small class="result-summary__candidate-effect">${escapeHtml(candidate.justification.effect.text)}</small>` : ""}${candidate.justification.beneficiaries.length ? `<div class="result-summary__beneficiaries"><small><b>Conexiones con el equipo:</b> ${escapeHtml(candidate.justification.beneficiarySummary || candidate.justification.beneficiaries.map((ally) => ally.text).join(" "))}</small></div>` : ""}</details>`
-      : candidate.strengths.length ? `<small><b>Aporta:</b> ${escapeHtml(candidate.strengths.join(" · "))}</small>` : "";
-    const body = `<small class="result-summary__candidate-reason">${escapeHtml(cleanSentence(candidate.reason))}</small>${justification}${candidate.limitations.length ? `<small class="result-summary__limitation"><b>Límite:</b> ${escapeHtml(candidate.limitations.join(" · "))}</small>` : ""}`;
+    const signals = (candidate.justification?.evidence || []).slice(0, 2).map(displaySignal);
+    const usefulReason = signals.length
+      ? `Señales registradas: ${signals.join(" y ")}.`
+      : cleanSentence(candidate.reason);
+    const beneficiaries = candidate.justification?.beneficiaries || [];
+    const evidence = beneficiaries.length
+      ? `<details class="result-summary__candidate-justification"><summary>Cómo encaja con el equipo</summary><small>${escapeHtml(candidate.justification.beneficiarySummary || beneficiaries.map((ally) => ally.text).join(" "))}</small></details>`
+      : "";
+    const limitation = candidate.limitations?.length
+      ? `<small class="result-summary__limitation"><b>Límite:</b> ${escapeHtml(candidate.limitations.join(" · "))}</small>` : "";
+    const body = `<small class="result-summary__candidate-reason">${escapeHtml(usefulReason)}</small>${evidence}${limitation}`;
     const title = `<strong>${escapeHtml(candidate.champion)}</strong>`;
     if (index === 0) return `<li class="result-summary__candidate-primary"><div class="result-summary__candidate-head">${title}<span class="result-summary__priority-label">${candidate.viabilityStatus === "habitual" ? "Primera alternativa" : "Alternativa · rol pendiente de verificar"}</span></div>${role}${body}</li>`;
     return `<li class="result-summary__candidate-secondary"><details class="result-summary__candidate-more"><summary><span class="result-summary__candidate-name">${title}${role}</span><span class="result-summary__disclosure-label">Ver motivos</span></summary><div class="result-summary__candidate-more-body">${body}</div></details></li>`;
+  }
+
+  // A multi-pick recomposition is a DIFFERENT calculation from the individual
+  // candidates. Never present it as if it belonged to the ranked list.
+  function renderIndependentProposal(section) {
+    const recomposition = section.teamRecomposition;
+    if (recomposition) {
+      const changes = (recomposition.pieces || []).filter((piece) => piece.action === "replace");
+      if (!changes.length) return "";
+      const replacements = changes.map((piece) =>
+        `${escapeHtml(ROLE_LABELS[piece.role] || piece.role)}: ${escapeHtml(piece.from)} → ${escapeHtml(piece.champion)}`).join(" · ");
+      const identity = recomposition.identity?.status === "preserved"
+        ? `El nuevo diagnóstico mantiene ${escapeHtml(recomposition.identity.primary)}.`
+        : "No se ha confirmado el plan del equipo resultante.";
+      return `<details class="result-summary__advanced-change"><summary>Otra propuesta: cambiar ${changes.length} campeones</summary>
+        <p>Es una recomposición independiente de las alternativas individuales.</p>
+        <p>${replacements}</p><p>${identity}</p></details>`;
+    }
+    const single = section.compositionOptimization;
+    if (!single?.change) return "";
+    const identity = single.identity?.status === "preserved"
+      ? `El nuevo diagnóstico mantiene ${escapeHtml(single.identity.primary)}.`
+      : "No se ha confirmado el plan del equipo resultante.";
+    return `<details class="result-summary__advanced-change"><summary>Otra propuesta: sustitución individual</summary>
+      <p>Se evalúa por separado de la lista de candidatos.</p>
+      <p>${escapeHtml(ROLE_LABELS[single.change.role] || single.change.role)}: ${escapeHtml(single.change.from)} → ${escapeHtml(single.change.to)}</p>
+      <p>${identity}</p></details>`;
   }
 
   function renderBan(ban) {
@@ -186,13 +236,9 @@
             <article class="result-summary__strategy-card" data-report-section="${escapeHtml(section.id)}">
               <h4>${escapeHtml(section.title)}</h4>
               ${renderHeadline(section)}
-              ${section.id === "correction" ? `<details class="result-summary__context"><summary>Fundamento de la recomendación</summary><p>${escapeHtml(briefSectionExplanation(section))}</p></details>` : `<p class="result-summary__section-context">${escapeHtml(briefSectionExplanation(section))}</p>`}
-              ${section.detectedNeed ? `<p class="result-summary__detected-need"><strong>Carencia detectada:</strong> ${escapeHtml(section.detectedNeed)}</p>` : section.optionalLimitation ? `<p class="result-summary__detected-need"><strong>Límite del estilo, no carencia demostrada:</strong> ${escapeHtml(section.optionalLimitation)}</p>` : ""}
-              ${section.teamRecomposition ? `<p class="result-summary__action"><strong>Equipo propuesto:</strong> ${section.teamRecomposition.pieces.map((piece) => `${escapeHtml(piece.role)}: ${escapeHtml(piece.champion)}${piece.action === "replace" ? ` (antes ${escapeHtml(piece.from)})` : ""}`).join(" · ")}.</p>
-                <p class="result-summary__action"><strong>Objetivo del cambio:</strong> ${escapeHtml(section.teamRecomposition.improvement)}${section.teamRecomposition.weaknessesCorrected.length ? ` · Limitación abordada: ${escapeHtml(section.teamRecomposition.weaknessesCorrected.join("; "))}` : ""}</p>
-                <p>${escapeHtml(section.teamRecomposition.explanation)} ${escapeHtml(section.teamRecomposition.identity.status === "preserved" ? `Identidad conservada: ${section.teamRecomposition.identity.primary}.` : `Identidad propuesta sin confirmar: ${section.teamRecomposition.identity.proposed || "pendiente"}.`)}</p>` : section.compositionOptimization ? `<p class="result-summary__action"><strong>Composición propuesta:</strong> ${escapeHtml(section.compositionOptimization.change.role)}: ${escapeHtml(section.compositionOptimization.change.from)} → ${escapeHtml(section.compositionOptimization.change.to)}. Busca reforzar ${escapeHtml(section.compositionOptimization.improvement)}; aborda ${escapeHtml(section.compositionOptimization.limitationCorrected)}.</p>
-                <p>${escapeHtml(section.compositionOptimization.identity.status === "preserved" ? `Identidad conservada: ${section.compositionOptimization.identity.primary}.` : `Identidad propuesta sin confirmar: ${section.compositionOptimization.identity.proposed || "pendiente"}.`)}</p>` : ""}
-              ${section.improves ? `<p class="result-summary__action"><strong>Para qué sirve:</strong> ${escapeHtml(section.improves)}</p>` : ""}
+              ${section.id === "correction" ? `<details class="result-summary__context"><summary>Por qué se recomienda</summary><p>${escapeHtml(briefSectionExplanation(section))}</p></details>` : `<p class="result-summary__section-context">${escapeHtml(briefSectionExplanation(section))}</p>`}
+              ${section.optionalLimitation ? `<p class="result-summary__detected-need">Oportunidad opcional: ${escapeHtml(section.optionalLimitation)}</p>` : ""}
+              ${section.id === "correction" ? renderIndependentProposal(section) : ""}
               ${section.action ? `<p class="result-summary__action"><strong>Protección:</strong> ${escapeHtml(section.action)}</p>` : ""}
               ${section.riskGuidance ? `<div class="result-summary__risk-guidance" aria-label="Riesgo propio y contramedida">${section.riskGuidance.risk ? `<p><strong>Riesgo propio:</strong> ${escapeHtml(section.riskGuidance.risk)}</p>` : ""}${section.riskGuidance.response ? `<p><strong>Cómo cubrirlo:</strong> ${escapeHtml(section.riskGuidance.response)}</p>` : ""}</div>` : ""}
               ${section.strategicBans?.length ? `<div class="result-summary__ban-integration" aria-label="Bans estratégicos">

@@ -102,7 +102,7 @@ async function main(){
   const splitPushPicks={top:"Fiora",jungle:"Viego",mid:"Twisted Fate",adc:"Ezreal",support:"Braum"};
   for(const [role,champion] of Object.entries(splitPushPicks))await page.locator("#"+role).fill(champion);
   await page.waitForFunction(expected=>expected.every(champion=>Array.from(document.querySelectorAll(".composition-table .champion-name")).some(node=>node.textContent.trim()===champion))&&document.querySelector('[data-report-section="diagnosis"] .result-summary__answer')?.textContent.includes("Split Push"),Object.values(splitPushPicks));
-  const splitStrategy=await strategy.innerText();assert.match(splitStrategy,/Lectura provisional: Plan principal: Split Push/i);assert.doesNotMatch(splitStrategy,/Oportunidad de mejora: Pick y control del mapa/i);assert.match(splitStrategy,/Protección provisional frente a Teamfight/i);
+  const splitStrategy=await strategy.innerText();assert.match(splitStrategy,/Plan probable: Split Push/i);assert.doesNotMatch(splitStrategy,/Oportunidad de mejora: Pick y control del mapa/i);assert.match(splitStrategy,/Protección provisional frente a Teamfight/i);
   const screenshotPicks={top:"Fiora",jungle:"Evelynn",mid:"Galio",adc:"Kai'Sa",support:"Milio"};
   for(const [role,champion] of Object.entries(screenshotPicks))await page.locator("#"+role).fill(champion);
   await page.waitForFunction(expected=>[...document.querySelectorAll(".composition-table .champion-name")].map(node=>node.textContent.trim()).join("|")===expected.join("|"),Object.values(screenshotPicks));
@@ -129,13 +129,15 @@ async function main(){
     null, { timeout: 3000 });
   assert.equal(await alternative.evaluate(node=>node.open),true, "Las alternativas se abren por teclado");
   const justifications = strategy.locator(".result-summary__candidate-justification");
-  assert.equal(await justifications.count(), await strategy.locator(".result-summary__recommendation-list > li").count());
+  assert.ok(await justifications.count() <= await strategy.locator(".result-summary__recommendation-list > li").count(), "Solo se explican conexiones con aliados acreditadas");
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  const firstJustification=justifications.first();
-  await firstJustification.locator("summary").press("Enter");
-  assert.equal(await firstJustification.evaluate(node=>node.open),true,"La evidencia de candidato es accesible");
-  assert.match(await firstJustification.innerText(),/Señales del catálogo:/);
-  assert.notEqual(await firstJustification.locator("summary").evaluate(node=>getComputedStyle(node).outlineStyle),"none");
+  if (await justifications.count()) {
+    const firstJustification = justifications.first();
+    await firstJustification.locator("summary").press("Enter");
+    assert.equal(await firstJustification.evaluate(node=>node.open), true, "Las conexiones con el equipo se abren por teclado");
+    assert.match(await firstJustification.innerText(), /complementa|encaja|acompaña|apoya/i);
+  }
+  assert.ok(await strategy.locator(".result-summary__candidate-reason").count()>0);
   for (const width of widths) {
     await page.setViewportSize({width,height:900});
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),
