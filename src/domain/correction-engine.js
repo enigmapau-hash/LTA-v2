@@ -124,7 +124,16 @@
         if (!champion || selectedChampions.has(key)) continue;
 
         const matchingSignals = candidateSignals(candidate).filter((signal) =>
-          profile.matches.some((term) => normalize(signal).includes(normalize(term)))
+          profile.matches.some((term) => {
+            const sought = normalize(term);
+            const raw = normalize(signal);
+            // Anti-frontline describes damage against a front line, not
+            // front line of our own; likewise anti-engage is not initiation.
+            const evidence = sought.startsWith("anti ")
+              ? raw
+              : raw.replace(/\banti [a-z0-9]+\b/g, " ");
+            return evidence.includes(sought);
+          })
         );
         const uniqueSignals = [...new Map(matchingSignals.map((signal) => [normalize(signal), signal])).values()];
         if (!uniqueSignals.length) continue;
