@@ -2,19 +2,19 @@
 
 ## Qué cambia
 
-Se han revisado **75 parejas adicionales**, sobre las 49 del corte anterior: **124/266** parejas del catálogo ahora tienen evidencia editorial y **142/266** continúan sin verificar. Este avance NO es una certificación estadística de todos los campeones.
+Se han revisado **74 parejas adicionales**, sobre las 49 del corte anterior: **123/266** parejas del catálogo ahora tienen evidencia editorial y **143/266** continúan sin verificar. Este avance NO es una certificación estadística de todos los campeones.
 
 | Estado | Antes | Propuesto |
 | --- | ---: | ---: |
 | Principal, criterio editorial | 7 | 12 |
-| Habitual con frecuencia documentada | 0 | 10 |
+| Habitual con frecuencia documentada | 0 | 9 |
 | Compatible por posición Riot (League Wiki) | 37 | 95 |
 | Secundaria / no normal | 4 | 6 |
 | Experimental | 1 | 1 |
-| Sin verificar | 217 | 142 |
+| Sin verificar | 217 | 143 |
 | **Total** | **266** | **266** |
 
-Las 75 nuevas parejas no incluyen Lux SUPPORT, que no está en el Excel. Su predominio cuantitativo se conserva como **referencia externa**, pero nunca suma cobertura ni añade el campeón a esa posición.\n\nLa única reclasificación de la primera tanda es **Yasuo MID**: compatible → habitual, apoyada por una distribución concreta. Se incorporan más posiciones del cliente Riot *manualmente seleccionadas*, sin importar la tabla comunitaria ni construir un scraper. La inclusión en `Draft Pool.xlsx` **no** basta por sí sola como prueba; cada pareja nueva tiene referencia y fecha.
+Las 74 nuevas parejas no incluyen Lux SUPPORT ni Jax JUNGLA, ausentes del Excel. Su predominio cuantitativo se conserva como **referencia externa**, pero nunca suma cobertura ni añade el campeón a esa posición.\n\nLa única reclasificación de la primera tanda es **Yasuo MID**: compatible → habitual, apoyada por una distribución concreta. Se incorporan más posiciones del cliente Riot *manualmente seleccionadas*, sin importar la tabla comunitaria ni construir un scraper. La inclusión en `Draft Pool.xlsx` **no** basta por sí sola como prueba; cada pareja nueva tiene referencia y fecha.
 
 ## Descarte correcto (sin exclusión indebida)
 
@@ -33,7 +33,7 @@ Fuente de cada campeón: **LeagueOfGraphs**, `https://www.leagueofgraphs.com/en/
 | --- | --- | --- |
 | Brand | SUPPORT 62,2 %; MID 16,2 %; JUNGLA 5,3 % | SUPPORT principal, MID habitual, JUNGLA secundaria |
 | Lux | SUPPORT 61,0 % (**fuera del Excel**); MID 32,1 % | MID habitual; predominio de SUPPORT usado solo como evidencia de descarte |
-| Jax | TOP 80,4 %; JUNGLA 16,1 % | TOP principal, JUNGLA habitual |
+| Jax | TOP 80,4 %; JUNGLA 16,1 % (**fuera del Excel**) | TOP principal; cuota de JUNGLA conservada solo como comparación |
 | Senna | SUPPORT 90,8 %; BOTLINE 7,8 % | SUPPORT principal |
 | Swain | SUPPORT 61,0 %; BOTLINE 16,0 %; MID 13,7 % | SUPPORT principal, BOTLINE habitual, MID compatible Riot |
 | Ashe | BOTLINE 82,5 %; SUPPORT 14,4 % | BOTLINE principal, SUPPORT compatible Riot |
