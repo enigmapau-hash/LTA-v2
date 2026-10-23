@@ -2,18 +2,18 @@
 
 ## Qué cambia
 
-Se han revisado **74 parejas adicionales**, sobre las 49 del corte anterior: **140/266** parejas del catálogo ahora tienen evidencia editorial y **126/266** continúan sin verificar. Este avance NO es una certificación estadística de todos los campeones.
+Se han revisado **74 parejas adicionales**, sobre las 49 del corte anterior: **139/266** parejas del catálogo ahora tienen evidencia editorial y **127/266** continúan sin verificar. Este avance NO es una certificación estadística de todos los campeones.
 
 | Estado | Antes | Propuesto |
 | --- | ---: | ---: |
 | Principal, criterio editorial | 7 | 12 |
 | Habitual (9 con cuota estadística y 13 solo/además confirmadas manualmente) | 0 | 22 |
 | Compatible por posición Riot (League Wiki) | 37 | 88 |
-| Situacional (criterio manual, sin frecuencia acreditada) | 0 | 7 |
+| Situacional (criterio manual, sin frecuencia acreditada) | 0 | 6 |
 | Descartada para recomendación automática (criterio manual) | 0 | 4 |
 | Secundaria / no normal | 4 | 6 |
 | Experimental | 1 | 1 |
-| Sin verificar | 217 | 126 |
+| Sin verificar | 217 | 127 |
 | **Total** | **266** | **266** |
 
 Las 74 posiciones respaldadas por fuentes no incluyen Lux SUPPORT ni Jax JUNGLA, ausentes del Excel. Su predominio cuantitativo se conserva como **referencia externa**, pero nunca suma cobertura ni añade el campeón a esa posición.
@@ -45,12 +45,13 @@ Todas las parejas declaradas manualmente incluyen `manualRoleReview`, fecha y pr
 
 El usuario completó las **11 parejas** del primer grupo que estaban sin verificar, sin atribuirles porcentajes ni parche:
 
-- **Situacionales (7):** Maokai JUNGLA; Galio TOP y SUPPORT; Garen JUNGLA y MID; Fiddlesticks SUPPORT; Brand BOTLINE.
+- **Situacionales dentro del Excel (6):** Galio TOP y SUPPORT; Garen JUNGLA y MID; Fiddlesticks SUPPORT; Brand BOTLINE.
+- **Situacional fuera del Excel (1):** Maokai JUNGLA, solo anotado como referencia manual, sin incrementar la cobertura.
 - **Descartadas para recomendaciones automáticas (4):** Dr. Mundo MID; Nautilus JUNGLA; Viego TOP; Yorick JUNGLA.
 
 Estas dos categorías son distintas: `situacional` expresa que el campeón puede jugarse en la posición en circunstancias concretas, **pero no se promueve como rol habitual ni entra en sustituciones automáticas normales sin un criterio contextual adicional**. El mapeador existente solo puede mostrarlo en la salida informativa provisional cuando no dispone de suficientes roles contrastados. `descartada` se excluye del mapeador y de las alternativas de optimizadores, pero **nunca bloquea un pick manual ni constituye un ban**.
 
-Los once registros incluyen fecha y procedencia manual, `source: null` y `sourcePatch: null`, sin alegar validación estadística o cliente Riot. Los 126 casos aún pendientes permanecen sin verificar; los once roles nuevos no se convierten en principales por descarte.
+Los diez registros dentro del Excel y la nota externa de Maokai incluyen fecha y procedencia manual, `source: null` y `sourcePatch: null`, sin alegar validación estadística o cliente Riot. Los 126 casos aún pendientes permanecen sin verificar; los once roles nuevos no se convierten en principales por descarte.
 
 ## Descarte correcto (sin exclusión indebida)
 
@@ -92,7 +93,7 @@ La documentación y los porcentajes son hechos puntuales fechados; pueden variar
 
 ## Límites y decisión de integración
 
-**126 parejas siguen pendientes**; la reducción de filas investigables se consigue agrupando por campeón, pero no autoriza a inventar el rol de las variantes o roles ausentes de fuentes. El estado `compatible` sigue siendo reconocimiento de cliente, no garantía estadística de predominio. La cobertura por perfil medida antes de excluir picks no prueba disponibilidad universal en cualquier draft.
+**127 parejas siguen pendientes**; la reducción de filas investigables se consigue agrupando por campeón, pero no autoriza a inventar el rol de las variantes o roles ausentes de fuentes. El estado `compatible` sigue siendo reconocimiento de cliente, no garantía estadística de predominio. La cobertura por perfil medida antes de excluir picks no prueba disponibilidad universal en cualquier draft.
 
 Exigir **GitHub Actions completamente verde** (auditoría editorial, PWA lifecycle, UX/teclado, dos optimizadores y versionado 3.13.4), revisar diferencias en los 10 casos de referencia, y comprobar que el caso Aurora TOP / Elise JUNGLA / Corki MID / Miss Fortune BOTLINE / Lulu SUPPORT no incorpore Maokai TOP.
 
