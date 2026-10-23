@@ -3,7 +3,9 @@
 ## v3.13.4
 
 ### Improved
-- Curación offline de 203 parejas del catálogo, incluyendo 65 decisiones manuales nuevas (35 habituales, 20 situacionales, 10 descartadas). Ekko MID/JUNGLA habitual; picks manuales y bans intactos.
+- Completada la clasificación editorial offline del catálogo: 266/266 parejas; las últimas 63 decisiones manuales son 47 habituales, 14 situacionales y 2 descartadas.
+- Mantiene procedencia humana separada de estadísticas, variantes de Shaco/Kayn/Varus diferenciadas, picks manuales y bans intactos.
+
 
 ## v3.13.3
 
