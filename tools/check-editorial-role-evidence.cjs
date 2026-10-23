@@ -38,6 +38,11 @@ for(const item of editorial.entries){
 }
 const counts=Object.fromEntries(["principal","compatible","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
 assert.deepEqual(counts,{principal:7,compatible:37,secundaria:4,experimental:1,"sin-verificar":217});
+assert.equal(viability.assess("Diana","mid").provider,"LeagueOfGraphs / League Wiki",
+  "Los porcentajes editoriales proceden de LeagueOfGraphs, no de OP.GG");
+assert.equal(viability.assess("Aurora","top").provider,"League Wiki / revisión editorial");
+assert.equal(viability.assess("Diana","top").provider,"METAsrc",
+  "La evidencia experimental histórica no debe atribuirse a League Wiki");
 for(const [champion,role,status] of [
   ["Maokai","support","principal"],["Maokai","top","secundaria"],["Aatrox","top","principal"],
   ["K'Sante","top","principal"],["Diana","jungle","principal"],["Diana","mid","principal"],
