@@ -57,6 +57,9 @@ jobs:
       - name: Validate patch 26.21 role viability and conservative recommendations
         run: node tools/check-role-viability.cjs
 
+      - name: Audit issue 52 curated roles and profile coverage
+        run: node tools/check-editorial-role-evidence.cjs
+
       - name: Validate the Championship Candidate Mapper
         run: node tools/check-championship-candidate-mapper.cjs
 

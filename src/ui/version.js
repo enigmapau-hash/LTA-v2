@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.13.2",
+    version: "v3.13.3",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-23",
-    summary: ["Informe más claro: motivos breves y recomposiciones independientes de las alternativas individuales, sin cambiar rankings."],
+    summary: ["Roles revisados offline: principales editoriales, compatibles y secundarios; alternativas sin verificar solo provisionales."],
     pending: [],
   };
 

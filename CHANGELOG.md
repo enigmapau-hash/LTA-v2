@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.13.3
+
+### Improved
+- Roles revisados offline: principales editoriales, compatibles y secundarios; alternativas sin verificar solo provisionales.
+
 ## v3.13.2
 
 ### Improved

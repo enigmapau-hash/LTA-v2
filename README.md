@@ -12,7 +12,7 @@ La v2 amplía la lectura estratégica de composiciones completas con diagnóstic
 
 ## Características
 
-- Versión visible: `v3.13.2`
+- Versión visible: `v3.13.3`
 - El informe separa la recomposición de dos campeones de las alternativas individuales; elimina afirmaciones repetidas y mantiene evidencia consultable.
 - La identidad estratégica reconocida no equivale a un plan ejecutable: el diagnóstico verifica recursos necesarios y la recomendación corrige las carencias acreditadas.
 - Las correcciones de equipos completos exigen una brecha de cohesión o una herramienta explícitamente requerida por el plan que falte. No se fuerzan cambios por debilidades normales del arquetipo. Protección y bans siguen funcionando aunque no se recomienden sustituciones.
@@ -31,7 +31,7 @@ La v2 amplía la lectura estratégica de composiciones completas con diagnóstic
 
 - `index.html` y los CSS de la raíz: documento y estilos de la interfaz.
 - `src/ui/`: controlador de la aplicación y comportamiento de los selectores, la navegación, la vista previa y la versión.
-- `src/data/`: lectura de `Draft Pool.xlsx`; `role-viability-26.21.js` aporta evidencia verificable de posiciones para el parche 26.21 sin conexión en tiempo de ejecución. Las parejas no verificadas conservan explícitamente el estado «sin verificar», nunca reciben una clasificación inventada.
+- `src/data/`: lectura de `Draft Pool.xlsx`; `role-editorial-26-21.js` añade una curación manual de 49 parejas con fuentes identificadas; `role-viability-26-21.js` combina la revisión con seis observaciones históricas y conserva el resto como «sin verificar», sin consultas de red. Las parejas no verificadas conservan explícitamente el estado «sin verificar», nunca reciben una clasificación inventada.
 - `src/domain/composition-logic.js`: validación y búsquedas puras usadas por la interfaz actual.
 - `src/domain/composition-engine.js`: evaluación determinista y pura de la composición con los atributos del workbook. Informa identidad principal/secundaria, condición de victoria, fortalezas, debilidades y cohesión; alimenta el análisis estratégico del informe visible.
 - `src/domain/diagnostic-engine.js`: diagnóstico de composiciones completas, con plan, coherencia, robustez, dependencias y problema principal.
@@ -72,18 +72,18 @@ npm run version:bump -- patch "Resumen del cambio"
 
 Usa `minor` para una mejora funcional compatible y `major` para un cambio incompatible. El comando sincroniza el badge y la versión de `README.md`, `version.json`, el fallback de `src/ui/version.js`, `package.json`, `CHANGELOG.md` y la caché del service worker en `sw.js`. Ejecuta `npm run version:check` para comprobar que los números visibles y el changelog siguen sincronizados. No requiere instalar dependencias para versionar. El workflow instala Chromium de forma temporal y prueba el ciclo PWA, los cinco selectores, duplicados, entradas inválidas, actualización en tiempo real, el uso por teclado y el diseño en varios anchos; también detecta errores de JavaScript y consola.
 
-## Fiabilidad de los roles — parche 26.21
+## Fiabilidad de los roles — revisión del 23/10/2026
 
-La lista del Excel decide qué campeones pueden **introducirse manualmente** en cada rol; ningún dato externo bloquea al jugador. El recomendador separa esa elegibilidad de la **viabilidad del rol**.
+El Excel determina únicamente las **posiciones que el usuario puede elegir manualmente**. La recomendación automática aplica un snapshot editorial offline y mantiene separada la certeza sobre el rol:
 
-- **Habitual:** evidencia de uso estable; prioridad sobre otros roles si aporta señales del perfil.
-- **Situacional:** se puede recomendar con contexto y se identifica expresamente como tal.
-- **Experimental:** no aparece como recomendación estándar; sigue disponible en el selector si figura en el Excel.
-- **Sin verificar:** posición incluida en el Excel pero sin prueba externa suficiente. No se finge conocer su viabilidad. Si dos posiciones de un mismo campeón tienen señales y contexto idénticos sin evidencia que las distinga, no se recomienda arbitrariamente la primera del orden de roles.
+- **Principal (criterio editorial):** predominio cualitativo contrastado con la posición destacada de OP.GG (parche 16.21) y listado Riot en League Wiki. Sin cuota homogénea ni certificación estadística.
+- **Compatible:** posición recogida por Riot en el listado de League Wiki; no equivale a predominio de partidas en un parche.
+- **Secundaria o experimental:** posición no admitida en propuestas automáticas normales, pero sí seleccionable manualmente cuando aparece en el Excel.
+- **Sin verificar:** se mantiene como alternativa **provisional** solo cuando faltan dos opciones revisadas para ese perfil. Los dos optimizadores consumen exclusivamente alternativas revisadas.
 
-La fotografía de datos es **26.21, verificada el 22/10/2026**. Incluye únicamente combinaciones con fuentes identificadas; el resto de las 266 parejas genera el estado conservador `sin-verificar`. Al salir parches posteriores, no se debe asumir que las categorías siguen vigentes sin auditoría de datos. Fuente externa en las entradas verificadas: METAsrc (muestras tempranas; consulta individual, no telemetría en directo).
+La curación cubre **49 de 266 parejas** (7 principales editoriales, 37 compatibles, 4 secundarias y una experimental); quedan **217 sin verificar**. Se conservan en archivos locales los enlaces y la fecha de la comprobación, no datos descargados de terceros. El corte Wiki no se atribuye ficticiamente a un parche. Las cifras no garantizan disponibilidad de candidatos para todos los equipos, por lo que las pruebas revisan perfiles y diez composiciones de referencia. Se excluye Maokai TOP de sugerencias estándar y se permite SUPPORT; Diana puede justificar JUNGLA y MID sin imponer una preferencia artificial.
 
-Esta capa es determinista y local: la PWA no solicita datos a los sitios de estadísticas durante su uso. Los tests comprueban integridad, datos no respaldados, selección multirrol y preservación del draft manual.
+[Metodología, fuentes y límites](docs/quality/Issue-52-Editorial-Positions-2026-10-23.md). La evidencia estadística exhaustiva sigue siendo una limitación, sin APIs ni actualización automática en esta versión.
 
 ## Integración de riesgos y contramedidas (v3.10.0)
 

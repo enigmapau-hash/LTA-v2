@@ -60,7 +60,7 @@ async function main(){
     top: window.LTARoleViability.assess("Diana", "top").status,
     jungle: window.LTARoleViability.assess("Diana", "jungle").status,
     unknown: window.LTARoleViability.assess("Campeón no contrastado", "top").status,
-  })), { top:"experimental", jungle:"habitual", unknown:"sin-verificar" }, "La evidencia del parche funciona también en el navegador");
+  })), { top:"experimental", jungle:"principal", unknown:"sin-verificar" }, "La evidencia del parche funciona también en el navegador");
   assert.equal((await strategy.locator(".result-summary__eyebrow").textContent()).trim(),"Informe estratégico","el informe presenta el análisis integrado de v2");
   assert.equal((await strategy.locator("h3").first().innerText()).trim(),"Cómo jugarla");
   assert.deepEqual(await strategy.locator("[data-report-section]").evaluateAll(nodes=>nodes.map(node=>node.dataset.reportSection)),["diagnosis","correction","protection"],"el informe ordena diagnóstico, recomendación y protección");
@@ -91,8 +91,14 @@ async function main(){
   await page.waitForFunction(() => document.querySelector(".result-summary__ban-detail")?.open === false,
     null, { timeout: 3000 });
   assert.equal(await firstBan.evaluate(node=>node.open), false);
-  assert.equal(await page.locator(".result-summary__header").evaluate(n=>getComputedStyle(n).display),"none","el estado de validación se omite en composiciones completas");
-  assert.equal(await page.locator(".result-summary.is-ready").evaluate(n=>getComputedStyle(n).paddingTop),"0px","el informe completo evita un marco exterior redundante");
+  await page.waitForFunction(() => {
+    const n = document.querySelector(".result-summary.is-ready .result-summary__header");
+    return n?.isConnected && getComputedStyle(n).display === "none";
+  }, null, { timeout: 5000 }); // Assert against the live version of the report.
+  await page.waitForFunction(() => {
+    const n = document.querySelector(".result-summary.is-ready");
+    return n?.isConnected && getComputedStyle(n).paddingTop === "0px";
+  }, null, { timeout: 5000 }); // Assert the live node during a queued report redraw.
   await page.waitForFunction(() => { const node = document.querySelector(".result-summary__strategy"); return node?.isConnected && getComputedStyle(node).borderTopWidth === "1px"; }, null, { timeout: 5000 }); // A concurrent report render can detach a previously resolved locator.
   assert.equal(await page.locator(".result-summary__global").count(),0,"no aparece el resumen global redundante");
   assert.equal(await page.locator(".result-summary__roles").count(),0,"no se genera una segunda lista de campeones redundante");
@@ -124,7 +130,9 @@ async function main(){
   await page.waitForFunction(expected=>[...document.querySelectorAll(".composition-table .champion-name")].map(node=>node.textContent.trim()).join("|")===expected.join("|")&&document.querySelector(".result-summary__ban-integration li"),Object.values(incoherentPicks));
   const candidateRoles = strategy.locator(".result-summary__candidate-role");
   assert.ok(await candidateRoles.count()>0, "Una brecha de cohesión mantiene alternativas explicables");
-  assert.ok((await candidateRoles.allInnerTexts()).every(label=>label.includes("(26.21)")));
+  assert.ok((await candidateRoles.allInnerTexts()).every(label =>
+    /(?:parche 16\.21|revisión \d{4}-\d{2}-\d{2})/.test(label)),
+    "Cada recomendación distingue corte estadístico de revisión descriptiva sin parche");
   // The report is reconstructed on the next animation frame after changes
   // to the five picks. Ensure the final DOM has settled before testing focus.
   await page.evaluate(() => new Promise(resolve =>

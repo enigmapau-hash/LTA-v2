@@ -82,10 +82,10 @@
   function candidateOrder(left, right) {
     // Across DIFFERENT champions the strategic context still leads: a sourced
     // role must not make one champion crowd out every other sensible option.
-    return right.contextFit - left.contextFit
+    return viability.priority(right.viability) - viability.priority(left.viability)
+      || right.contextFit - left.contextFit
       || right.signals.length - left.signals.length
       || right.matchedFields.length - left.matchedFields.length
-      || viability.priority(right.viability) - viability.priority(left.viability)
       || left.champion.localeCompare(right.champion, "es");
   }
 
@@ -145,7 +145,9 @@
       champion: candidate.champion,
       role: candidate.role,
       viabilityStatus: candidate.viability.status,
-      viabilityPatch: viability.PATCH,
+      viabilityPatch: candidate.viability.sourcePatch || null,
+      viabilityCheckedAt: candidate.viability.checkedAt,
+      ...(candidate.otherPrincipalRoles?.length ? { otherPrincipalRoles: candidate.otherPrincipalRoles } : {}),
       function: String(candidate.candidate.function || "").trim(),
       tempo: String(candidate.candidate.tempo || "").trim(),
       priority,
@@ -189,7 +191,7 @@
         const position = viability.assess(champion, candidate.role);
         // A listed draft role remains manually selectable, but a position
         // with confirmed experimental status is not a default recommendation.
-        if (position.status === "experimental") continue;
+        if (viability.isExcluded(position)) continue;
         const key = normalize(champion);
         const item = {
           champion,
@@ -218,14 +220,31 @@
         if (runnerUp && best.viability.status === "sin-verificar"
           && runnerUp.viability.status === "sin-verificar"
           && sameChampionRoleOrder(best, runnerUp) === 0) continue;
+        // Multi-principal roles are equally accepted, not silently ranked
+        // as a stronger position by the workbook order or alphabetical order.
+        const coMain = group.filter(item => item.viability.status === "principal");
+        if (coMain.length > 1) best.otherPrincipalRoles = coMain
+          .filter(item => item.role !== best.role).map(item => item.role).sort();
         ranked.push(best);
       }
 
-      const topCandidates = selectDiverseCandidates(ranked);
+      // Gate: never let contextFit promote an unchecked position above an
+      // editorially reviewed one. Keep a provisional fallback only when the
+      // reviewed shortlist cannot supply two different champions.
+      const reviewed = selectDiverseCandidates(ranked.filter(item =>
+        viability.isReviewedRecommendation(item.viability)));
+      const provisional = reviewed.length < 2
+        ? selectDiverseCandidates(ranked.filter(item => !viability.isReviewedRecommendation(item.viability)))
+            .filter(item => !reviewed.some(selected => selected.champion === item.champion))
+        : [];
+      const topCandidates = [...reviewed, ...provisional].slice(0, MAX_CANDIDATES_PER_PROFILE);
       if (topCandidates.length < 2) continue;
+      // Optimizers ONLY receive reviewed alternatives: the fallback is
+      // informative, not grounds for proposing a team substitution.
       const alternativesByRole = Object.fromEntries(ROLE_ORDER.map((role) => [
         role,
-        selectDiverseCandidates(roleCandidates.filter((candidate) => candidate.role === role))
+        selectDiverseCandidates(roleCandidates.filter((candidate) =>
+          candidate.role === role && viability.isReviewedRecommendation(candidate.viability)))
           .map((candidate, index) => presentCandidate(candidate, profile, index + 1)),
       ]));
 
