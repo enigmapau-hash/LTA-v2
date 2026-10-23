@@ -4,11 +4,11 @@
   if (!badge || !panel) return;
 
   const fallback = {
-    version: "v3.13.4",
+    version: "v3.13.5",
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-23",
-    summary: ["Catálogo completo: 266/266 parejas clasificadas mediante fuentes o criterio editorial manual identificado; última ronda de 63 posiciones."],
+    summary: ["Bans por campeón real: variantes de Shaco, Kayn y Varus unificadas, sin recomendar bans contra picks aliados."],
     pending: [],
   };
 
