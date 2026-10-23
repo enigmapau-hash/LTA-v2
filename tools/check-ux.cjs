@@ -60,7 +60,7 @@ async function main(){
     top: window.LTARoleViability.assess("Diana", "top").status,
     jungle: window.LTARoleViability.assess("Diana", "jungle").status,
     unknown: window.LTARoleViability.assess("Campeón no contrastado", "top").status,
-  })), { top:"experimental", jungle:"habitual", unknown:"sin-verificar" }, "La evidencia del parche funciona también en el navegador");
+  })), { top:"experimental", jungle:"principal", unknown:"sin-verificar" }, "La evidencia del parche funciona también en el navegador");
   assert.equal((await strategy.locator(".result-summary__eyebrow").textContent()).trim(),"Informe estratégico","el informe presenta el análisis integrado de v2");
   assert.equal((await strategy.locator("h3").first().innerText()).trim(),"Cómo jugarla");
   assert.deepEqual(await strategy.locator("[data-report-section]").evaluateAll(nodes=>nodes.map(node=>node.dataset.reportSection)),["diagnosis","correction","protection"],"el informe ordena diagnóstico, recomendación y protección");
