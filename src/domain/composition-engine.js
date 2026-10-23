@@ -138,7 +138,7 @@
     { id: "peel", label: "protección para los carries", fields: ["strengths"], terms: ["peel"] },
     { id: "sustained-damage", label: "daño sostenido", fields: ["strengths", "function"], terms: ["dps", "hypercarry"] },
     { id: "side-lane", label: "presión lateral", fields: ["strengths"], terms: ["side lane"] },
-    { id: "early-pressure", label: "presión temprana", fields: ["strengths", "tempo"], terms: ["early", "snowball", "tempo"] },
+
   ];
 
   const GAME_PLANS = {
@@ -498,7 +498,10 @@
     const archetype = ARCHETYPES.find((item) => normalize(item.label) === normalize(input.identity));
     const requirements = archetype?.executionNeeds || archetype?.draftNeeds || [];
     if (!archetype || picks.length !== 5 || !requirements.length) return [];
-    return STRATEGIC_GAPS
+    const executionOnlyGaps = [
+      { id: "early-pressure", label: "presión temprana", fields: ["strengths", "tempo"], terms: ["early", "snowball", "tempo"] },
+    ];
+    return [...STRATEGIC_GAPS, ...executionOnlyGaps]
       .filter((gap) => requirements.includes(gap.id))
       .filter((gap) => !picks.some((pick) => matchesExplicitSignal(pick, gap)))
       .map((gap) => ({ id: gap.id, label: gap.label }));
