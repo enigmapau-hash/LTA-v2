@@ -161,7 +161,9 @@
     const problemType = diagnosis.primaryProblem?.type;
     const clearPlan = diagnosis.plan?.clear && diagnosis.plan?.primaryIdentity;
     const missingRequirements = clearPlan && problemType === "identity-risk"
-      ? compositionEngine.assessPlanNeeds({ picks, identity: diagnosis.plan.primaryIdentity })
+      ? Array.isArray(diagnosis.execution?.missing)
+        ? diagnosis.execution.missing
+        : compositionEngine.assessPlanNeeds({ picks, identity: diagnosis.plan.primaryIdentity })
       : [];
     // Inherent archetype tradeoffs cannot themselves justify a replacement.
     const factors = clearPlan
