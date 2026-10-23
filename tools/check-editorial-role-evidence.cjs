@@ -147,22 +147,6 @@ for(const [champion,role] of userDiscarded) {
   assert.ok(viability.isExcluded(record),"Descartada queda fuera de picks automáticos");
   assert.ok(!viability.isReviewedRecommendation(record));
 }
-const situationMock=mapCandidates({...mock, candidatesByRole:{
-  support:[{champion:"Fiddlesticks",identity:"Front to Back",strengths:"Frontline · Tanque",
-    function:"Tanque",tempo:"Mid"},
-    {champion:"Poppy",identity:"Front to Back",strengths:"Frontline · Tanque",
-      function:"Tanque",tempo:"Mid"}],
-  jungle:[{champion:"Nautilus",identity:"Front to Back",strengths:"Frontline · Tanque",
-    function:"Tanque",tempo:"Mid"}]
-}});
-assert.ok(situationMock.profiles.every(profile => profile.candidates.every(candidate =>
-  !(candidate.champion==="Nautilus" && candidate.role==="jungle"))),
-  "Nautilus JUNGLA descartado nunca debe reaparecer como alternativa automática");
-assert.ok(situationMock.profiles.every(profile => Object.values(profile.alternativesByRole)
-  .flat().every(candidate => candidate.viabilityStatus!=="situacional"
-    && candidate.viabilityStatus!=="descartada")),
-  "El optimizador no debe usar roles situacionales ni descartados como correcciones normales");
-
 const reviewedCatalog=Object.fromEntries(Object.entries(catalog).map(([role,cs])=>[
  role,cs.filter(c=>viability.isReviewedRecommendation(viability.assess(c.champion,role)))
 ]));
@@ -190,6 +174,23 @@ assert.ok(mapped.profiles[0].candidates.every(c=>c.viabilityStatus!=="secundaria
 assert.ok(!mapped.profiles[0].alternativesByRole.top.some(c=>c.champion==="Maokai"),"No proponer Maokai TOP como sustitución");
 assert.ok(mapped.profiles[0].alternativesByRole.support.some(c=>c.champion==="Maokai"),"Maokai SUPPORT sí se admite");
 assert.deepEqual(mapCandidates(mock),mapped,"Determinismo sin runtime network");
+const situationMock=mapCandidates({...mock, candidatesByRole:{
+  support:[{champion:"Fiddlesticks",identity:"Front to Back",strengths:"Frontline · Tanque",
+    function:"Tanque",tempo:"Mid"},
+    {champion:"Poppy",identity:"Front to Back",strengths:"Frontline · Tanque",
+      function:"Tanque",tempo:"Mid"}],
+  jungle:[{champion:"Nautilus",identity:"Front to Back",strengths:"Frontline · Tanque",
+    function:"Tanque",tempo:"Mid"}]
+}});
+assert.ok(situationMock.profiles.every(profile => profile.candidates.every(candidate =>
+  !(candidate.champion==="Nautilus" && candidate.role==="jungle"))),
+  "Nautilus JUNGLA descartado nunca debe reaparecer como alternativa automática");
+assert.ok(situationMock.profiles.every(profile => Object.values(profile.alternativesByRole)
+  .flat().every(candidate => candidate.viabilityStatus!=="situacional"
+    && candidate.viabilityStatus!=="descartada")),
+  "El optimizador no debe usar roles situacionales ni descartados como correcciones normales");
+
+
 // The reported user composition must never resurrect Maokai TOP via a
 // secondary profile, the evaluator or role-specific optimizer alternatives.
 const {diagnoseComposition}=require("../src/domain/diagnostic-engine.js");
