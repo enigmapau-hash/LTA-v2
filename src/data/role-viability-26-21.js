@@ -70,7 +70,7 @@
     const curated = reviewed.get(key);
     if (curated) return {
       ...curated, patch: PATCH, checkedAt: curated.reviewedAt,
-      provider: curated.status === "principal" ? "LeagueOfGraphs / League Wiki"
+      provider: curated.source?.includes("leagueofgraphs.com") ? "LeagueOfGraphs / League Wiki"
         : curated.status === "experimental" ? "METAsrc" : "League Wiki / revisión editorial",
       reviewed: true,
     };
@@ -93,7 +93,8 @@
   }
 
   function isReviewedRecommendation(record) {
-    return record?.status === "principal" || record?.status === "compatible";
+    return record?.status === "principal" || record?.status === "compatible"
+      || record?.status === "habitual";
   }
 
   function isExcluded(record) {
