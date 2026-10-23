@@ -20,8 +20,21 @@ for(const item of editorial.entries){
   assert.equal(item.reviewedAt,"2026-10-23");
   if(item.status==="principal") {
     assert.equal(item.sourcePatch,"16.21");
-    assert.match(item.source,/op.gg/);
-  }else assert.equal(item.sourcePatch,null,"No asignar parche de OP.GG a una posición Wiki");
+    assert.match(item.source,/leagueofgraphs.com/);
+    assert.ok(item.roleSharePct > 0 && item.roleSharePct <= 100,
+      "La clasificación principal documenta la cuota relativa de la posición");
+    assert.ok(item.runnerUpSharePct >= 0 && item.runnerUpSharePct < 100);
+    assert.ok(item.roleSharePct >= 60
+      || (item.roleSharePct >= 30 && item.runnerUpSharePct >= 30
+        && Math.abs(item.roleSharePct-item.runnerUpSharePct) <= 5),
+      "Principal dominante (>60%) o multirrol comparable (dos roles >=30%, diferencia <=5 pp)");
+    if(item.roleSharePct < 60) {
+      const partner=editorial.entries.find(other=>other.champion===item.champion
+        && other.role===item.runnerUpRole && other.status==="principal");
+      assert.ok(partner, "No promover multirrol sin las dos posiciones corroboradas");
+      assert.equal(partner.roleSharePct, item.runnerUpSharePct);
+    }
+  }else assert.equal(item.sourcePatch,null,"No asignar parche de la estadística a una posición Wiki");
 }
 const counts=Object.fromEntries(["principal","compatible","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
 assert.deepEqual(counts,{principal:7,compatible:37,secundaria:4,experimental:1,"sin-verificar":217});
