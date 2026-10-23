@@ -8,7 +8,7 @@
     track: "Actualización funcional",
     label: "Versión",
     updated: "2026-10-23",
-    summary: ["Clasificación offline de 203 parejas del catálogo; 65 nuevas decisiones manuales, incluyendo Ekko MID/JUNGLA, con roles habituales, situacionales y descartados diferenciados."],
+    summary: ["Catálogo completo: 266/266 parejas clasificadas mediante fuentes o criterio editorial manual identificado; última ronda de 63 posiciones."],
     pending: [],
   };
 
