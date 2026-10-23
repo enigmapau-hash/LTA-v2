@@ -104,6 +104,29 @@ const pokeCorrection = proposeCorrections({ picks: poke, diagnosis: pokeDiagnosi
 assert.equal(pokeCorrection.status, "proposed", "Poke sin Peel merece apoyo");
 assert.equal(pokeCorrection.improvements[0].profile.id, "peel");
 verifyCandidates(pokeCorrection, new Set(poke.map((item) => item.champion)));
+// Screenshots reported by the user: the recognized identity must not be
+// mistaken for proof of an executable Front to Back or Scaling plan.
+const frontWithoutTank = composition({
+  top: "Aurora", jungle: "Kha'Zix", mid: "Hwei", botline: "Seraphine", support: "Brand",
+});
+const scalingWithoutTank = composition({
+  top: "Aurora", jungle: "Karthus", mid: "Hwei", botline: "Seraphine", support: "Brand",
+});
+for (const [picks, identity] of [
+  [frontWithoutTank, "Front to Back"],
+  [scalingWithoutTank, "Escalado"],
+]) {
+  const diagnosis = diagnoseComposition(picks);
+  assert.equal(diagnosis.plan.primaryIdentity, identity, "Identidad reconocida en la captura");
+  assert.equal(diagnosis.execution.status, "missing-required-capabilities");
+  assert.ok(diagnosis.execution.missing.some((need) => need.id === "frontline"),
+    "Una frontline ausente no puede tratarse como un plan ya cubierto");
+  const correction = proposeCorrections({ picks, diagnosis, candidatesByRole });
+  assert.equal(correction.status, "proposed", "No abstenerse ante la carencia principal");
+  assert.equal(correction.improvements[0].profile.id, "frontline");
+  assert.equal(correction.improvements[0].evidenceType, "required-plan-capability");
+  verifyCandidates(correction, new Set(picks.map((pick) => pick.champion)));
+}
 const protectedDiagnosis = diagnoseComposition(protectedPoke);
 assert.equal(proposeCorrections({ picks: protectedPoke, diagnosis: protectedDiagnosis, candidatesByRole }).status,
   "no-supported-correction", "Con Peel acreditado no se fuerza reemplazo");
