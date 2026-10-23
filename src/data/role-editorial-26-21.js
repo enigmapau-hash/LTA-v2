@@ -323,11 +323,7 @@
     "mid",
     "habitual"
   ],
-  [
-    "Jax",
-    "jungle",
-    "habitual"
-  ],
+  
   [
     "Lux",
     "mid",
