@@ -12,12 +12,12 @@ assert.equal(Object.values(countByRole).reduce((n,c)=>n+c,0),266);
 const records=viability.candidatesForReview(catalog);
 const key=(item)=>item.champion.toLocaleLowerCase("es")+"|"+item.role;
 const workbookPairs=new Set(records.map(key));
-assert.equal(editorial.entries.length,129,"Curación revisada, incluyendo seis nuevas parejas manuales; no inventar clasificación total");
-assert.equal(new Set(editorial.entries.map(key)).size,129,"Sin duplicar pares");
+assert.equal(editorial.entries.length,140,"Curación revisada, incluyendo seis nuevas parejas manuales; no inventar clasificación total");
+assert.equal(new Set(editorial.entries.map(key)).size,140,"Sin duplicar pares");
 for(const item of editorial.entries){
   assert.ok(workbookPairs.has(key(item)),item.champion+" "+item.role+" debe figurar en Draft Pool.xlsx");
   if(item.manualRoleReview && !item.source) {
-    assert.equal(item.status,"habitual");
+    assert.ok(["habitual","situacional","descartada"].includes(item.status));
     assert.equal(item.sourcePatch,null);
     assert.equal(item.manualProvenance,"Declaración del usuario de LTA, no estadística");
   } else assert.match(item.source,/^https:\/\//);
@@ -47,8 +47,8 @@ for(const item of editorial.entries){
       "Secundaria estadística: cuota inferior al 15%");
   }else assert.equal(item.sourcePatch,null,"No asignar parche de la estadística a una posición Wiki");
 }
-const counts=Object.fromEntries(["principal","compatible","habitual","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
-assert.deepEqual(counts,{principal:12,compatible:88,habitual:22,secundaria:6,experimental:1,"sin-verificar":137});
+const counts=Object.fromEntries(["principal","compatible","habitual","situacional","descartada","secundaria","experimental","sin-verificar"].map(status=>[status,records.filter(item=>item.status===status).length]));
+assert.deepEqual(counts,{principal:12,compatible:88,habitual:22,situacional:7,descartada:4,secundaria:6,experimental:1,"sin-verificar":126});
 assert.equal(viability.assess("Diana","mid").provider,"LeagueOfGraphs / League Wiki",
   "Los porcentajes editoriales proceden de LeagueOfGraphs, no de OP.GG");
 assert.equal(viability.assess("Aurora","top").provider,"League Wiki / revisión editorial");
@@ -67,8 +67,8 @@ for(const [champion,role,status] of [
 const {analyze: analyzeByChampion,canon}=require("./audit-editorial-by-champion.cjs");
 const byChampion=analyzeByChampion(catalog);
 assert.equal(byChampion.pairs,266);
-assert.equal(byChampion.reviewed,129);
-assert.equal(byChampion.pending,137);
+assert.equal(byChampion.reviewed,140);
+assert.equal(byChampion.pending,126);
 assert.ok(byChampion.champions < byChampion.distinctCatalogNames,
   "Las builds de Kayn/Varus/Shaco comparten campeón; no necesariamente rol verificado");
 assert.equal(canon("Kayn (Azul)"),canon("Kayn (Rojo)"));
@@ -109,13 +109,57 @@ for(const [champion,role] of [["Poppy","top"],["Gragas","top"],["Gragas","mid"],
   assert.equal(record.provider,"Criterio manual del usuario");
   assert.ok(viability.isReviewedRecommendation(record));
 }
-for(const [champion,role] of [["Maokai","jungle"],["Galio","top"],["Galio","support"],["Dr. Mundo","mid"],["Garen","jungle"],["Garen","mid"],["Nautilus","jungle"],["Viego","top"],["Fiddlesticks","support"],["Brand","botline"],["Yorick","jungle"]]) {
+for(const [champion,role] of []) {
   assert.equal(viability.assess(champion,role).status,"sin-verificar",
     "El usuario no afirmó que un rol omitido sea secundario o inviable");
 }
 assert.equal(viability.assess("Galio","mid").provider,"League Wiki / criterio manual del usuario");
 assert.equal(viability.assess("Maokai","support").provider,"LeagueOfGraphs / League Wiki",
   "No rebajar evidencia numérica a mera declaración manual");
+
+// Segunda ronda del usuario: situacional NO equivale a descartada.
+const userSituational=[["Maokai","jungle"],["Galio","top"],["Galio","support"],
+  ["Garen","jungle"],["Garen","mid"],["Fiddlesticks","support"],["Brand","botline"]];
+const userDiscarded=[["Dr. Mundo","mid"],["Nautilus","jungle"],
+  ["Viego","top"],["Yorick","jungle"]];
+assert.equal(userSituational.length,7);
+assert.equal(userDiscarded.length,4);
+for(const [champion,role] of userSituational) {
+  const record=viability.assess(champion,role);
+  assert.equal(record.status,"situacional");
+  assert.equal(record.manualRoleReview,"situacional");
+  assert.equal(record.provider,"Criterio manual del usuario");
+  assert.equal(record.source,null);
+  assert.equal(record.sourcePatch,null);
+  assert.ok(!viability.isExcluded(record),"Situacional no es prohibido");
+  assert.ok(!viability.isReviewedRecommendation(record),
+    "Situacional no se propone en cambios normales sin justificación contextual");
+}
+for(const [champion,role] of userDiscarded) {
+  const record=viability.assess(champion,role);
+  assert.equal(record.status,"descartada");
+  assert.equal(record.manualRoleReview,"descartada");
+  assert.equal(record.source,null);
+  assert.equal(record.sourcePatch,null);
+  assert.equal(record.provider,"Criterio manual del usuario");
+  assert.ok(viability.isExcluded(record),"Descartada queda fuera de picks automáticos");
+  assert.ok(!viability.isReviewedRecommendation(record));
+}
+const situationMock=mapCandidates({...mock, candidatesByRole:{
+  support:[{champion:"Fiddlesticks",identity:"Front to Back",strengths:"Frontline · Tanque",
+    function:"Tanque",tempo:"Mid"},
+    {champion:"Poppy",identity:"Front to Back",strengths:"Frontline · Tanque",
+      function:"Tanque",tempo:"Mid"}],
+  jungle:[{champion:"Nautilus",identity:"Front to Back",strengths:"Frontline · Tanque",
+    function:"Tanque",tempo:"Mid"}]
+}});
+assert.ok(situationMock.profiles.every(profile => profile.candidates.every(candidate =>
+  !(candidate.champion==="Nautilus" && candidate.role==="jungle"))),
+  "Nautilus JUNGLA descartado nunca debe reaparecer como alternativa automática");
+assert.ok(situationMock.profiles.every(profile => Object.values(profile.alternativesByRole)
+  .flat().every(candidate => candidate.viabilityStatus!=="situacional"
+    && candidate.viabilityStatus!=="descartada")),
+  "El optimizador no debe usar roles situacionales ni descartados como correcciones normales");
 
 const reviewedCatalog=Object.fromEntries(Object.entries(catalog).map(([role,cs])=>[
  role,cs.filter(c=>viability.isReviewedRecommendation(viability.assess(c.champion,role)))
